@@ -6,5 +6,5 @@ class BaseModel(nn.Module, metaclass=ABCMeta):
     def __init__(self):
         super().__init__()
     @abstractmethod
-    def __forward(self, x):
+    def forward(self, x):
         raise NotImplementedError
