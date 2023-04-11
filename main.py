@@ -9,16 +9,15 @@ import argparse
 def run(config):
     model_config = config['model']
     model = M.get_model(**model_config)
-    dataset = L.get_dataset(config['dataset'])
-    train_loader, valid_loader = L.get_loader(config['dataloader'],dataset)
+    train_dataset = L.get_dataset(config['dataset'])
+    train_dataloader = L.get_loader(config['dataloader'],train_dataset)
 
-    return 
-    trainer = Trainer(model,dataset)
+    trainer = Trainer(model,train_dataloader)
     tester = None
     trainer.train()
 
 
 
 if __name__ == '__main__':
-    config = read_json('sample_config.json')
+    config = read_json('sample_config2.json')
     run(config)
