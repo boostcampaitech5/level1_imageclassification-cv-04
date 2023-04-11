@@ -6,39 +6,7 @@ level1_imageclassification-cv-04 created by GitHub Classroom
 모든 모듈의 이름은 snake case를 사용합니다. ex. base_model
 클래스의 이름은 pascal case를 사용합니다. ex. BaseModel
 
-
+사용자는 train set과 val set을 나누는 코드를 작성해야 합니다.
+해당 부분은 dataloader의 custom dataloader에서 make_dataset을 통해 구현해야 합니다.
 ##config 작성 양식
-학습용 데이터는 data config에 작성
-만약 valid set이 따로 존재하지 않을 경우
- "dataset":{
-        "already_split": false,
-        "split_ratio": 0.8,
-
-        "name": "sample_dataset",
-        "args": {
-            "base_dir":"data"
-        },
-        "batch_size": 16,
-        "annotation_dir": "/annotaion.csv"
-    }
-존재할 경우
-"dataset":{
-        "already_split": true,
-        "train_dataset":{
-            "name": "sample_dataset",
-            "args": {
-                "base_dir":"data"
-            },
-            "batch_size": 16,
-            "annotation_dir": "/annotaion.csv"
-        },
-        "valid_dataset":{
-            "name": "sample_dataset",
-            "args": {
-                "base_dir":"data/valid"
-            },
-            "batch_size": 16,
-            "annotation_dir": "/annotaion.csv"
-        }
-    }
-와 같이 작성할 것
+split_ratio : 데이터가 train set과 val set으로 나누어지지 않았을 경우 필요합니다.

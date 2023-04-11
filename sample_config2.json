@@ -4,25 +4,16 @@
         "args": {}
     },
     "dataset":{
-        "train": true,
-        "already_split": true,
-        "train_set":{
-            "name": "sample_dataset",
-            "args": {
-                "base_dir":"data"
-            },
-            "annotation_dir": "/annotation"
+        "split": false,
+        "name": "sample_dataset",
+        "args": {
+            "base_dir":"data"
         },
-        "valid_set":{
-            "name": "sample_dataset",
-            "args": {
-                "base_dir":"data"
-            },
-            "annotation_dir": "/annotation"
-        }
+        "annotation_dir": "/annotation"
     },
     "dataloader":{
         "batch_size": 16,
         "shuffle": false
-    }
+    },
+    "loss": "BCELoss"
 }
