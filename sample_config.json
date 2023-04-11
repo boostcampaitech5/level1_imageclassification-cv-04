@@ -1,0 +1,20 @@
+{
+    "model":{
+        "name": "sample_model",
+        "args": {}
+    },
+    "dataset":{
+        "already_split": false,
+        "split_ratio": 0.8,
+
+        "name": "sample_dataset",
+        "args": {
+            "base_dir":"data"
+        },
+        "annotation_dir": "/annotation"
+    },
+    "dataloader":{
+        "batch_size": 16,
+        "shuffle": false
+    }
+}
