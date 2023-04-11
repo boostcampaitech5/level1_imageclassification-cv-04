@@ -11,3 +11,7 @@ def read_json(config):
     with open(config,'r') as f:
         json_file = json.load(f)
     return json_file
+
+def split_dataset(ratio,total_len):
+    train = int(total_len*ratio)
+    return [train,total_len-train]
