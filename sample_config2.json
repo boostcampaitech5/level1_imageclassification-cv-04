@@ -1,0 +1,28 @@
+{
+    "model":{
+        "name": "sample_model",
+        "args": {}
+    },
+    "dataset":{
+        "train": true,
+        "already_split": true,
+        "train_set":{
+            "name": "sample_dataset",
+            "args": {
+                "base_dir":"data"
+            },
+            "annotation_dir": "/annotation"
+        },
+        "valid_set":{
+            "name": "sample_dataset",
+            "args": {
+                "base_dir":"data"
+            },
+            "annotation_dir": "/annotation"
+        }
+    },
+    "dataloader":{
+        "batch_size": 16,
+        "shuffle": false
+    }
+}

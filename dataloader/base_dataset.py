@@ -1,7 +1,7 @@
 from torch.utils.data import Dataset
 from abc import *
 import pathlib
-class BaseLoader(Dataset, metaclass=ABCMeta):
+class BaseDataset(Dataset, metaclass=ABCMeta):
     def __init__(self, base_dir):
         print('Data dir: ',base_dir)
         self.base_dir = pathlib.Path(base_dir)
