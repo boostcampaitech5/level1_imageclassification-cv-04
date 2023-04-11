@@ -10,5 +10,5 @@ def get_loader(loader_name, args):
     loader_lib = importlib.import_module(target_lib)
     target_loader = ''.join(map(str.title,loader_name.split('_')))
     print("Target Loader: ",target_loader)
-    getattr(loader_lib,target_loader)('data')
+    getattr(loader_lib,target_loader)(**args)
 
