@@ -4,8 +4,7 @@
         "args": {}
     },
     "dataset":{
-        "train": true,
-        "already_split": false,
+        "split": true,
         "split_ratio": 0.8,
 
         "name": "sample_dataset",
@@ -17,5 +16,13 @@
     "dataloader":{
         "batch_size": 1,
         "shuffle": false
+    },
+    "loss": "CrossEntropyLoss",
+    "epochs": 10,
+    "optimizer":{
+        "name": "Adam",
+        "args":{
+            "lr": 0.01
+        }
     }
 }
