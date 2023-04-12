@@ -14,12 +14,6 @@ import multiprocessing as mp
 import pickle
 
 
-class cfg:
-    data_dir = './input/data/train'
-    img_dir = f'{data_dir}/images'
-    df_path = f'{data_dir}/train.csv'
-
-
 def get_img_stats(img_dir, img_ids):
     """
     데이터셋에 있는 이미지들의 크기와 RGB 평균 및 표준편차를 수집하는 함수
@@ -98,7 +92,7 @@ def count_face_detection(img_dir, img_ids):
 
     return not_found
 
-def plot_mask_images(img_dir, idx):
+def plot_mask_images(img_dir, idx, save_path):
     img_id = df.iloc[idx].path
     gen = df.iloc[idx].gender
     age = df.iloc[idx].age
@@ -120,10 +114,29 @@ def plot_mask_images(img_dir, idx):
         axes[i//(n_rows+1)][i%n_cols].imshow(imgs[i])
         axes[i//(n_rows+1)][i%n_cols].set_title(f'{num2class[i]}-{gen}-{age}', color='r')
     plt.tight_layout()
-    plt.savefig(f'./EDA_test_img/mask{idx}.jpg')
+    plt.savefig(os.path.join(save_path, f'mask{idx}.jpg'))
 
 
 if __name__ == '__main__':
+
+    save_path = './EDA_test_img'
+    stats = False
+    object_detection = False
+    target_df = False
+    xy = False
+    not_detection_img = False
+    n_not_detection = False
+    no_mask_not_detection = False
+    no_mask_noise = False
+    mask_noise = False
+    make_csv = False
+    test_make_csv = True
+    save_csv_path = './input/data/train/train_info.csv'
+
+    class cfg:
+        data_dir = './input/data/train'
+        img_dir = f'{data_dir}/images'
+        df_path = f'{data_dir}/train.csv'
 
     num2class = ['incorrect_mask', 'mask1', 'mask2', 'mask3',
                  'mask4', 'mask5', 'normal']
@@ -132,15 +145,6 @@ if __name__ == '__main__':
     df = pd.read_csv(cfg.df_path)
 
     print(df.head())
-
-    stats = False
-    object_detection = False
-    target_df = False
-    xy = False
-    not_detection_img = False
-    n_not_detection = False
-    no_mask_noise = False
-    mask_noise = False
     
     if stats:
         img_info = get_img_stats(cfg.img_dir, df.path.values)
@@ -174,7 +178,7 @@ if __name__ == '__main__':
             axes[ax_id].imshow(imgs[img_id])
             axes[ax_id].set_xticks([])
             axes[ax_id].set_yticks([])
-        fig.savefig('./EDA_test_img/HarrCascade_img1.png')
+        fig.savefig(os.path.join(save_path, 'HarrCascade_img1.png'))
 
     if target_df:
         # Gender
@@ -191,11 +195,11 @@ if __name__ == '__main__':
         for i, v in enumerate(counts_pct):
             ax.text(i, 0, v, horizontalalignment = 'center', size = 14, color = 'w', fontweight = 'bold')
         
-        fig.savefig('./EDA_test_img/gender.png')
+        fig.savefig(os.path.join(save_path, 'gender.png'))
 
         # Age
         sns.displot(df, x="age", stat="density")
-        plt.savefig('./EDA_test_img/age.png')
+        plt.savefig(os.path.join(save_path, 'age.png'))
 
         # Group Age
         age_0 = df[df['age'] < 30].value_counts().sum()
@@ -210,14 +214,14 @@ if __name__ == '__main__':
         ax.bar(group, group_age)
         ax.set_title('Group Age', fontsize= 14)
         ax.set_xticklabels(['~ 29', '30 ~ 59', '60 ~'], fontsize=14)
-        fig.savefig('./EDA_test_img/group_age.png')
+        fig.savefig(os.path.join(save_path, 'group_age.png'))
 
         # Age & Gender
         sns.displot(df, x="age", hue="gender", stat="density")
-        plt.savefig('./EDA_test_img/age_n_gender.png')
+        plt.savefig(os.path.join(save_path, 'age_n_gender.png'))
 
         sns.boxplot(x='gender', y='age', data=df)
-        plt.savefig('./EDA_test_img/gender_n_age.png')
+        plt.savefig(os.path.join(save_path, 'gender_n_age.png'))
 
     if xy:
         # Gray Scale인 경우 Histogram
@@ -234,7 +238,7 @@ if __name__ == '__main__':
 
         plt.legend(num2class)
         plt.title('Class Grayscale Histogram Plot', fontsize=15)
-        plt.savefig('./EDA_test_img/RGB_Y.png')
+        plt.savefig(os.path.join(save_path, 'RGB_Y.png'))
 
         # Mask를 쓴 이미지는 평균을 내서 확인
         plt.figure()
@@ -257,7 +261,7 @@ if __name__ == '__main__':
 
         plt.legend(['incorrect_mask', 'normal', 'mask average'])
         plt.title('Class Grayscale Histogram Plot', fontsize=15)
-        plt.savefig('./EDA_test_img/RGB_Y_mask_mean.png')
+        plt.savefig(os.path.join(save_path, 'RGB_Y_mask_mean.png'))
 
         # 마스크를 쓰지 않은 경우의 R, G, B의 histogram
         plt.figure()
@@ -271,7 +275,7 @@ if __name__ == '__main__':
 
         plt.legend()
         plt.title('RGB Histogram Plot - Normal', fontsize=15)
-        plt.savefig('./EDA_test_img/RGB_Y_no_mask.png')
+        plt.savefig(os.path.join(save_path, 'RGB_Y_no_mask.png'))
 
     if not_detection_img:
         face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
@@ -297,7 +301,7 @@ if __name__ == '__main__':
         for i, j in enumerate(range(len(not_found_idx))):
             axes[i].imshow(imgs[j])
             axes[i].set_title(f'{num2class[j]}')
-        fig.savefig('./EDA_test_img/not_found_face.png')
+        fig.savefig(os.path.join(save_path, './EDA_test_img/not_found_face.png'))
 
     if n_not_detection:
         not_found = count_face_detection(cfg.img_dir, df.path.values)
@@ -313,11 +317,22 @@ if __name__ == '__main__':
                      fontsize=11, fontweight='semibold'
                 )
         plt.tight_layout()
-        plt.savefig('./EDA_test_img/all_not_found_face.png')
+        plt.savefig(os.path.join(save_path, './EDA_test_img/all_not_found_face.png'))
         
 
         with open('not_found.pickle', 'wb') as f:
             pickle.dump(not_found, f)
+
+    if no_mask_not_detection:
+        with open("not_found.pickle", 'rb') as f:
+            not_found = pickle.load(f)
+        for id in range(len(not_found['normal'])):
+            img = np.array(Image.open(not_found['normal'][id]))
+            plt.imshow(img)
+            plt.xticks([])
+            plt.yticks([])
+            plt.savefig(os.path.join(save_path, f'no_mask_not_detection{id+1}.png'))
+            print((id+1), not_found['normal'][id])
 
     if no_mask_noise:
         no_mask_img = [2399, 2400, 1912, 764]
@@ -329,7 +344,9 @@ if __name__ == '__main__':
             exts = get_ext(cfg.img_dir, img_id)
             for ext in exts:
                 try:
-                    img = np.array(Image.open(os.path.join(cfg.img_dir, img_id, 'normal' + ext)))
+                    img_path = os.path.join(cfg.img_dir, img_id, 'normal' + ext)
+                    img = np.array(Image.open(img_path))
+                    print(img_path)
                     break
                 except:
                     continue
@@ -338,7 +355,62 @@ if __name__ == '__main__':
             axes[idx].set_xticks([])
             axes[idx].set_yticks([])
         fig.tight_layout()
-        fig.savefig('./EDA_test_img/no_mask.png')
+        fig.savefig(os.path.join(save_path, 'no_mask.png'))
 
     if mask_noise:
-        plot_mask_images(cfg.img_dir, 2399)
+        plot_mask_images(cfg.img_dir, 2399, save_path)
+
+    if make_csv:
+        data = []
+        for idx in tqdm(range(len(df))):
+            img_id = df.iloc[idx].path
+            gen = df.iloc[idx].gender
+            age = df.iloc[idx].age
+
+            exts = get_ext(cfg.img_dir, img_id)
+            for class_name in num2class[:-1]:
+                for ext in exts:
+                    try:
+                        img_path = os.path.join(cfg.img_dir, img_id, class_name + ext)
+                        break
+                    except:
+                        continue
+                if class_name == 'incorrect':
+                    if gen == 'male':
+                        if age < 30: ans = 6
+                        elif age >= 60: ans = 8
+                        else: ans = 7
+                    else:
+                        if age < 30: ans = 9
+                        elif age >= 60: ans = 11
+                        else: ans = 10
+                elif class_name == 'normal':
+                    if gen == 'male':
+                        if age < 30: ans = 12
+                        elif age >= 60: ans = 14
+                        else: ans = 13
+                    else:
+                        if age < 30: ans = 15
+                        elif age >= 60: ans = 17
+                        else: ans = 16
+                else:
+                    if gen == 'male':
+                        if age < 30: ans = 0
+                        elif age >= 60: ans = 2
+                        else: ans = 1
+                    else:
+                        if age < 30: ans = 3
+                        elif age >= 60: ans = 5
+                        else: ans = 4
+                data.append([img_path, ans])
+
+        result_df = pd.DataFrame(data, columns=['ImageID', 'ans'])
+        result_df.to_csv(save_csv_path, index=False)
+
+    if test_make_csv:
+        result_df = pd.read_csv(save_csv_path)
+        print(result_df.head())
+        print(result_df.iloc[0].ImageID)
+        print(result_df.iloc[0].ans)
+        plt.imshow(np.array(Image.open(result_df.iloc[0].ImageID)))
+        plt.savefig('./test_img.png')
