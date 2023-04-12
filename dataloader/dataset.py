@@ -8,10 +8,11 @@ import os
 class ClassificationDataset(Dataset):
     """Data loader를 만들기 위한 base dataset class"""
 
-    def __init__(self, csv_path, transform=None, train=True):
+    def __init__(self, csv_path, transform=None, train=True, eval_path=None):
         self.df = pd.read_csv(csv_path)
         self.transform = transform
         self.train = train
+        self.eval_path = eval_path
 
 
     def __len__(self):
@@ -22,7 +23,7 @@ class ClassificationDataset(Dataset):
         if self.train:
             img = Image.open(self.df.iloc[idx].ImageID)
         else:
-            img_path = os.path.join(os.getcwd(), 'input/data/eval/images', self.df.iloc[idx].ImageID)
+            img_path = os.path.join(self.eval_path, 'images', self.df.iloc[idx].ImageID)
             img = Image.open(img_path)
         label = self.df.iloc[idx].ans
 
