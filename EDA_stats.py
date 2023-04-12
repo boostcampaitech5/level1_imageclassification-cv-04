@@ -427,7 +427,8 @@ if __name__ == '__main__':
             age = df.iloc[idx].age
 
             exts = get_ext(cfg.img_dir, img_id)
-            for class_name in num2class[:-1]:
+            for class_name in num2class:
+                ans = 0
                 for ext in exts:
                     try:
                         img_path = os.path.join(cfg.img_dir, img_id, class_name + ext)
@@ -435,7 +436,7 @@ if __name__ == '__main__':
                         break
                     except:
                         continue
-                if class_name == 'incorrect':
+                if class_name == 'incorrect_mask':
                     if gen == 'male':
                         if age < 30: ans = 6
                         elif age >= 60: ans = 8
@@ -472,5 +473,5 @@ if __name__ == '__main__':
         print(result_df.head())
         print(result_df.iloc[0].ImageID)
         print(result_df.iloc[0].ans)
-        plt.imshow(np.array(Image.open(result_df.iloc[0].ImageID)))
-        plt.savefig('./test_img.png')
+        
+        print(result_df['ans'].value_counts())
