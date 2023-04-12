@@ -9,7 +9,7 @@ import torchvision.transforms as transforms
 
 from model.model import AlexNet
 
-from dataloader.dataset import Dataset
+from dataloader.dataset import IC_Dataset
 
 
 ########################### Define ##################################
@@ -24,17 +24,20 @@ MOMENTUM = 0.9
 LR_DECAY = 0.0005
 LR_INIT = 0.01
 IMAGE_DIM = 227 
-NUM_CLASSES = 2  
-DEVICE_IDS = [0] 
+NUM_CLASSES = 18  
+DEVICE_IDS = [0]
+TRAIN_IMG_DIR = "/opt/ml/input/data/train/images/"
+LABEL_PATH = "/opt/ml/input/data/train/train.csv"
 
 #####################################################################
 
+transform_list = [transforms.CenterCrop(IMAGE_DIM),
+                                transforms.ToTensor(),
+                                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),]
 
 alexnet = AlexNet(num_classes=NUM_CLASSES).to(device)
 
-dataset = Dataset(TRAIN_IMG_DIR,[transforms.CenterCrop(IMAGE_DIM),
-                                transforms.ToTensor(),
-                                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),])
+dataset = IC_Dataset(TRAIN_IMG_DIR,transform_list)
 print('Dataset created')
 
 dataloader = data.DataLoader(
