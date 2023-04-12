@@ -36,6 +36,9 @@ def run(args, args_dict):
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(f'The device is ready\t>>\t{device}')
 
+    print('Make save_path')
+    os.makedirs(args.save_path, exist_ok=True)
+
     transform = transforms.Compose([transforms.Resize((256, 256)),
                                     transforms.ToTensor()])
 
@@ -102,13 +105,15 @@ def run(args, args_dict):
             wandb.log({'Train Acc': train_acc,
                        'Train Loss': train_epoch_loss,
                        'Train F1-Score': train_f1})
-
+            if (epoch+1) % 1 == 0:
+                fig = plot_confusion_matrix(cm, args.num_classes, normalize=False, save_path=None)
+                wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch} : Confusion Matrix")})
 
 if __name__ == '__main__':
     args_dict = {'seed' : 223,
                  'csv_path' : './input/data/train/train_info.csv',
                  'save_path' : './checkpoint',
-                 'use_wandb' : False,
+                 'use_wandb' : True,
                  'wandb_exp_name' : 'test',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
