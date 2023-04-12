@@ -42,10 +42,10 @@ class IC_Dataset(Dataset):
             
         return x,y
         
-        
-TRAIN_IMG_DIR = "/opt/ml/input/data/train/"
-dataset = IC_Dataset(TRAIN_IMG_DIR)
+if __name__ == '__main__':
+    TRAIN_IMG_DIR = "/opt/ml/input/data/train/"
+    dataset = IC_Dataset(TRAIN_IMG_DIR)
 
-dataloader = data.DataLoader(dataset,batch_size=64)
-train_features, train_labels = next(iter(dataloader))
-print(train_labels[0])
+    dataloader = data.DataLoader(dataset,batch_size=64)
+    train_features, train_labels = next(iter(dataloader))
+    print(train_labels[0])
