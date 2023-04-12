@@ -17,5 +17,5 @@ def run(config):
 
 
 if __name__ == '__main__':
-    config = read_json('sample_config.json')
+    config = read_json('config.json')
     run(config)
