@@ -14,7 +14,7 @@
         "annotation_dir": "/annotation"
     },
     "dataloader":{
-        "batch_size": 1,
+        "batch_size": 4,
         "shuffle": false
     },
     "epochs": 10,

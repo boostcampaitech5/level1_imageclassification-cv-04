@@ -5,7 +5,7 @@ from util import split_dataset
 from torch.utils.data import random_split
 from PIL import Image
 import PIL
-import torchvision
+from torchvision import transforms
 
 class MaskDataset(BaseDataset):
     def __init__(self,base_dir, transform = None):
@@ -19,7 +19,10 @@ class MaskDataset(BaseDataset):
         self.valid_data = self._get_file_list(self.val_data_dir)
 
         if transform == None:
-            self.transform = torchvision.transforms.ToTensor()
+            self.transform = transforms.Compose([transforms.ToTensor(),
+                                    transforms.Resize((227,227)),
+                                    transforms.Normalize((0.485, 0.456, 0.406),
+                                                        (0.229, 0.224, 0.225))])
         else:
             self.transform = transform
 
@@ -35,7 +38,6 @@ class MaskDataset(BaseDataset):
         data_dir = target_data[idx]
         pil_data = Image.open(data_dir)
         data = self.transform(pil_data)
-
         annotation = self.parse_annotation(data_dir)
         y = self.annotation_to_tensor(annotation)
 

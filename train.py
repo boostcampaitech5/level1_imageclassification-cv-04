@@ -30,6 +30,7 @@ class Trainer():
                                     config['optimizer']['args'])
         print('Using device: ',device)
         
+        #test_getitem(self.dataloader)
 
     def run(self):
         self.model.to(device)
@@ -40,9 +41,10 @@ class Trainer():
                 for idx,data in enumerate(pbar):
                     pbar.set_description(f'Epoch:{epoch}/{self.EPOCH}')
                     x,label = data
+
                     self.optim.zero_grad()
-                    logit = self.model(x)
-                    loss = self.criterion(logit,label)
+                    logit = self.model(x.to(device))
+                    loss = self.criterion(logit,label.to(device))
                     loss.backward()
                     self.optim.step()
             self.model.eval()
@@ -51,6 +53,14 @@ class Trainer():
                 for idx,data in enumerate(pbar):
                     pbar.set_description(f'Epoch:{epoch}/{self.EPOCH}')
                     x,label = data
-                    logit = self.model(x)
-                    loss = self.criterion(logit,label)
 
+                    logit = self.model(x.to(device))
+                    loss = self.criterion(logit,label.to(device))
+                print(logit,label)
+
+def test_getitem(dataloader):
+    idx,data = next(enumerate(dataloader))
+    x,y = data
+    print(x.shape)
+    print(y)
+    print(y.shape)

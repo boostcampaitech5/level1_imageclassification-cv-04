@@ -1,7 +1,7 @@
 import torch
 from torch import nn
-
 from model.base_model import BaseModel
+
 class SampleModel(BaseModel):
     def __init__(self):
         super().__init__()
