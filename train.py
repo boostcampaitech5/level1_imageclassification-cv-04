@@ -106,7 +106,7 @@ def run(args, args_dict):
                        'Train Loss': train_epoch_loss,
                        'Train F1-Score': train_f1})
             if (epoch+1) % 1 == 0:
-                fig = plot_confusion_matrix(cm, args.num_classes, normalize=False, save_path=None)
+                fig = plot_confusion_matrix(cm, args.num_classes, normalize=True, save_path=None)
                 wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch} : Confusion Matrix")})
 
 if __name__ == '__main__':
