@@ -131,9 +131,9 @@ if __name__ == '__main__':
     no_mask_not_detection = False
     no_mask_noise = False
     mask_noise = False
-    make_csv = False
-    test_make_csv = False
-    tSNE = True
+    make_csv = True
+    test_make_csv = True
+    tSNE = False
     save_csv_path = './input/data/train/train_info.csv'
 
     class cfg:
@@ -431,6 +431,7 @@ if __name__ == '__main__':
                 for ext in exts:
                     try:
                         img_path = os.path.join(cfg.img_dir, img_id, class_name + ext)
+                        img = np.array(Image.open(img_path))
                         break
                     except:
                         continue
