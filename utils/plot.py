@@ -3,7 +3,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_confusion_matrix(cm, num_classes, normalize=False):
+def plot_confusion_matrix(cm, num_classes, normalize=False, save_path=None):
     if normalize:
         n_total = torch.sum(cm).item()
         np_cm = cm / n_total
@@ -20,7 +20,10 @@ def plot_confusion_matrix(cm, num_classes, normalize=False):
     ax.xaxis.set_ticklabels([i for i in range(num_classes)])
     ax.xaxis.tick_top()
     ax.yaxis.set_ticklabels([i for i in range(num_classes)])
-        
+    plt.tight_layout()
+    if save_path:
+        plt.savefig(save_path)
+    
     return ax
 
 

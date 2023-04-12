@@ -3,13 +3,15 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms 
 import pandas as pd
 from PIL import Image
+import os
 
 class ClassificationDataset(Dataset):
     """Data loader를 만들기 위한 base dataset class"""
 
-    def __init__(self, csv_path, transform=None):
+    def __init__(self, csv_path, transform=None, train=True):
         self.df = pd.read_csv(csv_path)
         self.transform = transform
+        self.train = train
 
 
     def __len__(self):
@@ -17,7 +19,11 @@ class ClassificationDataset(Dataset):
 
 
     def __getitem__(self, idx):
-        img = Image.open(self.df.iloc[idx].ImageID)
+        if self.train:
+            img = Image.open(self.df.iloc[idx].ImageID)
+        else:
+            img_path = os.path.join(os.getcwd(), 'input/data/eval/images', self.df.iloc[idx].ImageID)
+            img = Image.open(img_path)
         label = self.df.iloc[idx].ans
 
         if self.transform:
@@ -28,7 +34,7 @@ class ClassificationDataset(Dataset):
 if __name__ == '__main__':
     transform = transforms.Compose([transforms.ToTensor()])
 
-    dataset = ClassificationDataset(csv_path = './input/data/train/train_info.csv',
+    dataset = ClassificationDataset(csv_path = './input/data/eval/info.csv',
                                     transform=transform,
                                     num_classes = 18)
     data_iter = DataLoader(dataset,
