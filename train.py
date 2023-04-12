@@ -87,14 +87,14 @@ def run(args, args_dict):
               .format(time.time()-start_time, epoch, train_acc, train_epoch_loss, train_f1))
         
         if (epoch+1) % 1 == 0:
-            if args.save_mode == 'state' or args.save_mode == 'both':
+            if args.save_mode == 'state_dict' or args.save_mode == 'both':
                 # 모델의 parameter들을 저장
                 torch.save({
                     'epoch': epoch,
                     'model_state_dict': model.state_dict(),
                     'optimizer_state_dict': optimizer.state_dict(),
-                    }, os.path.join(args.save_path, f'epoch({epoch})_acc({train_acc:.3f})_loss({train_epoch_loss:.3f})_f1({train_f1:.3f})_state.pt'))
-            elif args.save_mode == 'model' or args.save_mode == 'both':
+                    }, os.path.join(args.save_path, f'epoch({epoch})_acc({train_acc:.3f})_loss({train_epoch_loss:.3f})_f1({train_f1:.3f})_state_dict.pt'))
+            if args.save_mode == 'model' or args.save_mode == 'both':
                 # 모델 자체를 저장
                 torch.save(model, os.path.join(args.save_path, f'epoch({epoch})_acc({train_acc:.3f})_loss({train_epoch_loss:.3f})_f1({train_f1:.3f})_model.pt'))
         
@@ -108,7 +108,7 @@ if __name__ == '__main__':
     args_dict = {'seed' : 223,
                  'csv_path' : './input/data/train/train_info.csv',
                  'save_path' : './checkpoint',
-                 'use_wandb' : True,
+                 'use_wandb' : False,
                  'wandb_exp_name' : 'test',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
