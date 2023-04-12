@@ -7,14 +7,14 @@ from PIL import Image
 class ClassificationDataset(Dataset):
     """Data loader를 만들기 위한 base dataset class"""
 
-    def __init__(self, csv_path, transform=None, num_classes=-1):
+    def __init__(self, csv_path, transform=None):
         self.df = pd.read_csv(csv_path)
         self.transform = transform
-        self.num_classes = num_classes
 
 
     def __len__(self):
         return len(self.df)
+
 
     def __getitem__(self, idx):
         img = Image.open(self.df.iloc[idx].ImageID)
