@@ -8,6 +8,9 @@ from torchsummary import summary
 
 
 def run(args):
+    csv_path = os.path.join(args.eval_path, 'info.csv')
+    save_csv_path = os.path.join(args.eval_path, 'eval_info.csv')
+
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(f'The device is ready\t>>\t{device}')
 
@@ -15,9 +18,10 @@ def run(args):
     transform = transforms.Compose([transforms.Resize((256, 256)),
                                     transforms.ToTensor()])
 
-    dataset = ClassificationDataset(csv_path = args.csv_path,
+    dataset = ClassificationDataset(csv_path = csv_path,
                                     transform=transform,
-                                    train=False)
+                                    train=False,
+                                    eval_path=args.eval_path)
     print(f'The number of testing images\t>>\t{len(dataset)}')
 
     test_iter = DataLoader(dataset,
@@ -48,17 +52,15 @@ def run(args):
         result.append(max_pred.item())
 
     print('Save CSV file')
-    df = pd.read_csv(args.csv_path)
+    df = pd.read_csv(csv_path)
     df['ans'] = result
-    df.to_csv(args.save_csv_path, index=False)
+    df.to_csv(save_csv_path, index=False)
 
 
 if __name__ == '__main__':
-    args_dict = {'csv_path' : './input/data/eval/info.csv',
-                 'save_csv_path' : './input/data/eval/eval_info.csv',
+    args_dict = {'eval_path' : './input/data/eval',
                  'checkpoint' : './checkpoint/epoch(0)_acc(0.366)_loss(3.851)_f1(0.182)_model.pt',
                  'load_mode' : 'model',
-                 'pt_path' : './checkpoint',
                  'num_classes' : 18,
                  'batch_size' : 1,
                  'model_summary' : True}
