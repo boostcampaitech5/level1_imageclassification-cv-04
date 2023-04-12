@@ -15,7 +15,7 @@ class Network(nn.Module):
 if __name__ == '__main__':
     model = Network(num_classes=18)
 
-    img = torch.randn(3, 3,256,256)
+    img = torch.randn(3, 3, 256, 256)
     output = model(img)
     print(output.shape)
 
