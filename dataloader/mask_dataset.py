@@ -28,7 +28,7 @@ class MaskDataset(BaseDataset):
 
         
 
-       # print(self.train_data[0])
+        print(self.train_data[0])
         print(self.parse_annotation(self.train_data[0]))
     def __getitem__(self, idx):
         if self.train_mode:
@@ -46,7 +46,7 @@ class MaskDataset(BaseDataset):
         return super().__len__()
     
     def _get_file_list(self,target_dir):
-        data_list = list(target_dir.glob('*/*'))
+        data_list = list(target_dir.glob('**/[mask|normal|incorrect]*'))
         return data_list
     def parse_annotation(self,file_dir):
         annotation = file_dir.parent.name
