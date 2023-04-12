@@ -7,10 +7,11 @@ def confusion_matrix(model, data_iter, device, num_classes):
         for data, target in data_iter:
             model_pred, y_target = model(data.to(device)), target.to(device)
             _, y_pred = torch.max(model_pred.data, 1)
-            if y_pred == y_target:
-                cm[y_target][y_target] += 1
-            else:
-                cm[y_target][y_pred] += 1
+            for y_p, y_t in zip(y_pred, y_target):
+                if y_p == y_t:
+                    cm[y_t][y_t] += 1
+                else:
+                    cm[y_t][y_p] += 1
 
     return cm
 
@@ -52,6 +53,21 @@ def f1_score(cm, num_classes):
 
 if __name__ == '__main__':
     num_classes = 3
+    actual = torch.LongTensor([0, 1, 2])
+    pred = torch.FloatTensor([[1,1,1],
+                              [0,1,3],
+                              [1,8,0]])
+    _, pred = torch.max(pred, 1)
+    print(pred)
+    cm = torch.zeros(3, 3)
+    for y_p, y_t in zip(pred, actual):
+        if y_p == y_t:
+            cm[y_t][y_t] += 1
+        else:
+            cm[y_t][y_p] += 1
+    print(cm)
+
+
     cm = [[5, 1, 1],
           [0, 5, 2],
           [1, 0, 5]]
