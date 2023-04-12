@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from model.base_model import BaseModel
-
+import torch.nn.functional as F
 class MaskClassification(BaseModel):
     def __init__(self,loss=nn.CrossEntropyLoss):
         super().__init__(loss)
@@ -26,6 +26,8 @@ class MaskClassification(BaseModel):
         x=self.sigmoid(self.fc1(x))
         x=self.fc2(x)
         return x
+    
+    
     def custom_loss(self,logit,y):
         CELoss = nn.CrossEntropyLoss()
         MSELoss = nn.MSELoss()
