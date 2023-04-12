@@ -23,10 +23,7 @@ class ClassificationDataset(Dataset):
         if self.transform:
             img = self.transform(img)
 
-        one_hot_label = torch.zeros((self.num_classes,))
-        one_hot_label[label] = 1
-            
-        return img, one_hot_label
+        return img, torch.LongTensor([label])
     
 if __name__ == '__main__':
     transform = transforms.Compose([transforms.ToTensor()])
