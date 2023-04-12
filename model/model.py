@@ -7,9 +7,12 @@ class Network(nn.Module):
         super(Network, self).__init__()
         self.num_classes = num_classes
 
+        self.flatten = nn.Flatten()
+        self.fc1 = nn.Linear(196608, num_classes)
+
     def forward(self, x):
-        x = nn.Flatten()(x)
-        x = nn.Linear(x.shape[-1], self.num_classes)(x)
+        x = self.flatten(x)
+        x = self.fc1(x)
         return x
     
 if __name__ == '__main__':
