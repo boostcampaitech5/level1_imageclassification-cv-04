@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import multiprocessing as mp
 import pickle
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
 
 
 def get_img_stats(img_dir, img_ids):
@@ -130,7 +132,8 @@ if __name__ == '__main__':
     no_mask_noise = False
     mask_noise = False
     make_csv = False
-    test_make_csv = True
+    test_make_csv = False
+    tSNE = True
     save_csv_path = './input/data/train/train_info.csv'
 
     class cfg:
@@ -359,6 +362,62 @@ if __name__ == '__main__':
 
     if mask_noise:
         plot_mask_images(cfg.img_dir, 2399, save_path)
+
+    # 결과 해석을 어떻게 해야하지
+    if tSNE:
+        # PCA
+        n_imgs = 100
+
+        imgs = []
+        for img_id in df.path.values[:n_imgs]:
+            exts = get_ext(cfg.img_dir, img_id)
+            for class_id in num2class:
+                for ext in exts:
+                    try:
+                        img_path = os.path.join(cfg.img_dir, img_id, class_id + ext)
+                        img = np.array(Image.open(img_path).convert('L'))
+                        break
+                    except:
+                        continue
+                imgs.append(img)
+        imgs = np.array(imgs)
+        n_samples, h, w = imgs.shape
+
+        imgs = np.reshape(imgs, (n_samples, h*w))
+
+        n_components = 30
+
+        t0 = time()
+        pca = PCA(n_components=n_components, svd_solver='randomized',
+                whiten=True).fit(imgs)
+        print(f"pca is fitted in {time() - t0:.0f}s")
+        print(f'Explained variation per principal component: \n{pca.explained_variance_ratio_}')
+
+        eigenfaces = pca.components_.reshape((n_components, h, w))
+        img_pca = pca.transform(imgs)
+
+        pca_df = pd.DataFrame(img_pca, columns=[str(col) for col in range(n_components)])
+        pca_df['class_id'] = [num2class[n % len(num2class)] for n in range(n_samples)]
+        pca_df['class_id'] = pca_df['class_id'].map(lambda x: x if x in ['incorrect_mask', 'normal'] else 'mask')
+
+        # tSNE
+        time_start = time()
+        tsne = TSNE(n_components=2, verbose=1, perplexity=40, n_iter=300)
+        tsne_results = tsne.fit_transform(img_pca)
+        print('t-SNE done! Time elapsed: {} seconds'.format(time()-time_start))
+
+        pca_df['tsne-2d-one'] = tsne_results[:,0]
+        pca_df['tsne-2d-two'] = tsne_results[:,1]
+        plt.figure(figsize=(8,6))
+        sns.scatterplot(
+            x="tsne-2d-one", y="tsne-2d-two",
+            hue="class_id",
+            palette=sns.color_palette("Set2", 3),
+            data=pca_df,
+            legend="full",
+            alpha=0.8
+        )
+        plt.savefig(os.path.join(save_path, 'tsne.png'))
 
     if make_csv:
         data = []
