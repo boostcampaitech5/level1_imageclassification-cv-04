@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils import data
+from torch.utils.data import Dataset, DataLoader, random_split
 import torchvision.transforms as transforms
 from torchvision import models
 from torchsummary import summary
@@ -14,24 +15,32 @@ from model.model_finetune import fineTune
 from dataloader.dataset import IC_Dataset
 import sys
 
+import wandb
+
 ########################### Define ##################################
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Device >> {device}")
 
 seed = torch.initial_seed()
 
-NUM_EPOCHS = 1
+NUM_EPOCHS = 100
 BATCH_SIZE = 128
 MOMENTUM = 0.9
 LR_DECAY = 0.0005
 LR_INIT = 0.01
+LR = 0.0001
 IMAGE_DIM = 384 
 NUM_CLASSES = 18  
 DEVICE_IDS = [0]
 TRAIN_IMG_DIR = "/opt/ml/input/data/train/"
+OUT_PATH = "./level1_imageclassification-cv-04/data_out/model_save/"
 MODEL = "Resnet18"
 
-
+wandb.init(name = "Temp",
+            project = 'Image_classification_mask',
+            entity = 'connect-cv-04',
+            )
+wandb.config = {'model': MODEL, 'lr': LR, 'epochs' : NUM_EPOCHS, 'batch_size' : BATCH_SIZE }
 #####################################################################
 
 transform_list = [transforms.CenterCrop(IMAGE_DIM),
@@ -46,19 +55,33 @@ model = fineTune(models.resnet18(pretrained=True).to(device), MODEL, NUM_CLASSES
 # sys.exit()
 
 dataset = IC_Dataset(TRAIN_IMG_DIR,transform_list)
+
+train_dataset , val_dataset = random_split(dataset, [int(len(dataset)*0.8), int(len(dataset)*0.2)])
+
+
 print('Dataset created')
 
-dataloader = data.DataLoader(
-        dataset,
+train_dataloader = data.DataLoader(
+        train_dataset,
         shuffle=True,
         pin_memory=True,
         num_workers=8,
         drop_last=True,
         batch_size=BATCH_SIZE)
+
+val_dataloader = data.DataLoader(
+        val_dataset,
+        shuffle=True,
+        pin_memory=True,
+        num_workers=8,
+        drop_last=True,
+        batch_size=BATCH_SIZE)
+
+
 print('Dataloader created')
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(params=model.parameters(), lr=0.0001)
+optimizer = optim.Adam(params=model.parameters(), lr=LR)
 print('Optimizer created')
 
 lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1) #일정 step 마다 lr 에 gamma 곱함
@@ -68,7 +91,8 @@ print('LR Scheduler created')
 print('Starting training...')
 total_steps = 1
 for epoch in range(NUM_EPOCHS):
-    for imgs, classes in dataloader:
+    model.train()
+    for imgs, classes in train_dataloader:
         imgs, classes = imgs.to(device), classes.to(device).long()
         
         output = model(imgs)
@@ -80,29 +104,41 @@ for epoch in range(NUM_EPOCHS):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+        
+        _, preds = torch.max(output, 1)
+        accuracy = torch.sum(preds == classes)
 
-        # log the information and add to tensorboard
         if total_steps % 10 == 0:
-            with torch.no_grad():
-                _, preds = torch.max(output, 1)
-                accuracy = torch.sum(preds == classes)
+            # Validation
+            model.eval()
+            for v_imgs, v_classes in val_dataloader:
+                v_imgs, v_classes = v_imgs.to(device), v_classes.to(device).long()
+                with torch.no_grad():
+                    val_out = model(v_imgs)
+                    
+                val_loss = criterion(val_out, v_classes)
+                _, val_preds = torch.max(val_out, 1)
+                val_accuracy = torch.sum(val_preds == v_classes)
+                
+            print('Epoch: {} \tStep: {} \tTrain_Loss: {:.4f} \tTrain_Acc: {} \tVal_Loss: {:.4f} \tVal_Acc: {}'
+                .format(epoch + 1, total_steps, loss.item(), accuracy.item()/BATCH_SIZE,
+                        val_loss.item(), val_accuracy.item()/BATCH_SIZE))
+            wandb.log({
+                "train Accuracy": 100. * accuracy.item()/BATCH_SIZE,
+                "train Loss": loss.item(),
+                "validation Accuracy": 100. * val_accuracy.item()/BATCH_SIZE,
+                "validation Loss": val_loss.item()})
+                
 
-                print('Epoch: {} \tStep: {} \tLoss: {:.4f} \tAcc: {}'
-                    .format(epoch + 1, total_steps, loss.item(), accuracy.item()/BATCH_SIZE))
-
-        # print out gradient values and parameter average values
-        if total_steps % 100 == 0:
-            with torch.no_grad():
-
-                print('*' * 10)
-                for name, parameter in model.named_parameters():
-                    if parameter.grad is not None:
-                        avg_grad = torch.mean(parameter.grad)
-                        print('\t{} - grad_avg: {}'.format(name, avg_grad))
-
-                    if parameter.data is not None:
-                        avg_weight = torch.mean(parameter.data)
-                        print('\t{} - param_avg: {}'.format(name, avg_weight))
-  
+            
         total_steps += 1
+        
+    ################### Wandb 로 로그 기록 ##################
+    wandb.log({
+        "train Accuracy": 100. * accuracy.item()/BATCH_SIZE,
+        "train Loss": loss.item()})
+
+    if epoch % 5 == 0:
+        torch.save(model.state_dict(), OUT_PATH + f"resnet18_{epoch:02}.pt")
+    
     lr_scheduler.step()
