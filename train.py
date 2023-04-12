@@ -40,8 +40,7 @@ def run(args, args_dict):
                                     transforms.ToTensor()])
 
     dataset = ClassificationDataset(csv_path = args.csv_path,
-                                    transform=transform,
-                                    num_classes = args.num_classes)
+                                    transform=transform)
     print(f'The number of training images\t>>\t{len(dataset)}')
 
     train_iter = DataLoader(dataset,
@@ -88,11 +87,16 @@ def run(args, args_dict):
               .format(time.time()-start_time, epoch, train_acc, train_epoch_loss, train_f1))
         
         if (epoch+1) % 1 == 0:
-            torch.save({
-                'epoch': epoch,
-                'model_state_dict': model.state_dict(),
-                'optimizer_state_dict': optimizer.state_dict(),
-                }, os.path.join(args.save_path, f'epoch({epoch})_acc({train_acc:.3f})_loss({train_epoch_loss:.3f})_f1({train_f1:.3f}).pt'))
+            if args.save_mode == 'state' or args.save_mode == 'both':
+                # 모델의 parameter들을 저장
+                torch.save({
+                    'epoch': epoch,
+                    'model_state_dict': model.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    }, os.path.join(args.save_path, f'epoch({epoch})_acc({train_acc:.3f})_loss({train_epoch_loss:.3f})_f1({train_f1:.3f})_state.pt'))
+            elif args.save_mode == 'model' or args.save_mode == 'both':
+                # 모델 자체를 저장
+                torch.save(model, os.path.join(args.save_path, f'epoch({epoch})_acc({train_acc:.3f})_loss({train_epoch_loss:.3f})_f1({train_f1:.3f})_model.pt'))
         
         if args.use_wandb:
             wandb.log({'Train Acc': train_acc,
@@ -112,7 +116,8 @@ if __name__ == '__main__':
                  'model_summary' : False,
                  'batch_size' : 128,
                  'learning_rate' : 1e-4,
-                 'epochs' : 1}
+                 'epochs' : 1,
+                 'save_mode' : 'both'}
     
     from collections import namedtuple
     Args = namedtuple('Args', args_dict.keys())
