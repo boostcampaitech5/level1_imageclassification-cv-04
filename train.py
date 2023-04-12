@@ -1,6 +1,7 @@
 from dataloader import *
 from model import *
 from metric import *
+from utils import *
 from torch.utils.data import DataLoader
 from torchvision import transforms 
 from torch import optim
@@ -79,23 +80,24 @@ def run(cfg):
         train_epoch_loss = train_epoch_loss / len(train_iter)
 
         cm = confusion_matrix(model, train_iter, device, cfg.num_classes)
+
         train_acc = accuracy(cm, cfg.num_classes)
         train_f1 = f1_score(cm, cfg.num_classes)
 
         print('time >> {:.4f}\tepoch >> {:04d}\ttrain_acc >> {:.4f}\ttrain_loss >> {:.4f}\ttrain_f1 >> {:.4f}'
               .format(time.time()-start_time, epoch, train_acc, train_epoch_loss, train_f1))
         
-        if (epoch+1) % 5 == 0:
+        if (epoch+1) % 1 == 0:
             torch.save({
                 'epoch': epoch,
                 'model_state_dict': model.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
-                }, cfg.save_path / f'epoch({epoch})_acc({train_acc:.3f})_loss({train_epoch_loss:.3f})_f1({train_f1:.3f}).pt')
+                }, os.path.join(cfg.save_path, f'epoch({epoch})_acc({train_acc:.3f})_loss({train_epoch_loss:.3f})_f1({train_f1:.3f}).pt'))
         
         if cfg.use_wandb:
-            wandb.log({'train_acc': train_acc,
-                       'train_loss': train_epoch_loss,
-                       'train_f1': train_f1})
+            wandb.log({'Train_Acc': train_acc,
+                       'Train_Loss': train_epoch_loss,
+                       'Train_F1_Score': train_f1})
 
 
 if __name__ == '__main__':
@@ -103,7 +105,7 @@ if __name__ == '__main__':
         seed = 223
         csv_path = './input/data/train/train_info.csv'
         save_path = './checkpoint'
-        use_wandb = False
+        use_wandb = True
         wandb_exp_name = 'test'
         wandb_project_name = 'Image_classification_mask'
         wandb_entity = 'connect-cv-04'
@@ -111,6 +113,6 @@ if __name__ == '__main__':
         model_summary = False
         batch_size = 128
         learning_rate = 1e-4
-        epochs = 10
+        epochs = 1
 
     run(cfg)
