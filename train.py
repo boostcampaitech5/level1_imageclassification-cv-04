@@ -5,12 +5,14 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils import data
 import torchvision.transforms as transforms
+from torchvision import models
+from torchsummary import summary
 
-
-from model.model import AlexNet
+from model.models import AlexNet
+from model.model_finetune import fineTune
 
 from dataloader.dataset import IC_Dataset
-
+import sys
 
 ########################### Define ##################################
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -23,20 +25,24 @@ BATCH_SIZE = 128
 MOMENTUM = 0.9
 LR_DECAY = 0.0005
 LR_INIT = 0.01
-IMAGE_DIM = 227 
+IMAGE_DIM = 384 
 NUM_CLASSES = 18  
 DEVICE_IDS = [0]
-TRAIN_IMG_DIR = "/opt/ml/input/data/train/images/"
-LABEL_PATH = "/opt/ml/input/data/train/train.csv"
+TRAIN_IMG_DIR = "/opt/ml/input/data/train/"
+MODEL = "Resnet50"
+
 
 #####################################################################
 
 transform_list = [transforms.CenterCrop(IMAGE_DIM),
-                                transforms.ToTensor(),
-                                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),]
+                  transforms.ToTensor(),
+                  transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),]
 
-alexnet = AlexNet(num_classes=NUM_CLASSES).to(device)
+model = fineTune(models.resnet18(pretrained=True).to(device),IMAGE_DIM,NUM_CLASSES)
 
+
+print(model)
+sys.exit()
 dataset = IC_Dataset(TRAIN_IMG_DIR,transform_list)
 print('Dataset created')
 
@@ -49,7 +55,7 @@ dataloader = data.DataLoader(
         batch_size=BATCH_SIZE)
 print('Dataloader created')
 
-optimizer = optim.Adam(params=alexnet.parameters(), lr=0.0001)
+optimizer = optim.Adam(params=model.parameters(), lr=0.0001)
 print('Optimizer created')
 
 lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1) #일정 step 마다 lr 에 gamma 곱함
@@ -60,9 +66,10 @@ print('Starting training...')
 total_steps = 1
 for epoch in range(NUM_EPOCHS):
     for imgs, classes in dataloader:
-        imgs, classes = imgs.to(device), classes.to(device)
+        imgs, classes = imgs.to(device), classes.to(device).long()
         
-        output = alexnet(imgs)
+        output = model(imgs)
+        print(output)
         loss = F.cross_entropy(output, classes)
         
         # update the parameters
@@ -84,7 +91,7 @@ for epoch in range(NUM_EPOCHS):
             with torch.no_grad():
 
                 print('*' * 10)
-                for name, parameter in alexnet.named_parameters():
+                for name, parameter in model.named_parameters():
                     if parameter.grad is not None:
                         avg_grad = torch.mean(parameter.grad)
                         print('\t{} - grad_avg: {}'.format(name, avg_grad))

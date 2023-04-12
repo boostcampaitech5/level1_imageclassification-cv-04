@@ -62,3 +62,5 @@ class AlexNet(nn.Module):
         x = self.net(x)
         x = x.view(-1, 256 * 6 * 6)  # reduce the dimensions for linear layer input
         return self.classifier(x)
+
+#################### RESNET
