@@ -26,7 +26,6 @@ class MaskDataset(BaseDataset):
         else:
             self.transform = transform
 
-        
 
         print(self.train_data[0])
         print(self.parse_annotation(self.train_data[0]))
@@ -35,6 +34,7 @@ class MaskDataset(BaseDataset):
             target_data = self.train_data
         else:
             target_data = self.val_data
+        
         data_dir = target_data[idx]
         pil_data = Image.open(data_dir)
         data = self.transform(pil_data)
@@ -51,7 +51,7 @@ class MaskDataset(BaseDataset):
     def parse_annotation(self,file_dir):
         annotation = file_dir.parent.name
         file_name = file_dir.name
-        gender,nation,age = annotation.split('_')[-3:]
+        gender,nation,age = annotation.split('_')[1:]
         mask_type = file_name.split('.')[0]
         #print(annotation,file_name)
         #print(gender,nation,age,mask_type)
@@ -62,20 +62,20 @@ class MaskDataset(BaseDataset):
         age = annotation[2]
         mask_type = annotation[3]
         #(male, female, age, mask, normal, incorrect)
-        answer = torch.zeros(6,dtype=torch.float)
+        answer = torch.zeros(3,dtype=torch.float)
         if gender == 'male':
-            answer[0] = 1
+            answer[0] = 0
         elif gender == 'female':
-            answer [1] = 1
+            answer [0] = 1
         else:
             raise ValueError(f"gender not in [male,female]: {gender}")
-        answer[2] = float(age)
+        answer[1] = float(age)
         if mask_type.startswith('mask'):
-            answer[3] = 1
+            answer[2] = 0
         elif mask_type.startswith('normal'):
-            answer[4] = 1
+            answer[2] = 1
         elif mask_type.startswith('incorrect'):
-            answer[5] = 1
+            answer[2] = 2
         else:
             raise ValueError(f"File name not in [mask,normal,incorrect]: {mask_type}")
         return answer

@@ -9,13 +9,13 @@
 
         "name": "mask_dataset",
         "args": {
-            "base_dir":"data"
+            "base_dir":"../input2/data"
         },
         "annotation_dir": "/annotation"
     },
     "dataloader":{
         "batch_size": 4,
-        "shuffle": false
+        "shuffle": true
     },
     "epochs": 10,
     "optimizer":{
@@ -23,5 +23,8 @@
         "args":{
             "lr": 0.01
         }
+    },
+    "backbone":{
+
     }
 }

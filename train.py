@@ -41,7 +41,7 @@ class Trainer():
                 for idx,data in enumerate(pbar):
                     pbar.set_description(f'Epoch:{epoch}/{self.EPOCH}')
                     x,label = data
-
+                    
                     self.optim.zero_grad()
                     logit = self.model(x.to(device))
                     loss = self.criterion(logit,label.to(device))
