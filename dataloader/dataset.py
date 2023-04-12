@@ -7,6 +7,7 @@ import pandas as pd
 from PIL import Image
 import os
 import csv
+import sys
 
 #Mask Image Classification 마스크 착용 여부
 class IC_Dataset(Dataset): 
@@ -23,11 +24,13 @@ class IC_Dataset(Dataset):
         return len(self.X)
     
     def __getitem__(self,idx):
+        print(self.X[idx])
         X = Image.open(self.X[idx])
         trans_X = transforms.Compose(self.transform)(X)
          
-        y = self.Y[idx]
-        return torch.Tensor(trans_X),torch.Tensor([int(y)]) 
+        y = float(self.Y[idx])
+        # print(torch.Tensor(y))
+        return trans_X,y
     
     #각 폴더에 있는 이미지들의 경로 생성 후 Class id 까지
     def getXY(self,root_path):
@@ -47,6 +50,7 @@ if __name__ == '__main__':
     TRAIN_IMG_DIR = "/opt/ml/input/data/train/"
     dataset = IC_Dataset(TRAIN_IMG_DIR)
 
-    dataloader = data.DataLoader(dataset,batch_size=64)
-    train_features, train_labels = next(iter(dataloader))
-    print(train_features[1],train_labels[1])
+    dataloader = data.DataLoader(dataset,batch_size=1)
+    for imgs, classes in dataloader:
+        print(imgs,classes)
+        sys.exit()

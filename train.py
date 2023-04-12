@@ -20,7 +20,7 @@ print(f"Device >> {device}")
 
 seed = torch.initial_seed()
 
-NUM_EPOCHS = 90 
+NUM_EPOCHS = 1
 BATCH_SIZE = 128
 MOMENTUM = 0.9
 LR_DECAY = 0.0005
@@ -29,7 +29,7 @@ IMAGE_DIM = 384
 NUM_CLASSES = 18  
 DEVICE_IDS = [0]
 TRAIN_IMG_DIR = "/opt/ml/input/data/train/"
-MODEL = "Resnet50"
+MODEL = "Resnet18"
 
 
 #####################################################################
@@ -38,11 +38,13 @@ transform_list = [transforms.CenterCrop(IMAGE_DIM),
                   transforms.ToTensor(),
                   transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),]
 
-model = fineTune(models.resnet18(pretrained=True).to(device),IMAGE_DIM,NUM_CLASSES)
+model = fineTune(models.resnet18(pretrained=True).to(device), MODEL, NUM_CLASSES).to(device)
+# model = models.resnet18(pretrained=True).to(device)
+# model = model(3,18)
 
+# print(summary(model,(3,IMAGE_DIM,IMAGE_DIM),device = "cuda"))
+# sys.exit()
 
-print(model)
-sys.exit()
 dataset = IC_Dataset(TRAIN_IMG_DIR,transform_list)
 print('Dataset created')
 
@@ -55,6 +57,7 @@ dataloader = data.DataLoader(
         batch_size=BATCH_SIZE)
 print('Dataloader created')
 
+criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(params=model.parameters(), lr=0.0001)
 print('Optimizer created')
 
@@ -69,8 +72,9 @@ for epoch in range(NUM_EPOCHS):
         imgs, classes = imgs.to(device), classes.to(device).long()
         
         output = model(imgs)
-        print(output)
-        loss = F.cross_entropy(output, classes)
+        # print(classes.shape)
+        # print(output[0])
+        loss = criterion(output, classes)
         
         # update the parameters
         optimizer.zero_grad()
