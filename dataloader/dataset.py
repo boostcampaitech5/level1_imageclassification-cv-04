@@ -1,5 +1,6 @@
 
 from torch.utils.data import Dataset
+import torch
 import torchvision.transforms as transforms
 from torch.utils import data
 import pandas as pd
@@ -26,7 +27,7 @@ class IC_Dataset(Dataset):
         trans_X = transforms.Compose(self.transform)(X)
          
         y = self.Y[idx]
-        return trans_X,y 
+        return torch.Tensor(trans_X),torch.Tensor([int(y)]) 
     
     #각 폴더에 있는 이미지들의 경로 생성 후 Class id 까지
     def getXY(self,root_path):
@@ -48,4 +49,4 @@ if __name__ == '__main__':
 
     dataloader = data.DataLoader(dataset,batch_size=64)
     train_features, train_labels = next(iter(dataloader))
-    print(train_labels[0])
+    print(train_features[1],train_labels[1])
