@@ -109,7 +109,7 @@ if __name__ == '__main__':
         wandb_entity = 'connect-cv-04'
         num_classes = 18
         model_summary = False
-        batch_size = 3
+        batch_size = 128
         learning_rate = 1e-4
         epochs = 10
 
