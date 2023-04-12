@@ -24,7 +24,6 @@ class IC_Dataset(Dataset):
         return len(self.X)
     
     def __getitem__(self,idx):
-        print(self.X[idx])
         X = Image.open(self.X[idx])
         trans_X = transforms.Compose(self.transform)(X)
          
