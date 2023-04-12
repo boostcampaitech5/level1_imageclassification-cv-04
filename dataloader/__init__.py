@@ -9,6 +9,11 @@ def get_loader(config, dataset):
     return dataloader.DataLoader(dataset,**config)
 
 
+def convert_dataset_name(name):
+    name = "".join(map(str.title,name.split("_")))
+    return name
+                   
+
 '''
 def get_dataset(config):
     print('Load Dataset start')

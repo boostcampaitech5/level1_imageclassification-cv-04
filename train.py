@@ -16,27 +16,27 @@ class Trainer():
         self.model = model
         loader_mod = importlib.import_module('dataloader.'+
                                              config['dataset']['name'])
-        make_dataset = getattr(loader_mod,'make_dataset')
-        self.train_set, self.val_set = make_dataset(config['dataset'])
-        self.train_dataloader = dataloader.DataLoader(self.train_set,
+        dataset_name = L.convert_dataset_name(config['dataset']['name'])
+        dataset_init = getattr(loader_mod,dataset_name)
+        self.dataset = dataset_init(**config['dataset']['args'])
+        self.dataloader = dataloader.DataLoader(self.dataset,
                                                       **config['dataloader'])
-        self.val_dataloader = dataloader.DataLoader(self.val_set,
-                                                      **config['dataloader'])
+        
         self.criterion = loss.set_loss(config['loss'])
         self.EPOCH = config['epochs']
 
         self.optim = set_optimizer(self.model.parameters(),
                                     config['optimizer']['name'],
                                     config['optimizer']['args'])
-
         print('Using device: ',device)
         
 
     def run(self):
-        self.model.train()
         self.model.to(device)
         for epoch in range(self.EPOCH):
-            with tqdm(self.train_dataloader) as pbar:
+            self.model.train()
+            self.dataset.set_train_mode()
+            with tqdm(self.dataloader) as pbar:
                 for idx,data in enumerate(pbar):
                     pbar.set_description(f'Epoch:{epoch}/{self.EPOCH}')
                     x,label = data
@@ -45,6 +45,12 @@ class Trainer():
                     loss = self.criterion(logit,label)
                     loss.backward()
                     self.optim.step()
-                    
+            self.model.eval()
+            self.dataset.set_val_mode()
+            with tqdm(self.dataloader) as pbar:
+                for idx,data in enumerate(pbar):
+                    pbar.set_description(f'Epoch:{epoch}/{self.EPOCH}')
+                    x,label = data
+                    logit = self.model(x)
+                    loss = self.criterion(logit,label)
 
-import time
