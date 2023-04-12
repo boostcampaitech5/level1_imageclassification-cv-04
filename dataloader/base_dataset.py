@@ -5,7 +5,7 @@ class BaseDataset(Dataset, metaclass=ABCMeta):
     def __init__(self, base_dir):
         print('Data dir: ',base_dir)
         self.base_dir = pathlib.Path(base_dir)
-        self.data_list = self._get_file_list()
+        self.data_list = []
         self.train_data = []
         self.val_data = []
         self.train_mode = True

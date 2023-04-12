@@ -1,0 +1,27 @@
+{
+    "model":{
+        "name": "mask_classification",
+        "args": {"loss": "Custom"}
+    },
+    "dataset":{
+        "split": false,
+        "split_ratio": 0.8,
+
+        "name": "mask_dataset",
+        "args": {
+            "base_dir":"data"
+        },
+        "annotation_dir": "/annotation"
+    },
+    "dataloader":{
+        "batch_size": 1,
+        "shuffle": false
+    },
+    "epochs": 10,
+    "optimizer":{
+        "name": "Adam",
+        "args":{
+            "lr": 0.01
+        }
+    }
+}

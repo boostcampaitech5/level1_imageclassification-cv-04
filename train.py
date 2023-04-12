@@ -22,7 +22,7 @@ class Trainer():
         self.dataloader = dataloader.DataLoader(self.dataset,
                                                       **config['dataloader'])
         
-        self.criterion = loss.set_loss(config['loss'])
+        self.criterion = self.model.criterion
         self.EPOCH = config['epochs']
 
         self.optim = set_optimizer(self.model.parameters(),
