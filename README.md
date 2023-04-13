@@ -51,7 +51,7 @@ level1_imageclassification-cv-04 created by GitHub Classroom
 |learning_rate|---|1e-4|---|
 |epochs|---|1|---|
 |train_val_split|train_set의 비율(val_set의 비율은 자동)|0.8|---|
-|save_mode|state_dict를 저장할 지 model 자체를 저장할 지|both|state_dict, both|
+|save_mode|state_dict를 저장할 지 model 자체를 저장할 지|both|state_dict, model, both|
 |save_epoch|parameter를 몇 epoch마다 저장할지(Confusion matrix도 적용)|1|---|
 
 ### Test
