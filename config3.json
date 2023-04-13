@@ -1,16 +1,16 @@
 {
     "model":{
-        "name": "mask_classification2",
+        "name": "mask_classification3",
         "args":{
             "loss": "Custom",
-            "class_num": 6
+            "class_num": 18
         }
     },
     "dataset":{
         "split": false,
         "split_ratio": 0.8,
 
-        "name": "mask_dataset",
+        "name": "mask_dataset3",
         "args": {
             "base_dir":"../input2/data"
         },

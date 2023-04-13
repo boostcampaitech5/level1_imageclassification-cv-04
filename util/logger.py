@@ -8,7 +8,7 @@ class logger:
         wandb.init(
             project = f'Image_classification_mask',
             name = f'exp{idx}_bs{batch_size}_ep{epoch}_{optim_name}_lr{lr}_{backbone}.dk',
-            entity = 'zionia4758'
+            entity = 'connect-cv-04'
         )
         wandb_config['idx']+=1
         util.write_json('wandb.json',wandb_config)

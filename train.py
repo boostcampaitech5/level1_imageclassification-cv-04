@@ -39,7 +39,7 @@ class Trainer():
                                     self.optim_name,
                                     self.lr,
                                     self.backbone_name)
-
+        self.valid = False
         self.save_name = config['save_name']
         #summary(self.model.to(device),(3,224,224))
         print('Using device: ',device)
@@ -59,8 +59,8 @@ class Trainer():
             train_acc = 0
             train_cnt = 0
             with tqdm(self.dataloader) as pbar:
+                print(str(epoch)+'train')
                 for idx,data in enumerate(pbar):
-                    print(str(epoch)+'train')
                     x,label = data
                     self.optim.zero_grad()
                     logit = self.model(x.to(device))
@@ -71,33 +71,38 @@ class Trainer():
                     train_acc += self.model.accuracy(logit,label.to(device))
                     train_cnt += self.batch_size
                     pbar.set_description(f'Epoch:{epoch}/{self.EPOCH},'+\
-                                         f' cur_loss/avg_loss:{loss/self.batch_size}/{self.train_loss.get_loss()}'+\
+                                         f' cur_loss/avg_loss:{loss.item()/self.batch_size:4.3f}/{self.train_loss.get_loss():4.3f}'+\
                                             f', acc: {train_acc}/{train_cnt}')
-                    break
                     
+            
+            
+            print(logit.argmax(dim=1))
+            print(label)
             self.model.eval()
             self.dataset.set_val_mode()
             val_acc = 0
-            val_cnt = 0
-            print(f'valid::::::::{len(self.dataloader)}')
-            with tqdm(self.dataloader) as pbar:
-                for idx,data in enumerate(pbar):
+            val_cnt = 1
+            if self.valid:
+                with tqdm(self.dataloader) as pbar:
                     print(str(epoch)+'validation')
-                    x,label = data
-                    logit = self.model(x.to(device))
-                    loss = self.criterion(logit,label.to(device))
-                    self.val_loss.update(loss,self.batch_size)
-                    val_acc += self.model.accuracy(logit,label.to(device))
-                    val_cnt += self.batch_size
-                    pbar.set_description(f'Epoch:{epoch}/{self.EPOCH}, cur_loss/avg_loss:'\
-                        +f'{loss}/{self.val_loss.get_loss()}'+\
-                            f', acc: {val_acc}/{val_cnt}')
+                    for idx,data in enumerate(pbar):
+                        x,label = data
+                        logit = self.model(x.to(device))
+                        loss = self.criterion(logit,label.to(device))
+                        self.val_loss.update(loss,self.batch_size)
+                        val_acc += self.model.accuracy(logit,label.to(device))
+                        val_cnt += self.batch_size
+                        pbar.set_description(f'Epoch:{epoch}/{self.EPOCH}, cur_loss/avg_loss:'\
+                            +f'{loss.item()/self.batch_size:4.3f}/{self.val_loss.get_loss():4.3f}'+\
+                                f', acc: {val_acc}/{val_cnt}')
                     
-            self.logger({'Train Acc':train_acc/train_cnt, "Train Loss":self.train_loss.get_loss(),
+            #print(logit,label)
+            self.logger.write({'Train Acc':train_acc/train_cnt, "Train Loss":self.train_loss.get_loss(),
                          'Val Acc':val_acc/val_cnt, 'Val loss':self.val_loss.get_loss()})
-            print(logit,label)
 
-        torch.save(self.model.state_dict(),f'./saved_model/{self.save_name}')
+            #print(logit,label)
+
+        torch.save(self.model,f'./saved_model/{self.save_name}')
 
 def test_getitem(dataloader):
     idx,data = next(enumerate(dataloader))

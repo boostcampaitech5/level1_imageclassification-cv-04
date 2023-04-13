@@ -8,7 +8,7 @@ import PIL
 from torchvision import transforms
 import pandas as pd
 
-class MaskDataset(BaseDataset):
+class MaskDataset3(BaseDataset):
     def __init__(self,base_dir, transform = None):
         super().__init__(base_dir)
         self.train_dir = self.base_dir/'train'
@@ -23,6 +23,8 @@ class MaskDataset(BaseDataset):
             self.transform = transforms.Compose([transforms.ToTensor(),
                                     transforms.Resize((232,232)),
                                     transforms.CenterCrop((224,224)),
+                                    transforms.RandomHorizontalFlip(0.5),
+                                    transforms.RandomRotation(90),
                                     transforms.Normalize((0.485, 0.456, 0.406),(0.229, 0.224, 0.225))
                                     ])
         else:
@@ -44,11 +46,12 @@ class MaskDataset(BaseDataset):
         if self.train_mode:
             annotation = self.parse_annotation(data_dir)
             y = self.annotation_to_tensor(annotation)
+            return data,y
         else:
             data_id = str(data_dir).split('/')[-1]
-            ans =self.val_csv.loc[data_id]['ans']
-            y=self.class_to_tensor(ans)
-        return data,y
+            
+            return data,data_id
+
     def __len__(self):
         return super().__len__()
     
@@ -69,42 +72,35 @@ class MaskDataset(BaseDataset):
     
     def annotation_to_tensor(self,annotation):
         gender = annotation[0]
-        age = annotation[2]
+        age = int(annotation[2])
         mask_type = annotation[3]
         #(male, female, age, mask, normal, incorrect)
-        answer = torch.zeros(3,dtype=torch.long)
+        idx = 0
+        
+        if age<30:
+            idx+=0
+        elif age<60:
+            idx+=1
+        else:
+            idx+=2
+
         if gender == 'male':
-            answer[0] = 0
+            idx+= 0
         elif gender == 'female':
-            answer [0] = 1
+            idx+=3
         else:
             raise ValueError(f"gender not in [male,female]: {gender}")
-        answer[1] = int(age)
+        
         if mask_type.startswith('mask'):
-            answer[2] = 0
+            idx+=0
         elif mask_type.startswith('incorrect'):
-            answer[2] = 1
+            idx+=6
         elif mask_type.startswith('normal'):
-            answer[2] = 2
+            idx+=12
         else:
             raise ValueError(f"File name not in [mask,normal,incorrect]: {mask_type}")
-        return answer
+        return idx
     def class_to_tensor(self,num):
-        answer = torch.zeros(3).long()
-        if num<6:
-            answer[2]=0
-        elif num<12:
-            answer[2]=1
-        else:
-            answer[2]=2
-        if num%6<3:
-            answer[0]=0
-        else:
-            answer[0]=1
-        if num%3==0:
-            answer[1]=20
-        elif num%3==1:
-            answer[1]=45
-        else:
-            answer[1]=70
+        answer = torch.zeros(1).long()
+        
         return answer

@@ -24,11 +24,12 @@
     "optimizer":{
         "name": "Adam",
         "args":{
-            "lr": 0.001
+            "lr": 0.005,
+            "weight_decay":0.01
         }
     },
     "backbone":{
-        "name": "Adam"
+        "name": "Resnet50"
     },
     "save_name":"test4"
 }
