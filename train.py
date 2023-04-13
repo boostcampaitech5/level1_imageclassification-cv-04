@@ -40,6 +40,7 @@ def run(args, args_dict):
     print('Make save_path')
     os.makedirs(args.save_path, exist_ok=True)
 
+
     transform = transforms.Compose([transforms.Resize((args.img_width, args.img_height)),
                                     transforms.ToTensor(),
                                     transforms.Normalize((0.485, 0.456, 0.406),

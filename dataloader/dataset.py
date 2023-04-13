@@ -31,8 +31,8 @@ class ClassificationDataset(Dataset):
             img = self.transform(img)
 
         return img, torch.LongTensor([label]).squeeze()
-    
-    
+
+
 if __name__ == '__main__':
     transform = transforms.Compose([transforms.ToTensor()])
 
