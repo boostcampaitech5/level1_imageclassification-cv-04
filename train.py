@@ -93,10 +93,9 @@ print('LR Scheduler created')
 
 
 print('Starting training...')
-total_steps = 1
 for epoch in range(NUM_EPOCHS):
     model.train()
-    for imgs, classes in train_dataloader:
+    for steps,(imgs, classes) in enumerate(train_dataloader):
         imgs, classes = imgs.to(device), classes.to(device).long()
         
         output = model(imgs)
@@ -112,7 +111,7 @@ for epoch in range(NUM_EPOCHS):
         _, preds = torch.max(output, 1)
         accuracy = torch.sum(preds == classes)
 
-        
+    
     model.eval()
     for v_imgs, v_classes in val_dataloader:
         v_imgs, v_classes = v_imgs.to(device), v_classes.to(device).long()
@@ -123,23 +122,22 @@ for epoch in range(NUM_EPOCHS):
         _, val_preds = torch.max(val_out, 1)
         val_accuracy = torch.sum(val_preds == v_classes)
         
-    print('Epoch: {} \tStep: {} \tTrain_Loss: {:.4f} \tTrain_Acc: {} \tVal_Loss: {:.4f} \tVal_Acc: {}'
-        .format(epoch + 1, total_steps, loss.item(), accuracy.item()/BATCH_SIZE,
-                val_loss.item(), val_accuracy.item()/BATCH_SIZE))
-    
     wandb.log({
         "Train Acc": 100. * accuracy.item()/BATCH_SIZE,
         "Train Loss": loss.item(),
         "Val Acc": 100. * val_accuracy.item()/BATCH_SIZE,
         "Val Loss": val_loss.item()})
-                
-            
-    total_steps += 1
+    
+    if steps % 10 == 0:            
+        print('Epoch: {} \tStep: {} \tTrain_Loss: {:.4f} \tTrain_Acc: {} \tVal_Loss: {:.4f} \tVal_Acc: {}'
+            .format(epoch + 1, steps, loss.item(), accuracy.item()/BATCH_SIZE,
+                    val_loss.item(), val_accuracy.item()/BATCH_SIZE))
+   
     lr_scheduler.step()
         
     ################### Wandb 로 로그 기록 ##################
 
     if epoch % 5 == 0:
-        path = os.path.join(OUT_PATH + Test_name + f"{MODEL}_{epoch:02}.pt")
+        path = os.path.join(OUT_PATH , Test_name , f"{MODEL}_{epoch:02}.pt")
         torch.save(model.state_dict(), path)
     
