@@ -11,6 +11,9 @@ def read_json(config):
     with open(config,'r') as f:
         json_file = json.load(f)
     return json_file
+def write_json(dir,data):
+    with open(dir,'w') as f:
+        json.dump(data, f,indent = 2)
 
 def split_dataset(ratio,total_len):
     train = int(total_len*ratio)

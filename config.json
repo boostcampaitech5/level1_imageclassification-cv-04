@@ -1,7 +1,10 @@
 {
     "model":{
-        "name": "mask_classification2",
-        "args": {"loss": "Custom"}
+        "name": "mask_classification",
+        "args": {
+            "loss": "Custom",
+            "class_num": 6
+        }
     },
     "dataset":{
         "split": false,
@@ -25,7 +28,7 @@
         }
     },
     "backbone":{
-
+        "name": "Adam"
     },
-    "save_name":"test1"
+    "save_name":"test4"
 }

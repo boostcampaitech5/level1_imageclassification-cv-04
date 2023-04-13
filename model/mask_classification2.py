@@ -7,9 +7,9 @@ from torchvision.models import resnet101
 
 
 class MaskClassification2(BaseModel):
-    def __init__(self,loss="MSELoss"):
+    def __init__(self,class_num, loss="MSELoss"):
         super().__init__(loss)
-
+        self.class_num = class_num
         self.resnet = resnet101(pretrained=True)
         # for p in self.resnet.parameters():
         #     p.requires_grad = False
@@ -18,10 +18,10 @@ class MaskClassification2(BaseModel):
                                 nn.Sigmoid(),
                                 nn.Linear(1024,512),
                                 nn.Sigmoid(),
-                                nn.Linear(512,6)
+                                nn.Linear(512,self.class_num)
                                 )
-        #self.resnet.fc.requires_grad = True
-        print(self.resnet)
+      #  self.resnet.fc.requires_grad = True
+        #print(self.resnet)
         
     def forward(self,x):
       #  print(x[0],x[1])
@@ -30,18 +30,17 @@ class MaskClassification2(BaseModel):
     
     
     def custom_loss(self,logit,y):
-        ClassLoss = nn.BCEWithLogitsLoss()
+        ClassLoss = nn.CrossEntropyLoss()
         AGELoss = nn.MSELoss()
-
-        loss = ClassLoss(logit[:,:2],y[:,:2])+\
-            AGELoss(logit[:,2:3],y[:,2:3])+\
-            ClassLoss(logit[:,3:],y[:,3:])
+        loss = ClassLoss(logit[:,:2],y[:,0])+\
+            AGELoss(logit[:,2:3],y[:,1:2].float())+\
+            ClassLoss(logit[:,3:],y[:,2])
         
         return loss
     def accuracy(self,logit,label):
-        gender = (logit[:,:2].argmax(dim=1) == label[:,:2].argmax(dim=1))
+        gender = (logit[:,:2].argmax(dim=1) == label[:,0])
         boundary = torch.Tensor([30,60]).cuda()
-        age = (torch.bucketize(logit[:,2],boundary)==torch.bucketize(label[:,2],boundary))
-        mask = (logit[:,3:].argmax(dim=1)==label[:,3:].argmax(dim=1))
+        age = (torch.bucketize(logit[:,2],boundary)==torch.bucketize(label[:,1],boundary))
+        mask = (logit[:,3:].argmax(dim=1)==label[:,2])
         all_correct = gender&age&mask
         return sum(all_correct)

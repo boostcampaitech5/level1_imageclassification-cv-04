@@ -1,7 +1,10 @@
 {
     "model":{
-        "name": "mask_classification",
-        "args": {"loss": "Custom"}
+        "name": "mask_classification2",
+        "args":{
+            "loss": "Custom",
+            "class_num": 6
+        }
     },
     "dataset":{
         "split": false,
@@ -17,7 +20,7 @@
         "batch_size": 32,
         "shuffle": true
     },
-    "epochs": 10,
+    "epochs": 20,
     "optimizer":{
         "name": "Adam",
         "args":{
@@ -27,5 +30,5 @@
     "backbone":{
 
     },
-    "save_name":"test2"
+    "save_name":"test3"
 }

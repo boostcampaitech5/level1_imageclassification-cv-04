@@ -3,3 +3,6 @@ model/__pycache__
 data/
 __pycache__
 wandbAPI.json
+saved_model/
+wandb/
+wandb.json

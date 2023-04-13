@@ -5,6 +5,7 @@ from torch.utils.data import dataloader
 import dataloader as L
 from metric import loss
 from metric.optimizer import set_optimizer
+from util import logger
 import importlib
 from tqdm import tqdm
 from torchsummary import summary
@@ -25,13 +26,20 @@ class Trainer():
         self.criterion = self.model.criterion
         self.EPOCH = config['epochs']
         self.batch_size = config['dataloader']['batch_size']
-
+        self.optim_name = config['optimizer']['name']
+        self.lr = config['optimizer']['args']['lr']
+        self.backbone_name = config['backbone']['name']
         self.optim = set_optimizer(self.model.parameters(),
                                     config['optimizer']['name'],
                                     config['optimizer']['args'])
         
         self.train_loss = loss.loss_tracker()
         self.val_loss = loss.loss_tracker()
+        self.logger = logger.logger(self.batch_size,self.EPOCH,
+                                    self.optim_name,
+                                    self.lr,
+                                    self.backbone_name)
+
         self.save_name = config['save_name']
         #summary(self.model.to(device),(3,224,224))
         print('Using device: ',device)
@@ -48,32 +56,47 @@ class Trainer():
             self.dataset.set_train_mode()
             self.train_loss.reset()
             self.val_loss.reset()
+            train_acc = 0
+            train_cnt = 0
             with tqdm(self.dataloader) as pbar:
                 for idx,data in enumerate(pbar):
+                    print(str(epoch)+'train')
                     x,label = data
                     self.optim.zero_grad()
                     logit = self.model(x.to(device))
-                    #print(logit,label)
                     loss = self.criterion(logit,label.to(device))
                     loss.backward()
                     self.train_loss.update(loss,self.batch_size)
                     self.optim.step()
-                    acc = self.model.accuracy(logit,label.to(device))
+                    train_acc += self.model.accuracy(logit,label.to(device))
+                    train_cnt += self.batch_size
                     pbar.set_description(f'Epoch:{epoch}/{self.EPOCH},'+\
                                          f' cur_loss/avg_loss:{loss/self.batch_size}/{self.train_loss.get_loss()}'+\
-                                            f', acc: {acc}/{self.batch_size}')
+                                            f', acc: {train_acc}/{train_cnt}')
+                    break
+                    
             self.model.eval()
             self.dataset.set_val_mode()
+            val_acc = 0
+            val_cnt = 0
+            print(f'valid::::::::{len(self.dataloader)}')
             with tqdm(self.dataloader) as pbar:
                 for idx,data in enumerate(pbar):
+                    print(str(epoch)+'validation')
                     x,label = data
                     logit = self.model(x.to(device))
                     loss = self.criterion(logit,label.to(device))
                     self.val_loss.update(loss,self.batch_size)
-                    
+                    val_acc += self.model.accuracy(logit,label.to(device))
+                    val_cnt += self.batch_size
                     pbar.set_description(f'Epoch:{epoch}/{self.EPOCH}, cur_loss/avg_loss:'\
-                        +f'{loss}/{self.val_loss.get_loss()}')
+                        +f'{loss}/{self.val_loss.get_loss()}'+\
+                            f', acc: {val_acc}/{val_cnt}')
+                    
+            self.logger({'Train Acc':train_acc/train_cnt, "Train Loss":self.train_loss.get_loss(),
+                         'Val Acc':val_acc/val_cnt, 'Val loss':self.val_loss.get_loss()})
             print(logit,label)
+
         torch.save(self.model.state_dict(),f'./saved_model/{self.save_name}')
 
 def test_getitem(dataloader):
