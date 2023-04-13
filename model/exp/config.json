@@ -13,5 +13,5 @@
     "log_interval": 20,
     "name": "exp",
     "data_dir": "/opt/ml/input/data/train/images",
-    "model_dir": "/opt/ml/CV-04_daehee/model"
+    "model_dir": "./model"
 }
