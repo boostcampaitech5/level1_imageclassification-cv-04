@@ -5,7 +5,7 @@ import numpy as np
 
 def plot_confusion_matrix(cm, num_classes, normalize=False, save_path=None):
     if normalize:
-        n_total = torch.sum(cm).item()
+        n_total = torch.sum(cm, 1).view(num_classes, 1)
         np_cm = cm / n_total
         np_cm = np_cm.numpy()
         ax = sns.heatmap(np_cm, annot=True, cmap='Blues', linewidth=.5,
