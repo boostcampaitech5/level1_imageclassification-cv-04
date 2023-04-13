@@ -1,4 +1,5 @@
 import os
+import pandas as pd
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -7,6 +8,8 @@ from torch.utils import data
 import torchvision.transforms as transforms
 from torchvision import models
 from torchsummary import summary
+from PIL import Image
+
 
 from model.models import AlexNet
 from model.model_finetune import fineTune
@@ -36,7 +39,7 @@ transform_list = [transforms.CenterCrop(IMAGE_DIM),
 
 model = fineTune(models.resnet18(pretrained=True).to(device), MODEL, NUM_CLASSES).to(device)
 
-model.load_state_dict(torch.load(OUT_PATH + "resnet18_05.pt"))
+model.load_state_dict(torch.load(OUT_PATH + "resnet18_80.pt"))
 model.eval()
 
 test_dataset = IC_Test_Dataset(TRAIN_IMG_DIR,transform_list)
@@ -49,13 +52,18 @@ test_dataloader = data.DataLoader(
         drop_last=True,
         batch_size=BATCH_SIZE)
 
-x,y = next(iter(test_dataloader))
-x = x.to(device)
 
-out = model(x)
+df = pd.read_csv(TRAIN_IMG_DIR + "info.csv")
 
-for i in range(BATCH_SIZE):
-    predict = torch.argmax(out[i])
-    print(predict,y[i])
-# i = 5
-# print(out.data[i],y[i])
+cnt = 0
+for x,y in test_dataloader:
+    print(cnt,end="\r")
+    cnt += 1
+    x = x.to(device)
+    out = model(x)
+
+    for i in range(len(y)):
+        predict = torch.argmax(out[i])
+        df.loc[df["ImageID"] == y[i],"ans"] = predict.item()
+
+df.to_csv("./level1_imageclassification-cv-04/data_out/test_1.csv",index = False)
