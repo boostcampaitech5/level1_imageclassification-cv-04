@@ -55,6 +55,9 @@ level1_imageclassification-cv-04 created by GitHub Classroom
 |train_val_split|train_set의 비율(val_set의 비율은 자동)|0.8|0 ~ 1|
 |save_mode|state_dict를 저장할 지 model 자체를 저장할 지|both|state_dict, model, both|
 |save_epoch|parameter를 몇 epoch마다 저장할지(Confusion matrix도 적용)|1|---|
+|load_model|어떤 backbone network를 사용할 것인 지|resnet50|resnet50|
+|img_width|Input image의 width|256|---|
+|img_height|Input image의 height|256|---|
 
 ### Test
 |Argument|Description|Default|Possible value|

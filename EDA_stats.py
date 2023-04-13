@@ -131,9 +131,10 @@ if __name__ == '__main__':
     no_mask_not_detection = False
     no_mask_noise = False
     mask_noise = False
-    make_csv = True
-    test_make_csv = True
+    make_csv = False
+    test_make_csv = False
     tSNE = False
+    class_distribution = True
     save_csv_path = './input/data/train/train_info.csv'
 
     class cfg:
@@ -475,3 +476,20 @@ if __name__ == '__main__':
         print(result_df.iloc[0].ans)
         
         print(result_df['ans'].value_counts())
+
+    if class_distribution:
+        info_df = pd.read_csv('./input/data/train/train_info.csv')
+        label = info_df['ans'].value_counts()
+        label_dict = sorted(dict(label).items(), key=lambda x:x[0])
+
+        x = [str(key) for key, val in label_dict]
+        y = [val for key, val in label_dict]
+        colors = ['#87CEFA'] * 18
+        plt.bar(x, y, color=colors)
+        for idx, val in enumerate(y):
+            plt.text(x=idx, y=val, s=val,
+                     va='bottom', ha='center',
+                     fontsize=11, fontweight='semibold'
+                )
+        plt.tight_layout()
+        plt.savefig(os.path.join(save_path, 'train_info_ans.png'))
