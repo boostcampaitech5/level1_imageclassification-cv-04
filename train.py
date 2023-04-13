@@ -23,8 +23,8 @@ print(f"Device >> {device}")
 
 seed = torch.initial_seed()
 
-NUM_EPOCHS = 80
-BATCH_SIZE = 64
+NUM_EPOCHS = 100
+BATCH_SIZE = 128
 MOMENTUM = 0.9
 LR_DECAY = 0.0005
 LR_INIT = 0.01
@@ -34,11 +34,9 @@ NUM_CLASSES = 18
 DEVICE_IDS = [0]
 TRAIN_IMG_DIR = "/opt/ml/input/data/train/"
 OUT_PATH = "./level1_imageclassification-cv-04/data_out/model_save/"
-MODEL = "resnet18"
+MODEL = "Resnet18"
 
-Test_name= f"exp1_bs{BATCH_SIZE}_ep{NUM_EPOCHS}_adam_lr{LR}_{MODEL}.jh"
-
-wandb.init(name = Test_name,
+wandb.init(name = "Temp",
             project = 'Image_classification_mask',
             entity = 'connect-cv-04',
             )
@@ -50,6 +48,7 @@ transform_list = [transforms.CenterCrop(IMAGE_DIM),
                   transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),]
 
 model = fineTune(models.resnet18(pretrained=True).to(device), MODEL, NUM_CLASSES).to(device)
+
 # model = models.resnet18(pretrained=True).to(device)
 # model = model(3,18)
 
@@ -60,8 +59,6 @@ dataset = IC_Dataset(TRAIN_IMG_DIR,transform_list)
 
 train_dataset , val_dataset = random_split(dataset, [int(len(dataset)*0.8), int(len(dataset)*0.2)])
 
-if (not os.path.isdir(OUT_PATH + Test_name)):
-	os.makedirs(OUT_PATH + Test_name)
 
 print('Dataset created')
 
@@ -93,9 +90,10 @@ print('LR Scheduler created')
 
 
 print('Starting training...')
+total_steps = 1
 for epoch in range(NUM_EPOCHS):
     model.train()
-    for steps,(imgs, classes) in enumerate(train_dataloader):
+    for imgs, classes in train_dataloader:
         imgs, classes = imgs.to(device), classes.to(device).long()
         
         output = model(imgs)
@@ -111,7 +109,8 @@ for epoch in range(NUM_EPOCHS):
         _, preds = torch.max(output, 1)
         accuracy = torch.sum(preds == classes)
 
-        if steps % 10 == 0:  
+        if total_steps % 10 == 0:
+            # Validation
             model.eval()
             for v_imgs, v_classes in val_dataloader:
                 v_imgs, v_classes = v_imgs.to(device), v_classes.to(device).long()
@@ -122,21 +121,25 @@ for epoch in range(NUM_EPOCHS):
                 _, val_preds = torch.max(val_out, 1)
                 val_accuracy = torch.sum(val_preds == v_classes)
                 
-            wandb.log({
-                "Train Acc": 100. * accuracy.item()/BATCH_SIZE,
-                "Train Loss": loss.item(),
-                "Val Acc": 100. * val_accuracy.item()/BATCH_SIZE,
-                "Val Loss": val_loss.item()})
-      
             print('Epoch: {} \tStep: {} \tTrain_Loss: {:.4f} \tTrain_Acc: {} \tVal_Loss: {:.4f} \tVal_Acc: {}'
-                .format(epoch + 1, steps, loss.item(), accuracy.item()/BATCH_SIZE,
+                .format(epoch + 1, total_steps, loss.item(), accuracy.item()/BATCH_SIZE,
                         val_loss.item(), val_accuracy.item()/BATCH_SIZE))
-   
-    lr_scheduler.step()
+            wandb.log({
+                "train Accuracy": 100. * accuracy.item()/BATCH_SIZE,
+                "train Loss": loss.item(),
+                "validation Accuracy": 100. * val_accuracy.item()/BATCH_SIZE,
+                "validation Loss": val_loss.item()})
+                
+
+            
+        total_steps += 1
         
     ################### Wandb 로 로그 기록 ##################
+    wandb.log({
+        "train Accuracy": 100. * accuracy.item()/BATCH_SIZE,
+        "train Loss": loss.item()})
 
     if epoch % 5 == 0:
-        path = os.path.join(OUT_PATH , Test_name , f"{MODEL}_{epoch:02}.pt")
-        torch.save(model.state_dict(), path)
+        torch.save(model.state_dict(), OUT_PATH + f"resnet18_{epoch:02}.pt")
     
+    lr_scheduler.step()
