@@ -111,27 +111,26 @@ for epoch in range(NUM_EPOCHS):
         _, preds = torch.max(output, 1)
         accuracy = torch.sum(preds == classes)
 
-    
-    model.eval()
-    for v_imgs, v_classes in val_dataloader:
-        v_imgs, v_classes = v_imgs.to(device), v_classes.to(device).long()
-        with torch.no_grad():
-            val_out = model(v_imgs)
-            
-        val_loss = criterion(val_out, v_classes)
-        _, val_preds = torch.max(val_out, 1)
-        val_accuracy = torch.sum(val_preds == v_classes)
-        
-    wandb.log({
-        "Train Acc": 100. * accuracy.item()/BATCH_SIZE,
-        "Train Loss": loss.item(),
-        "Val Acc": 100. * val_accuracy.item()/BATCH_SIZE,
-        "Val Loss": val_loss.item()})
-    
-    if steps % 10 == 0:            
-        print('Epoch: {} \tStep: {} \tTrain_Loss: {:.4f} \tTrain_Acc: {} \tVal_Loss: {:.4f} \tVal_Acc: {}'
-            .format(epoch + 1, steps, loss.item(), accuracy.item()/BATCH_SIZE,
-                    val_loss.item(), val_accuracy.item()/BATCH_SIZE))
+        if steps % 10 == 0:  
+            model.eval()
+            for v_imgs, v_classes in val_dataloader:
+                v_imgs, v_classes = v_imgs.to(device), v_classes.to(device).long()
+                with torch.no_grad():
+                    val_out = model(v_imgs)
+                    
+                val_loss = criterion(val_out, v_classes)
+                _, val_preds = torch.max(val_out, 1)
+                val_accuracy = torch.sum(val_preds == v_classes)
+                
+            wandb.log({
+                "Train Acc": 100. * accuracy.item()/BATCH_SIZE,
+                "Train Loss": loss.item(),
+                "Val Acc": 100. * val_accuracy.item()/BATCH_SIZE,
+                "Val Loss": val_loss.item()})
+      
+            print('Epoch: {} \tStep: {} \tTrain_Loss: {:.4f} \tTrain_Acc: {} \tVal_Loss: {:.4f} \tVal_Acc: {}'
+                .format(epoch + 1, steps, loss.item(), accuracy.item()/BATCH_SIZE,
+                        val_loss.item(), val_accuracy.item()/BATCH_SIZE))
    
     lr_scheduler.step()
         
