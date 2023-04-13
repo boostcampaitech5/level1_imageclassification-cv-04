@@ -6,13 +6,13 @@ import torch.nn.functional as F
 from torchvision.models import resnet101
 
 
-class MaskClassification(BaseModel):
+class MaskClassification2(BaseModel):
     def __init__(self,loss="MSELoss"):
         super().__init__(loss)
 
         self.resnet = resnet101(pretrained=True)
-        for p in self.resnet.parameters():
-            p.requires_grad = False
+        # for p in self.resnet.parameters():
+        #     p.requires_grad = False
         self.resnet.layer4 = self.resnet.layer4[:1]
         self.resnet.fc = nn.Sequential(nn.Linear(2048,1024),
                                 nn.Sigmoid(),
@@ -20,7 +20,7 @@ class MaskClassification(BaseModel):
                                 nn.Sigmoid(),
                                 nn.Linear(512,6)
                                 )
-        self.resnet.fc.requires_grad = True
+        #self.resnet.fc.requires_grad = True
         print(self.resnet)
         
     def forward(self,x):

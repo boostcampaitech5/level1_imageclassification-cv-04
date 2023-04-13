@@ -1,6 +1,6 @@
 {
     "model":{
-        "name": "mask_classification2",
+        "name": "mask_classification",
         "args": {"loss": "Custom"}
     },
     "dataset":{
@@ -17,7 +17,7 @@
         "batch_size": 32,
         "shuffle": true
     },
-    "epochs": 20,
+    "epochs": 10,
     "optimizer":{
         "name": "Adam",
         "args":{
@@ -27,5 +27,5 @@
     "backbone":{
 
     },
-    "save_name":"test1"
+    "save_name":"test2"
 }

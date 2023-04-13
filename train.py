@@ -7,7 +7,7 @@ from metric import loss
 from metric.optimizer import set_optimizer
 import importlib
 from tqdm import tqdm
-
+from torchsummary import summary
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class Trainer():
@@ -32,7 +32,8 @@ class Trainer():
         
         self.train_loss = loss.loss_tracker()
         self.val_loss = loss.loss_tracker()
-        
+        self.save_name = config['save_name']
+        #summary(self.model.to(device),(3,224,224))
         print('Using device: ',device)
         
     
@@ -41,6 +42,7 @@ class Trainer():
 
     def run(self):
         self.model.to(device)
+        torch.save(self.model.state_dict(),f'./saved_model/{self.save_name}')
         for epoch in range(self.EPOCH):
             self.model.train()
             self.dataset.set_train_mode()
@@ -51,12 +53,15 @@ class Trainer():
                     x,label = data
                     self.optim.zero_grad()
                     logit = self.model(x.to(device))
+                    #print(logit,label)
                     loss = self.criterion(logit,label.to(device))
                     loss.backward()
                     self.train_loss.update(loss,self.batch_size)
                     self.optim.step()
-                    pbar.set_description(f'Epoch:{epoch}/{self.EPOCH}, cur_loss/avg_loss:\
-                        {loss}/{self.train_loss.get_loss()}')
+                    acc = self.model.accuracy(logit,label.to(device))
+                    pbar.set_description(f'Epoch:{epoch}/{self.EPOCH},'+\
+                                         f' cur_loss/avg_loss:{loss/self.batch_size}/{self.train_loss.get_loss()}'+\
+                                            f', acc: {acc}/{self.batch_size}')
             self.model.eval()
             self.dataset.set_val_mode()
             with tqdm(self.dataloader) as pbar:
@@ -66,9 +71,10 @@ class Trainer():
                     loss = self.criterion(logit,label.to(device))
                     self.val_loss.update(loss,self.batch_size)
                     
-                    pbar.set_description(f'Epoch:{epoch}/{self.EPOCH}, cur_loss/avg_loss:\
-                        {loss}/{self.val_loss.get_loss()}')
-                print(logit,label)
+                    pbar.set_description(f'Epoch:{epoch}/{self.EPOCH}, cur_loss/avg_loss:'\
+                        +f'{loss}/{self.val_loss.get_loss()}')
+            print(logit,label)
+        torch.save(self.model.state_dict(),f'./saved_model/{self.save_name}')
 
 def test_getitem(dataloader):
     idx,data = next(enumerate(dataloader))

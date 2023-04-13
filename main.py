@@ -17,5 +17,12 @@ def run(config):
 
 
 if __name__ == '__main__':
-    config = read_json('config.json')
+    parser = argparse.ArgumentParser(
+        prog="",
+        description="",
+        epilog=""
+    )
+    parser.add_argument('-c','--config',type=str,default='config.json')
+    args=parser.parse_args()
+    config = read_json(args.config)
     run(config)

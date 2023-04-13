@@ -12,7 +12,7 @@ class loss_tracker():
         self.cnt = 0
         self.avg_loss = 0
     def update(self,loss,cnt):
-        self.total_loss += loss
+        self.total_loss += loss.item()
         self.cnt += cnt
         self.avg_loss = self.total_loss/self.cnt
     def get_loss(self):

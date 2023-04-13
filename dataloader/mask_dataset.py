@@ -20,13 +20,14 @@ class MaskDataset(BaseDataset):
 
         if transform == None:
             self.transform = transforms.Compose([transforms.ToTensor(),
-                                    transforms.Resize((227,227)),
-                                    transforms.Normalize((0.485, 0.456, 0.406),
-                                                        (0.229, 0.224, 0.225))])
+                                    transforms.Resize((232,232)),
+                                    transforms.CenterCrop((224,224)),
+                                    transforms.Normalize((0.485, 0.456, 0.406),(0.229, 0.224, 0.225))
+                                    ])
         else:
             self.transform = transform
 
-
+        print('sample data')
         print(self.train_data[0])
         print(self.parse_annotation(self.train_data[0]))
     def __getitem__(self, idx):
@@ -62,20 +63,20 @@ class MaskDataset(BaseDataset):
         age = annotation[2]
         mask_type = annotation[3]
         #(male, female, age, mask, normal, incorrect)
-        answer = torch.zeros(3,dtype=torch.float)
+        answer = torch.zeros(6,dtype=torch.float)
         if gender == 'male':
-            answer[0] = 0
+            answer[0] = 1
         elif gender == 'female':
-            answer [0] = 1
+            answer [1] = 1
         else:
             raise ValueError(f"gender not in [male,female]: {gender}")
-        answer[1] = float(age)
+        answer[2] = float(age)
         if mask_type.startswith('mask'):
-            answer[2] = 0
+            answer[3] = 1
         elif mask_type.startswith('normal'):
-            answer[2] = 1
+            answer[4] = 1
         elif mask_type.startswith('incorrect'):
-            answer[2] = 2
+            answer[5] = 1
         else:
             raise ValueError(f"File name not in [mask,normal,incorrect]: {mask_type}")
         return answer
