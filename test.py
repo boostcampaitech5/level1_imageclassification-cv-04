@@ -32,7 +32,7 @@ def run(args):
         state_dict = torch.load(args.checkpoint)
 
         print('The model is ready ...')
-        model = Network(num_classes = args.num_classes).to(device)
+        model = Classifier(args.num_classes, load_model='resnet50').to(device)
         if args.model_summary:
             print(summary(model, (3, 256, 256)))
         model.load_state_dict(state_dict['model_state_dict'])

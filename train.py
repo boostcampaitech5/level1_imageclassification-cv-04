@@ -11,6 +11,7 @@ import os
 import wandb
 from torchsummary import summary
 import time
+import multiprocessing
 
 def torch_seed(random_seed):
     torch.manual_seed(random_seed)
@@ -39,8 +40,17 @@ def run(args, args_dict):
     print('Make save_path')
     os.makedirs(args.save_path, exist_ok=True)
 
-    transform = transforms.Compose([transforms.Resize((256, 256)),
-                                    transforms.ToTensor()])
+    transform = transforms.Compose([transforms.Resize((args.img_width, args.img_height)),
+                                    transforms.ToTensor(),
+                                    transforms.Normalize((0.485, 0.456, 0.406),
+                                                         (0.229, 0.224, 0.225))])
+                                    # transforms.Normalize((0.5601, 0.5241, 0.5014),
+                                    #                      (0.2331, 0.2430, 0.2456))])
+
+    # transform = albumentations.Compose([transforms.Resize((args.img_width, args.img_height)),
+    #                                     transforms.ToTensor(),
+    #                                     transforms.Normalize((0.485, 0.456, 0.406),
+    #                                                          (0.229, 0.224, 0.225))])
 
     dataset = ClassificationDataset(csv_path = args.csv_path,
                                     transform=transform)
@@ -52,14 +62,18 @@ def run(args, args_dict):
 
     train_iter = DataLoader(train_set,
                             batch_size=args.batch_size,
-                            shuffle = True)
+                            shuffle = True,
+                            drop_last=True,
+                            num_workers=multiprocessing.cpu_count() // 2,)
     val_iter = DataLoader(val_set,
                           batch_size=args.batch_size,
-                          shuffle = True)
+                          shuffle = True,
+                          drop_last=True,
+                          num_workers=multiprocessing.cpu_count() // 2,)
     
 
     print('The model is ready ...')
-    model = Network(num_classes = args.num_classes).to(device)
+    model = Classifier(args.num_classes, args.load_model).to(device)
     if args.model_summary:
         print(summary(model, (3, 256, 256)))
 
@@ -111,7 +125,7 @@ def run(args, args_dict):
         val_acc = accuracy(val_cm, args.num_classes)
         val_f1 = f1_score(val_cm, args.num_classes)
 
-        print('time >> {:.4f}\tepoch >> {:04d}\ttrain_acc >> {:.4f}\ttrain_loss >> {:.4f}\tval_f1 >> {:.4f}\tval_acc >> {:.4f}\tval_loss >> {:.4f}\tval_f1 >> {:.4f}'
+        print('time >> {:.4f}\tepoch >> {:04d}\ttrain_acc >> {:.4f}\ttrain_loss >> {:.4f}\ttrain_f1 >> {:.4f}\tval_acc >> {:.4f}\tval_loss >> {:.4f}\tval_f1 >> {:.4f}'
               .format(time.time()-start_time, epoch, train_acc, train_epoch_loss, train_f1, val_acc, val_epoch_loss, val_f1))
         
         if (epoch+1) % args.save_epoch == 0:
@@ -142,17 +156,20 @@ if __name__ == '__main__':
                  'csv_path' : './input/data/train/train_info.csv',
                  'save_path' : './checkpoint',
                  'use_wandb' : True,
-                 'wandb_exp_name' : 'test',
+                 'wandb_exp_name' : 'exp1_bs64_ep100_adam_lr0.0001_resnet50.jy',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 18,
-                 'model_summary' : False,
-                 'batch_size' : 128,
+                 'model_summary' : True,
+                 'batch_size' : 64,
                  'learning_rate' : 1e-4,
-                 'epochs' : 1,
+                 'epochs' : 100,
                  'train_val_split': 0.8,
                  'save_mode' : 'both',
-                 'save_epoch' : 1}
+                 'save_epoch' : 10,
+                 'load_model':'resnet50',
+                 'img_width' : 256,
+                 'img_height' : 256}
     
     from collections import namedtuple
     Args = namedtuple('Args', args_dict.keys())
