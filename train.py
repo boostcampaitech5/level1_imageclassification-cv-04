@@ -2,7 +2,7 @@ from dataloader import *
 from model import *
 from metric import *
 from utils import *
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 from torchvision import transforms 
 from torch import optim
 import numpy as np
@@ -44,11 +44,18 @@ def run(args, args_dict):
 
     dataset = ClassificationDataset(csv_path = args.csv_path,
                                     transform=transform)
-    print(f'The number of training images\t>>\t{len(dataset)}')
+    
+    n_train_set = int(args.train_val_split*len(dataset))
+    train_set, val_set = random_split(dataset, [n_train_set, len(dataset)-n_train_set])
+    print(f'The number of training images\t>>\t{len(train_set)}')
+    print(f'The number of validation images\t>>\t{len(val_set)}')
 
-    train_iter = DataLoader(dataset,
+    train_iter = DataLoader(train_set,
                             batch_size=args.batch_size,
                             shuffle = True)
+    val_iter = DataLoader(val_set,
+                          batch_size=args.batch_size,
+                          shuffle = True)
     
 
     print('The model is ready ...')
@@ -81,33 +88,54 @@ def run(args, args_dict):
 
         train_epoch_loss = train_epoch_loss / len(train_iter)
 
-        cm = confusion_matrix(model, train_iter, device, args.num_classes)
+        train_cm = confusion_matrix(model, train_iter, device, args.num_classes)
 
-        train_acc = accuracy(cm, args.num_classes)
-        train_f1 = f1_score(cm, args.num_classes)
+        train_acc = accuracy(train_cm, args.num_classes)
+        train_f1 = f1_score(train_cm, args.num_classes)
 
-        print('time >> {:.4f}\tepoch >> {:04d}\ttrain_acc >> {:.4f}\ttrain_loss >> {:.4f}\ttrain_f1 >> {:.4f}'
-              .format(time.time()-start_time, epoch, train_acc, train_epoch_loss, train_f1))
+        # Validation
+        with torch.no_grad():
+            val_epoch_loss = 0
+            model.eval()
+            for val_img, val_target in val_iter:
+                val_img, val_target = val_img.to(device), val_target.to(device)
+
+                val_pred = model(val_img)
+                val_iter_loss = criterion(val_pred, val_target).detach()
+
+                val_epoch_loss += val_iter_loss
+        val_epoch_loss = val_epoch_loss / len(val_iter)
+
+        val_cm = confusion_matrix(model, val_iter, device, args.num_classes)
+
+        val_acc = accuracy(val_cm, args.num_classes)
+        val_f1 = f1_score(val_cm, args.num_classes)
+
+        print('time >> {:.4f}\tepoch >> {:04d}\ttrain_acc >> {:.4f}\ttrain_loss >> {:.4f}\tval_f1 >> {:.4f}\tval_acc >> {:.4f}\tval_loss >> {:.4f}\tval_f1 >> {:.4f}'
+              .format(time.time()-start_time, epoch, train_acc, train_epoch_loss, train_f1, val_acc, val_epoch_loss, val_f1))
         
-        if (epoch+1) % 1 == 0:
+        if (epoch+1) % args.save_epoch == 0:
             if args.save_mode == 'state_dict' or args.save_mode == 'both':
                 # 모델의 parameter들을 저장
                 torch.save({
                     'epoch': epoch,
                     'model_state_dict': model.state_dict(),
                     'optimizer_state_dict': optimizer.state_dict(),
-                    }, os.path.join(args.save_path, f'epoch({epoch})_acc({train_acc:.3f})_loss({train_epoch_loss:.3f})_f1({train_f1:.3f})_state_dict.pt'))
+                    }, os.path.join(args.save_path, f'epoch({epoch})_acc({val_acc:.3f})_loss({val_epoch_loss:.3f})_f1({val_f1:.3f})_state_dict.pt'))
             if args.save_mode == 'model' or args.save_mode == 'both':
                 # 모델 자체를 저장
-                torch.save(model, os.path.join(args.save_path, f'epoch({epoch})_acc({train_acc:.3f})_loss({train_epoch_loss:.3f})_f1({train_f1:.3f})_model.pt'))
-        
+                torch.save(model, os.path.join(args.save_path, f'epoch({epoch})_acc({val_acc:.3f})_loss({val_epoch_loss:.3f})_f1({val_f1:.3f})_model.pt'))
+
         if args.use_wandb:
             wandb.log({'Train Acc': train_acc,
                        'Train Loss': train_epoch_loss,
-                       'Train F1-Score': train_f1})
-            if (epoch+1) % 1 == 0:
-                fig = plot_confusion_matrix(cm, args.num_classes, normalize=True, save_path=None)
-                wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch} : Confusion Matrix")})
+                       'Train F1-Score': train_f1,
+                       'Val Acc': val_acc,
+                       'Val Loss': val_epoch_loss,
+                       'Val F1-Score': val_f1})
+            if (epoch+1) % args.save_epoch == 0:
+                fig = plot_confusion_matrix(val_cm, args.num_classes, normalize=True, save_path=None)
+                wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")})
 
 if __name__ == '__main__':
     args_dict = {'seed' : 223,
@@ -122,7 +150,9 @@ if __name__ == '__main__':
                  'batch_size' : 128,
                  'learning_rate' : 1e-4,
                  'epochs' : 1,
-                 'save_mode' : 'both'}
+                 'train_val_split': 0.8,
+                 'save_mode' : 'both',
+                 'save_epoch' : 1}
     
     from collections import namedtuple
     Args = namedtuple('Args', args_dict.keys())
