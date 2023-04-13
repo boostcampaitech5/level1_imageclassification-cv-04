@@ -1,0 +1,82 @@
+wandb_version: 1
+
+seed:
+  desc: null
+  value: 223
+csv_path:
+  desc: null
+  value: ./input/data/train/train_info.csv
+save_path:
+  desc: null
+  value: ./checkpoint
+use_wandb:
+  desc: null
+  value: true
+wandb_exp_name:
+  desc: null
+  value: exp1_bs64_ep100_adam_lr0.0001_resnet50.jy
+wandb_project_name:
+  desc: null
+  value: Image_classification_mask
+wandb_entity:
+  desc: null
+  value: connect-cv-04
+num_classes:
+  desc: null
+  value: 18
+model_summary:
+  desc: null
+  value: true
+batch_size:
+  desc: null
+  value: 64
+learning_rate:
+  desc: null
+  value: 0.0001
+epochs:
+  desc: null
+  value: 100
+train_val_split:
+  desc: null
+  value: 0.8
+save_mode:
+  desc: null
+  value: both
+save_epoch:
+  desc: null
+  value: 10
+load_model:
+  desc: null
+  value: resnet50
+img_width:
+  desc: null
+  value: 256
+img_height:
+  desc: null
+  value: 256
+_wandb:
+  desc: null
+  value:
+    python_version: 3.8.5
+    cli_version: 0.14.2
+    framework: torch
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    start_time: 1681372111.027228
+    t:
+      1:
+      - 1
+      - 41
+      - 55
+      2:
+      - 1
+      - 41
+      - 55
+      3:
+      - 13
+      - 16
+      - 23
+      4: 3.8.5
+      5: 0.14.2
+      8:
+      - 5

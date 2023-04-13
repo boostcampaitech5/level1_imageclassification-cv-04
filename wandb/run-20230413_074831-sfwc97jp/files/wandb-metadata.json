@@ -1,0 +1,85 @@
+{
+    "os": "Linux-4.4.0-59-generic-x86_64-with-glibc2.10",
+    "python": "3.8.5",
+    "heartbeatAt": "2023-04-13T07:48:32.334068",
+    "startedAt": "2023-04-13T07:48:31.016025",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "/opt/ml/level1_imageclassification_2/level1_imageclassification-cv-04/train.py",
+    "codePath": "train.py",
+    "git": {
+        "remote": "https://github.com/boostcampaitech5/level1_imageclassification-cv-04.git",
+        "commit": "6f89e063dc5f88233f38f86d7dd762f9089a889d"
+    },
+    "email": "jh58power@naver.com",
+    "root": "/opt/ml/level1_imageclassification_2/level1_imageclassification-cv-04",
+    "host": "0b79b3546bc9",
+    "username": "root",
+    "executable": "/opt/conda/bin/python",
+    "cpu_count": 8,
+    "cpu_count_logical": 8,
+    "cpu_freq": {
+        "current": 2200.02,
+        "min": 0.0,
+        "max": 0.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2200.02,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2200.02,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2200.02,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2200.02,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2200.02,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2200.02,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2200.02,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2200.02,
+            "min": 0.0,
+            "max": 0.0
+        }
+    ],
+    "disk": {
+        "total": 98.30496215820312,
+        "used": 11.121292114257812
+    },
+    "gpu": "Tesla V100-PCIE-32GB",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "Tesla V100-PCIE-32GB",
+            "memory_total": 34089730048
+        }
+    ],
+    "memory": {
+        "total": 88.50595092773438
+    }
+}

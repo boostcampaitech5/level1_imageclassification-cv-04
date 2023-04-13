@@ -12,6 +12,7 @@ import wandb
 from torchsummary import summary
 import time
 import multiprocessing
+import sys
 
 def torch_seed(random_seed):
     torch.manual_seed(random_seed)
@@ -29,7 +30,7 @@ def run(args, args_dict):
     if args.use_wandb:
         print('Initialize WandB ...')
         wandb.init(name = args.wandb_exp_name,
-                   project = args.wandb_project_name,
+                   project = f'exp1_bs{args.batch_size}_ep{args.epochs}_adam_lr{args.learning_rate}_{args.load_model}.jh',
                    entity = args.wandb_entity,
                    config = args_dict)
         
@@ -48,10 +49,6 @@ def run(args, args_dict):
                                     # transforms.Normalize((0.5601, 0.5241, 0.5014),
                                     #                      (0.2331, 0.2430, 0.2456))])
 
-    # transform = albumentations.Compose([transforms.Resize((args.img_width, args.img_height)),
-    #                                     transforms.ToTensor(),
-    #                                     transforms.Normalize((0.485, 0.456, 0.406),
-    #                                                          (0.229, 0.224, 0.225))])
 
     dataset = ClassificationDataset(csv_path = args.csv_path,
                                     transform=transform)
@@ -60,6 +57,9 @@ def run(args, args_dict):
     train_set, val_set = random_split(dataset, [n_train_set, len(dataset)-n_train_set])
     print(f'The number of training images\t>>\t{len(train_set)}')
     print(f'The number of validation images\t>>\t{len(val_set)}')
+    
+    num_samples = len(dataset)
+    print(num_samples)
 
     train_iter = DataLoader(train_set,
                             batch_size=args.batch_size,
@@ -156,8 +156,8 @@ if __name__ == '__main__':
     args_dict = {'seed' : 223,
                  'csv_path' : './input/data/train/train_info.csv',
                  'save_path' : './checkpoint',
-                 'use_wandb' : True,
-                 'wandb_exp_name' : 'exp1_bs64_ep100_adam_lr0.0001_resnet50.jy',
+                 'use_wandb' : False,
+                 'wandb_exp_name' : 'exp1_bs64_ep100_adam_lr0.0001_resnet50.jh',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 18,
