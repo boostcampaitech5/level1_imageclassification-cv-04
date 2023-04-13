@@ -50,7 +50,7 @@ level1_imageclassification-cv-04 created by GitHub Classroom
 |batch_size|---|128|---|
 |learning_rate|---|1e-4|---|
 |epochs|---|1|---|
-|train_val_split|train_set의 비율(val_set의 비율은 자동)|0.8|---|
+|train_val_split|train_set의 비율(val_set의 비율은 자동)|0.8|0 ~ 1|
 |save_mode|state_dict를 저장할 지 model 자체를 저장할 지|both|state_dict, model, both|
 |save_epoch|parameter를 몇 epoch마다 저장할지(Confusion matrix도 적용)|1|---|
 
@@ -61,5 +61,5 @@ level1_imageclassification-cv-04 created by GitHub Classroom
 |checkpoint|저장된 parameter 위치|./checkpoint/epoch(0)_acc(0.366)_loss(3.851)_f1(0.182)_model.pt|---|
 |load_mode|저장된 parameter를 불러오는 방식|model|state_dict, model|
 |num_classes|Class 개수|18|---|
-|batch_size|---|1|---|
+|batch_size|Test이므로 batch_size 1로 고정|1|---|
 |model_summary|모델 summary를 출력할지|False|True, False|
