@@ -187,7 +187,7 @@ if __name__ == '__main__':
                  'save_path' : './checkpoint',
                  'use_wandb' : False,
                  'wandb_exp_name' : 'exp5',
-                 'wandb_project_name' : 'Image_classification_mask',
+                 'wandb_project_name' : 'Transform_Exp',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 18,
                  'model_summary' : True,
