@@ -45,9 +45,10 @@ def w_sampler_test():
     print(dataset.df['ImageID'].to_numpy().shape)
     print(dataset.df['ans'].to_numpy().shape)
 
-    train_set,val_set,train_idx,val_idx = train_valid_split_by_sklearn(dataset,223)
+    train_set,val_set,train_idx,val_idx = train_valid_split_by_sklearn(dataset,0.8,223)
     sampler = weighted_sampler(dataset,train_idx,18)
     sampler2 = weighted_sampler(dataset,val_idx,18)
+    print(len(sampler),len(sampler2))
     loader = DataLoader(train_set,sampler=sampler)
     class_list = torch.zeros(18)
     for x,y in loader:
