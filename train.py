@@ -15,6 +15,7 @@ import multiprocessing
 import sklearn
 import sys
 import wandb_info
+from sklearn.model_selection import train_test_split
 
 def torch_seed(random_seed):
     torch.manual_seed(random_seed)
@@ -55,25 +56,31 @@ def run(args, args_dict):
                                     transform=transform)
 
     n_train_set = int(args.train_val_split*len(dataset))
-    train_set, val_set = random_split(dataset, [n_train_set, len(dataset)-n_train_set])
+    train_set, val_set = train_test_split(dataset.df['ImageID'],
+                                          dataset.df['ans'],
+                                          train_size=0.8,
+                                          stratift=dataset.df['ans'])
     print(f'The number of training images\t>>\t{len(train_set)}')
     print(f'The number of validation images\t>>\t{len(val_set)}')
 
+
+
     print('The data loader is ready ...')
-    train_sampler = weighted_sampler(train_set, args.num_classes)
-    val_sampler = weighted_sampler(val_set, args.num_classes)
+    # train_sampler = weighted_sampler(train_set, args.num_classes)
+    # val_sampler = weighted_sampler(val_set, args.num_classes)
     
     train_iter = DataLoader(train_set,
                             batch_size=args.batch_size,
                             drop_last=True,
-                            num_workers=multiprocessing.cpu_count() // 2,
-                            sampler = train_sampler)
-    
+                            num_workers=multiprocessing.cpu_count() // 2
+                            #, sampler = train_sampler
+                            )   
     val_iter = DataLoader(val_set,
                           batch_size=args.batch_size,
                           drop_last=True,
-                          num_workers=multiprocessing.cpu_count() // 2,
-                          sampler = val_sampler)
+                          num_workers=multiprocessing.cpu_count() // 2
+                          #,sampler = val_sampler
+                          )
 
     print('The model is ready ...')
     model = Classifier(args.num_classes, args.load_model).to(device)
@@ -93,7 +100,7 @@ def run(args, args_dict):
         model.train()
         for train_img, train_target in train_iter:
             train_img, train_target = train_img.to(device), train_target.to(device)
-            
+            print(train_img.shape)
             optimizer.zero_grad()
 
             train_pred = model(train_img)
