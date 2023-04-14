@@ -55,7 +55,7 @@ def run(args, args_dict):
                                     transform=transform)
 
     n_train_set = int(args.train_val_split*len(dataset))
-    train_set, val_set = train_valid_split_by_sklearn(dataset)
+    train_set, val_set = train_valid_split_by_sklearn(dataset,args.seed)
     print(f'The number of training images\t>>\t{len(train_set)}')
     print(f'The number of validation images\t>>\t{len(val_set)}')
 
