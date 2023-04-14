@@ -48,7 +48,8 @@ def run(args, args_dict):
 
     print(f'Transform\t>>\t{args.transform_list}')
     transform, config = get_transform(args)
-    wandb.config.update(config)                                
+    if args.use_wandb:
+        wandb.config.update(config)                                
 
     dataset = ClassificationDataset(csv_path = args.csv_path,
                                     transform=transform)
@@ -169,7 +170,7 @@ if __name__ == '__main__':
                  'wandb_exp_name' : 'exp',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
-                 'num_classes' : 6,
+                 'num_classes' : 18,
                  'model_summary' : True,
                  'batch_size' : 64,
                  'learning_rate' : 1e-4,
@@ -181,8 +182,7 @@ if __name__ == '__main__':
                  'transform_path' : './transform_list.json',
                  'transform_list' : ['resize', 'totensor', 'normalize']}
     wandb_data = wandb_info.get_wandb_info()
-
-    print(args_dict)
+    args_dict.update(wandb_data)
     from collections import namedtuple
     Args = namedtuple('Args', args_dict.keys())
     args = Args(**args_dict)
