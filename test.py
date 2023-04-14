@@ -5,6 +5,7 @@ from utils import *
 from torch.utils.data import DataLoader
 from torchvision import transforms 
 from torchsummary import summary
+import multiprocessing
 
 
 def run(args):
@@ -16,7 +17,9 @@ def run(args):
 
     # Image size 조절과 tensor로만 만들어주면 됨(normalize까지는 해야 할 듯)
     transform = transforms.Compose([transforms.Resize((256, 256)),
-                                    transforms.ToTensor()])
+                                    transforms.ToTensor(),
+                                    transforms.Normalize(mean=(0.485, 0.456, 0.406),
+                                                         std=(0.229, 0.224, 0.225))])
 
     dataset = ClassificationDataset(csv_path = csv_path,
                                     transform=transform,
@@ -25,7 +28,8 @@ def run(args):
     print(f'The number of testing images\t>>\t{len(dataset)}')
 
     test_iter = DataLoader(dataset,
-                           batch_size=args.batch_size)
+                           batch_size=args.batch_size,
+                           num_workers=multiprocessing.cpu_count() // 2)
     
     if args.load_mode == 'state_dict':
         print('Loading checkpoint ...')
@@ -59,7 +63,7 @@ def run(args):
 
 if __name__ == '__main__':
     args_dict = {'eval_path' : './input/data/eval',
-                 'checkpoint' : './checkpoint/epoch(0)_acc(0.366)_loss(3.851)_f1(0.182)_model.pt',
+                 'checkpoint' : './checkpoint/exp2_bs64_ep100_adam_lr0.0001_resnet50/epoch(99)_acc(0.765)_loss(0.939)_f1(0.781)_model.pt',
                  'load_mode' : 'model',
                  'num_classes' : 18,
                  'batch_size' : 1,
