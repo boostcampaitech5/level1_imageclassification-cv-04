@@ -21,11 +21,11 @@ def weighted_sampler(dataset, num_classes):
 
     return sampler
 
-def train_valid_split_by_sklearn(dataset):
+def train_valid_split_by_sklearn(dataset,seed=223):
     train_idx, val_idx = train_test_split(np.arange(len(dataset))
                                       ,train_size=0.8
                                       ,stratify=dataset.df['ans']
-                                      ,random_state=223
+                                      ,random_state=seed
                                       )
     train_set = Subset(dataset,train_idx)
     val_set = Subset(dataset,val_idx)
