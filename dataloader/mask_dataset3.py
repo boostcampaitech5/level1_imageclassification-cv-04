@@ -14,11 +14,8 @@ class MaskDataset3(BaseDataset):
         self.train_dir = self.base_dir/'train'
         self.val_dir = self.base_dir/'eval'
         self.train_data_dir = self.train_dir/'images'
-        self.val_data_dir = self.val_dir/'images'
-        
         self.train_data = self._get_file_list(self.train_data_dir)
-        self.val_data = self._get_file_list(self.val_data_dir)
-        self.val_csv = pd.read_csv(self.val_dir/'info.csv').set_index('ImageID')
+        
         if transform == None:
             self.transform = transforms.Compose([transforms.ToTensor(),
                                     transforms.Resize((232,232)),
@@ -103,4 +100,3 @@ class MaskDataset3(BaseDataset):
     def class_to_tensor(self,num):
         answer = torch.zeros(1).long()
         
-        return answer

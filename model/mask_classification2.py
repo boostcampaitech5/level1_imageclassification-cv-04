@@ -11,9 +11,9 @@ class MaskClassification2(BaseModel):
         super().__init__(loss)
         self.class_num = class_num
         self.resnet = resnet101(pretrained=True)
-        for p in self.resnet.parameters():
-            p.requires_grad = False
-        #self.resnet.layer4 = self.resnet.layer4[:3]
+        # for p in self.resnet.parameters():
+        #     p.requires_grad = False
+        #self.resnet.layer4 = self.resnet.layer4[:1]
         self.resnet.layer4.requires_grad = True
         self.resnet.fc = nn.Sequential(nn.Linear(2048,1024),
                                 nn.BatchNorm1d(1024),
@@ -37,24 +37,17 @@ class MaskClassification2(BaseModel):
     
     
     def custom_loss(self,logit,y):
-        
         ClassLoss = nn.CrossEntropyLoss()
         AGELoss = nn.MSELoss()
-        loss = ClassLoss(logit[:,:2],y[:,0])+\
-            AGELoss(logit[:,2:3],y[:,1:2].float())+\
-            ClassLoss(logit[:,3:],y[:,2])
+        loss = ClassLoss(logit,y)
         
         return loss
     def accuracy(self,logit,label):
-        g,a,m=self.convert_inference(logit)
-        #print(g,a,m)
-        gender = (g == label[:,0])
-        boundary = torch.Tensor([30,60]).cuda()
-        age = (a==torch.bucketize(label[:,1],boundary))
-        mask = (m==label[:,2])
         
-        all_correct = gender&age&mask
-        return sum(all_correct)
+        cor = (logit.argmax(dim=1)==label)
+        
+        
+        return sum(cor)
     def convert_inference(self,logit):
         g=logit[:,:2].argmax(dim=1)
         boundary = torch.Tensor([30,60]).cuda()

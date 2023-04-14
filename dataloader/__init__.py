@@ -1,5 +1,5 @@
 import torch
-from torch.utils.data import dataloader
+from torch.utils.data import dataloader,random_split
 import importlib
 
 
@@ -13,7 +13,12 @@ def convert_dataset_name(name):
     name = "".join(map(str.title,name.split("_")))
     return name
                    
-
+def split_dataset(dataset,split_ratio):
+    set_len = len(dataset)
+    train_len = int(set_len*split_ratio)
+    val_len = set_len-train_len
+    train,val = random_split(dataset,[train_len,val_len])
+    return train,val
 '''
 def get_dataset(config):
     print('Load Dataset start')

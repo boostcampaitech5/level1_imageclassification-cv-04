@@ -11,9 +11,9 @@ class MaskClassification3(BaseModel):
         super().__init__(loss)
         self.class_num = class_num
         self.resnet = resnet101(pretrained=True)
-        for p in self.resnet.parameters():
-            p.requires_grad = False
-        #self.resnet.layer4 = self.resnet.layer4[:3]
+        # for p in self.resnet.parameters():
+        #     p.requires_grad = False
+        self.resnet.layer4 = self.resnet.layer4[:1]
         self.resnet.layer4.requires_grad = True
         self.resnet.fc = nn.Sequential(nn.Linear(2048,1024),
                                 nn.BatchNorm1d(1024),

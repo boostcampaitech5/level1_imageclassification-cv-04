@@ -17,7 +17,7 @@
         "annotation_dir": "/annotation"
     },
     "dataloader":{
-        "batch_size": 64,
+        "batch_size": 32,
         "shuffle": true
     },
     "epochs": 20,
@@ -30,5 +30,5 @@
     "backbone":{
         "name": "Resnet50"
     },
-    "save_name":"test6"
+    "save_name":"resnet_cutting_full_train"
 }

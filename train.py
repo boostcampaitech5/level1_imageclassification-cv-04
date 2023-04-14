@@ -20,9 +20,12 @@ class Trainer():
         dataset_name = L.convert_dataset_name(config['dataset']['name'])
         dataset_init = getattr(loader_mod,dataset_name)
         self.dataset = dataset_init(**config['dataset']['args'])
-        self.dataloader = dataloader.DataLoader(self.dataset,
-                                                      **config['dataloader'])
-        
+        self.trainset,self.valset = L.split_dataset(self.dataset,config['dataset']['split_ratio'])
+        self.trainloader = dataloader.DataLoader(self.trainset,
+                                                      **config['dataloader'])    
+        self.valloader = dataloader.DataLoader(self.valset,
+                                                      **config['dataloader'])    
+       
         self.criterion = self.model.criterion
         self.EPOCH = config['epochs']
         self.batch_size = config['dataloader']['batch_size']
@@ -39,12 +42,12 @@ class Trainer():
                                     self.optim_name,
                                     self.lr,
                                     self.backbone_name)
-        self.valid = False
+
         self.save_name = config['save_name']
         #summary(self.model.to(device),(3,224,224))
         print('Using device: ',device)
-        
-    
+        print("Trainset: ",len(self.trainset))
+        print("Valset: ",len(self.valset))
         
         #test_getitem(self.dataloader)
 
@@ -53,12 +56,11 @@ class Trainer():
         torch.save(self.model.state_dict(),f'./saved_model/{self.save_name}')
         for epoch in range(self.EPOCH):
             self.model.train()
-            self.dataset.set_train_mode()
             self.train_loss.reset()
             self.val_loss.reset()
             train_acc = 0
             train_cnt = 0
-            with tqdm(self.dataloader) as pbar:
+            with tqdm(self.trainloader) as pbar:
                 print(str(epoch)+'train')
                 for idx,data in enumerate(pbar):
                     x,label = data
@@ -74,26 +76,21 @@ class Trainer():
                                          f' cur_loss/avg_loss:{loss.item()/self.batch_size:4.3f}/{self.train_loss.get_loss():4.3f}'+\
                                             f', acc: {train_acc}/{train_cnt}')
                     
-            
-            
-            print(logit.argmax(dim=1))
-            print(label)
             self.model.eval()
-            self.dataset.set_val_mode()
             val_acc = 0
-            val_cnt = 1
-            if self.valid:
-                with tqdm(self.dataloader) as pbar:
-                    print(str(epoch)+'validation')
-                    for idx,data in enumerate(pbar):
-                        x,label = data
-                        logit = self.model(x.to(device))
-                        loss = self.criterion(logit,label.to(device))
-                        self.val_loss.update(loss,self.batch_size)
-                        val_acc += self.model.accuracy(logit,label.to(device))
-                        val_cnt += self.batch_size
-                        pbar.set_description(f'Epoch:{epoch}/{self.EPOCH}, cur_loss/avg_loss:'\
-                            +f'{loss.item()/self.batch_size:4.3f}/{self.val_loss.get_loss():4.3f}'+\
+            val_cnt = 0
+
+            with tqdm(self.valloader) as pbar:
+                print(str(epoch)+'validation')
+                for idx,data in enumerate(pbar):
+                    x,label = data
+                    logit = self.model(x.to(device))
+                    loss = self.criterion(logit,label.to(device))
+                    self.val_loss.update(loss,self.batch_size)
+                    val_acc += self.model.accuracy(logit,label.to(device))
+                    val_cnt += self.batch_size
+                    pbar.set_description(f'Epoch:{epoch}/{self.EPOCH}, cur_loss/avg_loss:'\
+                        +f'{loss.item()/self.batch_size:4.3f}/{self.val_loss.get_loss():4.3f}'+\
                                 f', acc: {val_acc}/{val_cnt}')
                     
             #print(logit,label)
