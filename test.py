@@ -26,9 +26,9 @@ class TestDataset(Dataset):
     def __len__(self):
         return len(self.img_paths)
 def main():
-    model = mask_classification3.MaskClassification3(18)
-    #model = torch.load('./saved_model/full_model.pt')
-    model.load_state_dict(torch.load('./saved_model/test6'))
+    #model = mask_classification3.MaskClassification3(18)
+    model = torch.load('./saved_model/resnet_cutting_full_train')
+    #model.load_state_dict(torch.load('./saved_model/resnet_cutting_full_train'))
     test_dir = '../input2/data/eval'
     submission = pd.read_csv(os.path.join(test_dir, 'info.csv'))
     image_dir = os.path.join(test_dir, 'images')
@@ -65,7 +65,7 @@ def main():
     submission['ans'] = all_predictions
 
     # 제출할 파일을 저장합니다.
-    submission.to_csv(os.path.join(test_dir, 'submission.csv'), index=False)
+    submission.to_csv(os.path.join(test_dir, 'submission2.csv'), index=False)
     print('test inference is done!')
 if __name__ == '__main__':
     main()
