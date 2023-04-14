@@ -15,6 +15,7 @@ import multiprocessing
 import sklearn
 import sys
 import wandb_info
+from tqdm import tqdm
 
 def torch_seed(random_seed):
     torch.manual_seed(random_seed)
@@ -60,9 +61,10 @@ def run(args, args_dict):
     print(f'The number of validation images\t>>\t{len(val_set)}')
 
     print('The data loader is ready ...')
+    print('weighted_sampling start')
     train_sampler = weighted_sampler(train_set, args.num_classes)
     val_sampler = weighted_sampler(val_set, args.num_classes)
-    
+    print('weighted sampling end')
     train_iter = DataLoader(train_set,
                             batch_size=args.batch_size,
                             drop_last=True,
@@ -84,14 +86,14 @@ def run(args, args_dict):
     optimizer = optim.Adam(params=model.parameters(), lr=args.learning_rate)
 
     print('The loss function is ready ...')
-    criterion = nn.CrossEntropyLoss()
-
+    #criterion = nn.CrossEntropyLoss()
+    criterion = loss.CustomLoss
     print("Starting training ...")
     for epoch in range(args.epochs):
         start_time = time.time()
         train_epoch_loss = 0
         model.train()
-        for train_img, train_target in train_iter:
+        for _,train_img, train_target in enumerate(tqdm(train_iter)):
             train_img, train_target = train_img.to(device), train_target.to(device)
             
             optimizer.zero_grad()

@@ -11,7 +11,6 @@ class ClassificationDataset(Dataset):
     def __init__(self, csv_path, transform=None, train=True, eval_path=None):
         self.df = pd.read_csv(csv_path)
         self.transform = transform
-        self.train = train
         self.eval_path = eval_path
 
 
@@ -32,13 +31,14 @@ class ClassificationDataset(Dataset):
 
         return img, torch.LongTensor([label]).squeeze()
 
-
+    def get_df(self):
+        return self.df
 if __name__ == '__main__':
     transform = transforms.Compose([transforms.ToTensor()])
 
     dataset = ClassificationDataset(csv_path = './input/data/eval/info.csv',
                                     transform=transform,
-                                    num_classes = 18)
+                                    num_classes = 3)
     data_iter = DataLoader(dataset,
                            batch_size=3,
                            shuffle = True)

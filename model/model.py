@@ -18,7 +18,7 @@ class Classifier(nn.Module):
         self.fc = nn.Sequential(nn.Linear(1000, 512),
                                 nn.Dropout(0.5),
                                 nn.Linear(512, 128),
-                                nn.Linear(128, num_classes))
+                                nn.Linear(128, 6))
         
 
     def forward(self, x):
