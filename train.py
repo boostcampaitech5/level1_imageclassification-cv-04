@@ -55,15 +55,15 @@ def run(args, args_dict):
                                     transform=transform)
 
     n_train_set = int(args.train_val_split*len(dataset))
-    train_set, val_set = train_valid_split_by_sklearn(dataset,args.seed)
+    train_set, val_set, train_idx, val_idx = train_valid_split_by_sklearn(dataset,args.seed)
     print(f'The number of training images\t>>\t{len(train_set)}')
     print(f'The number of validation images\t>>\t{len(val_set)}')
 
 
 
     print('The data loader is ready ...')
-    # train_sampler = weighted_sampler(train_set, args.num_classes)
-    # val_sampler = weighted_sampler(val_set, args.num_classes)
+    train_sampler = weighted_sampler(dataset, train_idx, args.num_classes)
+    val_sampler = weighted_sampler(dataset,val_idx, args.num_classes)
     
     train_iter = DataLoader(train_set,
                             batch_size=args.batch_size,
@@ -96,7 +96,6 @@ def run(args, args_dict):
         model.train()
         for train_img, train_target in train_iter:
             train_img, train_target = train_img.to(device), train_target.to(device)
-            print(train_img.shape)
             optimizer.zero_grad()
 
             train_pred = model(train_img)
