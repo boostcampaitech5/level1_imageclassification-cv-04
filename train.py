@@ -15,7 +15,6 @@ import multiprocessing
 import sklearn
 import sys
 import wandb_info
-from sklearn.model_selection import train_test_split
 
 def torch_seed(random_seed):
     torch.manual_seed(random_seed)
@@ -56,10 +55,7 @@ def run(args, args_dict):
                                     transform=transform)
 
     n_train_set = int(args.train_val_split*len(dataset))
-    train_set, val_set = train_test_split(dataset.df['ImageID'],
-                                          dataset.df['ans'],
-                                          train_size=0.8,
-                                          stratift=dataset.df['ans'])
+    train_set, val_set = train_valid_split_by_sklearn(dataset)
     print(f'The number of training images\t>>\t{len(train_set)}')
     print(f'The number of validation images\t>>\t{len(val_set)}')
 
