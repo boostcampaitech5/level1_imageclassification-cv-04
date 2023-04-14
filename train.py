@@ -14,6 +14,7 @@ import time
 import multiprocessing
 import sklearn
 import sys
+import wandb_info
 
 def torch_seed(random_seed):
     torch.manual_seed(random_seed)
@@ -30,7 +31,7 @@ def torch_seed(random_seed):
 def run(args, args_dict):
     if args.use_wandb:
         print('Initialize WandB ...')
-        wandb.init(name = f'{args.wandb_exp_name}_bs{args.batch_size}_ep{args.epochs}_adam_lr{args.learning_rate}_{args.load_model}.jy',
+        wandb.init(name = f'{args.wandb_exp_name}{args.exp_num}_bs{args.batch_size}_ep{args.epochs}_adam_lr{args.learning_rate}_{args.load_model}.{args.user_name}',
                    project = args.wandb_project_name,
                    entity = args.wandb_entity,
                    config = args_dict)
@@ -164,22 +165,24 @@ if __name__ == '__main__':
     args_dict = {'seed' : 223,
                  'csv_path' : './input/data/train/train_info.csv',
                  'save_path' : './checkpoint',
-                 'use_wandb' : True,
-                 'wandb_exp_name' : 'test',
+                 'use_wandb' : False,
+                 'wandb_exp_name' : 'exp',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
-                 'num_classes' : 18,
+                 'num_classes' : 6,
                  'model_summary' : True,
                  'batch_size' : 64,
                  'learning_rate' : 1e-4,
                  'epochs' : 3,
                  'train_val_split': 0.8,
                  'save_mode' : 'both',
-                 'save_epoch' : 1,
+                 'save_epoch' : 5,
                  'load_model':'resnet50',
                  'transform_path' : './transform_list.json',
                  'transform_list' : ['resize', 'totensor', 'normalize']}
-    
+    wandb_data = wandb_info.get_wandb_info()
+
+    print(args_dict)
     from collections import namedtuple
     Args = namedtuple('Args', args_dict.keys())
     args = Args(**args_dict)
