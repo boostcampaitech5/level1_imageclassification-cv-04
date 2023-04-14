@@ -41,6 +41,14 @@ level1_imageclassification-cv-04 created by GitHub Classroom
 ├── train.py
 └── test.py
 ```
+## Accelerator 설치방법
+---
+``` bash
+pip install accelerate
+```
+-  (필수) 기본 세팅 -> 
+    https://github.com/TooTouch/Pytorch-Accelerator-Test 
+- Accelerator 를 사용하게 되면 device 를 항상 추척(?)하기 때문에 to(device) 를 따로 안해줘도 됨
 
 ## TODO
 
@@ -71,6 +79,8 @@ level1_imageclassification-cv-04 created by GitHub Classroom
 |load_model|어떤 backbone network를 사용할 것인 지|resnet50|resnet50|
 |transform_path|transform_list.json 파일의 위치치|./transform_list.json|---|
 |transform_list|적용할 transform의 종류와 순서|['resize', 'totensor', 'normalize']|transform_list.json 참고|
+|not_freeze_layer|freeze 할 layer|['layer4']|모델을 전부 fine tuning 하기로 해서 더 이상 사용 안함|
+|weight_decay|optimizer에 들어갈 weight_decay|1e-2|---|
 
 ### Test
 |Argument|Description|Default|Possible value|

@@ -64,7 +64,7 @@ def run(args):
 
 if __name__ == '__main__':
     args_dict = {'eval_path' : './input/data/eval',
-                 'checkpoint' : './checkpoint/exp5_bs64_ep100_adam_lr0.0001_resnet50/epoch(22)_acc(0.986)_loss(0.040)_f1(0.986)_model.pt',
+                 'checkpoint' : './checkpoint/exp2_bs64_ep100_adam_lr0.0001_resnet50/epoch(99)_acc(0.765)_loss(0.939)_f1(0.781)_model.pt',
                  'load_mode' : 'model',
                  'num_classes' : 18,
                  'batch_size' : 1,

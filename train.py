@@ -14,6 +14,8 @@ import time
 import multiprocessing
 import sklearn
 import sys
+from accelerate import Accelerator
+
 
 def torch_seed(random_seed):
     torch.manual_seed(random_seed)
@@ -28,9 +30,20 @@ def torch_seed(random_seed):
     os.environ['PYTHONHASHSEED'] = str(random_seed)
 
 def run(args, args_dict):
+    
+    accelerator = Accelerator(
+        gradient_accumulation_steps = 1,
+        mixed_precision             = 'fp16'
+    )
+    
+    if args.weight_decay > 0:
+        optimizer_name = 'adamw'
+    else:
+        optimizer_name = 'adam'
+
     if args.use_wandb:
         print('Initialize WandB ...')
-        wandb.init(name = f'{args.wandb_exp_name}_bs{args.batch_size}_ep{args.epochs}_adam_lr{args.learning_rate}_{args.load_model}.jh',
+        wandb.init(name = f'{args.wandb_exp_name}_bs{args.batch_size}_ep{args.epochs}_{optimizer_name}_lr{args.learning_rate}_{args.load_model}.jy',
                    project = args.wandb_project_name,
                    entity = args.wandb_entity,
                    config = args_dict)
@@ -38,7 +51,8 @@ def run(args, args_dict):
     print(f'Seed\t>>\t{args.seed}')
     torch_seed(args.seed)
 
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    device = accelerator.device
     print(f'The device is ready\t>>\t{device}')
 
     print('Make save_path')
@@ -47,7 +61,8 @@ def run(args, args_dict):
 
     print(f'Transform\t>>\t{args.transform_list}')
     transform, config = get_transform(args)
-    wandb.config.update(config)                                
+    if args.use_wandb:
+        wandb.config.update(config)                                
 
     dataset = ClassificationDataset(csv_path = args.csv_path,
                                     transform=transform)
@@ -74,15 +89,20 @@ def run(args, args_dict):
                           sampler = val_sampler)
 
     print('The model is ready ...')
-    model = Classifier(args.num_classes, args.load_model).to(device)
+    model = Classifier(args).to(device)
     if args.model_summary:
         print(summary(model, (3, 256, 256)))
 
     print('The optimizer is ready ...')
-    optimizer = optim.Adam(params=model.parameters(), lr=args.learning_rate)
+    optimizer = optim.Adam(params=model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
 
     print('The loss function is ready ...')
     criterion = nn.CrossEntropyLoss()
+    
+    #Accelerator 적용
+    model, optimizer, train_iter, val_iter = accelerator.prepare(
+        model, optimizer, train_iter, val_iter
+    )
 
     print("Starting training ...")
     for epoch in range(args.epochs):
@@ -90,13 +110,14 @@ def run(args, args_dict):
         train_epoch_loss = 0
         model.train()
         for train_img, train_target in train_iter:
-            train_img, train_target = train_img.to(device), train_target.to(device)
+            # train_img, train_target = train_img.to(device), train_target.to(device)
             
             optimizer.zero_grad()
 
             train_pred = model(train_img)
             train_iter_loss = criterion(train_pred, train_target)
-            train_iter_loss.backward()
+            # train_iter_loss.backward()
+            accelerator.backward(train_iter_loss)
             optimizer.step()
 
             train_epoch_loss += train_iter_loss
@@ -114,7 +135,7 @@ def run(args, args_dict):
             model.eval()
 
             for val_img, val_target in val_iter:
-                val_img, val_target = val_img.to(device), val_target.to(device)
+                # val_img, val_target = val_img.to(device), val_target.to(device)
 
                 val_pred = model(val_img)
                 val_iter_loss = criterion(val_pred, val_target).detach()
@@ -164,7 +185,7 @@ if __name__ == '__main__':
     args_dict = {'seed' : 223,
                  'csv_path' : './input/data/train/train_info.csv',
                  'save_path' : './checkpoint',
-                 'use_wandb' : True,
+                 'use_wandb' : False,
                  'wandb_exp_name' : 'exp5',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
@@ -174,7 +195,7 @@ if __name__ == '__main__':
                  'learning_rate' : 1e-4,
                  'epochs' : 100,
                  'train_val_split': 0.8,
-                 'save_mode' : 'both',
+                 'save_mode' : 'model',
                  'save_epoch' : 10,
                  'load_model':'resnet50',
                  'transform_path' : './transform_list.json',
