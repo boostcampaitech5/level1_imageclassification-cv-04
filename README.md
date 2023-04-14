@@ -81,4 +81,3 @@ level1_imageclassification-cv-04 created by GitHub Classroom
 |num_classes|Class 개수|18|---|
 |batch_size|Test이므로 batch_size 1로 고정|1|---|
 |model_summary|모델 summary를 출력할지|False|True, False|
->>>>>>> KJY

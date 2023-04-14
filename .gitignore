@@ -7,3 +7,4 @@ not_found.pickle
 __pycache__
 /checkpoint
 /wandb
+.git
