@@ -191,7 +191,7 @@ def run(args, args_dict):
 
 if __name__ == '__main__':
     args_dict = {'seed' : 223,
-                 'csv_path' : './input/data/train/train_info.csv',
+                 'csv_path' : '../input/data/train/train_info.csv',
                  'save_path' : './checkpoint',
                  'use_wandb' : True,
                  'wandb_exp_name' : 'input_size_resize_512_384',
