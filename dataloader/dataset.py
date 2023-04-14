@@ -36,11 +36,11 @@ class ClassificationDataset(Dataset):
 if __name__ == '__main__':
     transform = transforms.Compose([transforms.ToTensor()])
 
-    dataset = ClassificationDataset(csv_path = './input/data/eval/info.csv',
-                                    transform=transform,
-                                    num_classes = 18)
+    dataset = ClassificationDataset(csv_path = './input/data/train/train_info.csv',
+                                    transform=transform)
     data_iter = DataLoader(dataset,
                            batch_size=3,
                            shuffle = True)
-    
-    print(next(iter(data_iter)))
+    print(dataset.df.columns)
+    print(dataset.df['ImageID'])
+  #  print(next(iter(data_iter)))
