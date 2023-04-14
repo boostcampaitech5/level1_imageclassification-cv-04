@@ -13,25 +13,11 @@ class Classifier(nn.Module):
         if self.load_model:
             # list_models('resnet*', pretrained=True)
             self.backbone = create_model('resnet50', pretrained=True, num_classes=args.num_classes)
-        # self.backbone.fc = nn.Linear(2048, 1000)
-
-        # self.fc = nn.Sequential(nn.Linear(1000, 512),
-        #                         nn.Dropout(0.5),
-        #                         nn.Linear(512, 128),
-        #                         nn.Linear(128, self.num_classes))
-        
 
     def forward(self, x):
         if self.load_model:
             x = self.backbone(x)
         return x
-
-
-def load_backbone(model_name):
-    if model_name == 'resnet50':
-        model = models.resnet50(pretrained=True)
-
-    return model
 
 
 if __name__ == '__main__':
