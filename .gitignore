@@ -9,5 +9,5 @@ __pycache__
 /wandb
 .git
 /saved_model
-./wandb.json
+wandb_info/
 data.tar.gz
