@@ -30,7 +30,7 @@ def torch_seed(random_seed):
 def run(args, args_dict):
     if args.use_wandb:
         print('Initialize WandB ...')
-        wandb.init(name = f'{args.wandb_exp_name}_bs{args.batch_size}_ep{args.epochs}_adam_lr{args.learning_rate}_{args.load_model}.jy',
+        wandb.init(name = f'{args.wandb_exp_name}_bs{args.batch_size}_ep{args.epochs}_adam_lr{args.learning_rate}_{args.load_model}.jh',
                    project = args.wandb_project_name,
                    entity = args.wandb_entity,
                    config = args_dict)
@@ -165,7 +165,7 @@ if __name__ == '__main__':
                  'csv_path' : './input/data/train/train_info.csv',
                  'save_path' : './checkpoint',
                  'use_wandb' : True,
-                 'wandb_exp_name' : 'test',
+                 'wandb_exp_name' : 'exp3',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 18,
@@ -178,7 +178,7 @@ if __name__ == '__main__':
                  'save_epoch' : 1,
                  'load_model':'resnet50',
                  'transform_path' : './transform_list.json',
-                 'transform_list' : ['resize', 'totensor', 'normalize']}
+                 'transform_list' : ['centercrop', 'totensor', 'normalize']}
     
     from collections import namedtuple
     Args = namedtuple('Args', args_dict.keys())
