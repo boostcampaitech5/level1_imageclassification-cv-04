@@ -46,7 +46,13 @@ def w_sampler_test():
     print(dataset.df['ans'].to_numpy().shape)
 
     train_set,val_set,train_idx,val_idx = train_valid_split_by_sklearn(dataset,223)
-    weighted_sampler(dataset,train_idx,18)
+    sampler = weighted_sampler(dataset,train_idx,18)
+    sampler2 = weighted_sampler(dataset,val_idx,18)
+    loader = DataLoader(train_set,sampler=sampler)
+    class_list = torch.zeros(18)
+    for x,y in loader:
+        class_list[y]+=1
+    print(class_list)
 if __name__ == '__main__':
     #split_test()
     w_sampler_test()
