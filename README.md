@@ -41,6 +41,13 @@ level1_imageclassification-cv-04 created by GitHub Classroom
 ├── train.py
 └── test.py
 ```
+## Accelerator 설치방법
+---
+``` bash
+pip install accelerate
+```
+-  (필수) 기본 세팅 -> 
+    https://github.com/TooTouch/Pytorch-Accelerator-Test 
 
 ## TODO
 
