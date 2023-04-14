@@ -28,9 +28,14 @@ def torch_seed(random_seed):
     os.environ['PYTHONHASHSEED'] = str(random_seed)
 
 def run(args, args_dict):
+    if args.weight_decay > 0:
+        optimizer_name = 'adamw'
+    else:
+        optimizer_name = 'adam'
+
     if args.use_wandb:
         print('Initialize WandB ...')
-        wandb.init(name = f'{args.wandb_exp_name}_bs{args.batch_size}_ep{args.epochs}_adam_lr{args.learning_rate}_{args.load_model}.jy',
+        wandb.init(name = f'{args.wandb_exp_name}_bs{args.batch_size}_ep{args.epochs}_{optimizer_name}_lr{args.learning_rate}_{args.load_model}.jy',
                    project = args.wandb_project_name,
                    entity = args.wandb_entity,
                    config = args_dict)
@@ -74,12 +79,12 @@ def run(args, args_dict):
                           sampler = val_sampler)
 
     print('The model is ready ...')
-    model = Classifier(args.num_classes, args.load_model).to(device)
+    model = Classifier(args).to(device)
     if args.model_summary:
         print(summary(model, (3, 256, 256)))
 
     print('The optimizer is ready ...')
-    optimizer = optim.Adam(params=model.parameters(), lr=args.learning_rate)
+    optimizer = optim.Adam(params=model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
 
     print('The loss function is ready ...')
     criterion = nn.CrossEntropyLoss()
@@ -165,20 +170,22 @@ if __name__ == '__main__':
                  'csv_path' : './input/data/train/train_info.csv',
                  'save_path' : './checkpoint',
                  'use_wandb' : True,
-                 'wandb_exp_name' : 'test',
+                 'wandb_exp_name' : 'exp5',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 18,
                  'model_summary' : True,
                  'batch_size' : 64,
                  'learning_rate' : 1e-4,
-                 'epochs' : 3,
+                 'epochs' : 100,
                  'train_val_split': 0.8,
-                 'save_mode' : 'both',
-                 'save_epoch' : 1,
+                 'save_mode' : 'model',
+                 'save_epoch' : 10,
                  'load_model':'resnet50',
                  'transform_path' : './transform_list.json',
-                 'transform_list' : ['resize', 'totensor', 'normalize']}
+                 'transform_list' : ['resize', 'randomhorizontalflip', 'randomrotation', 'totensor', 'normalize'],
+                 'not_freeze_layer' : ['layer4'],
+                 'weight_decay': 1e-2}
     
     from collections import namedtuple
     Args = namedtuple('Args', args_dict.keys())
