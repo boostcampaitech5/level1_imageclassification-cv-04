@@ -41,6 +41,14 @@ level1_imageclassification-cv-04 created by GitHub Classroom
 ├── train.py
 └── test.py
 ```
+## Accelerator 설치방법
+---
+``` bash
+pip install accelerate
+```
+-  (필수) 기본 세팅 -> 
+    https://github.com/TooTouch/Pytorch-Accelerator-Test 
+- Accelerator 를 사용하게 되면 device 를 항상 추척(?)하기 때문에 to(device) 를 따로 안해줘도 됨
 
 ## TODO
 
