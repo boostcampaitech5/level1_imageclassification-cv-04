@@ -49,11 +49,12 @@ def run(args):
     print("Starting testing ...")
     model.eval()
     result = []
-    for test_img, test_target in test_iter:
-        test_img, test_target = test_img.to(device), test_target.to(device)
-        test_pred = model(test_img)
-        _, max_pred = torch.max(test_pred, 1)
-        result.append(max_pred.item())
+    for test_img, _ in test_iter:
+        with torch.no_grad():
+            test_img = test_img.to(device)
+            test_pred = model(test_img)
+            _, max_pred = torch.max(test_pred, 1)
+            result.append(max_pred.item())
 
     print('Save CSV file')
     df = pd.read_csv(csv_path)
