@@ -49,11 +49,12 @@ def run(args):
     print("Starting testing ...")
     model.eval()
     result = []
-    for test_img, test_target in test_iter:
-        test_img, test_target = test_img.to(device), test_target.to(device)
-        test_pred = model(test_img)
-        _, max_pred = torch.max(test_pred, 1)
-        result.append(max_pred.item())
+    for test_img, _ in test_iter:
+        with torch.no_grad():
+            test_img = test_img.to(device)
+            test_pred = model(test_img)
+            _, max_pred = torch.max(test_pred, 1)
+            result.append(max_pred.item())
 
     print('Save CSV file')
     df = pd.read_csv(csv_path)
@@ -63,7 +64,7 @@ def run(args):
 
 if __name__ == '__main__':
     args_dict = {'eval_path' : './input/data/eval',
-                 'checkpoint' : './checkpoint/exp2_bs64_ep100_adam_lr0.0001_resnet50/epoch(99)_acc(0.765)_loss(0.939)_f1(0.781)_model.pt',
+                 'checkpoint' : './checkpoint/exp5_bs64_ep100_adam_lr0.0001_resnet50/epoch(49)_acc(0.975)_loss(0.093)_f1(0.975)_model.pt',
                  'load_mode' : 'model',
                  'num_classes' : 18,
                  'batch_size' : 1,
