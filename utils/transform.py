@@ -12,12 +12,12 @@ def get_transform(args):
                  'mask' : {'mean' : (0.5601, 0.5241, 0.5014),
                            'std' : (0.2331, 0.2430, 0.2456)}}
     
-    transform_dict = {'resize' : transforms.Resize((tf_list['resize']['img_width'], 
-                                                    tf_list['resize']['img_height'])),
+    transform_dict = {'resize' : transforms.Resize((tf_list['resize']['img_height'], 
+                                                    tf_list['resize']['img_width'])),
                       'totensor' : transforms.ToTensor(),
                       'normalize' : transforms.Normalize(mean=statistic[tf_list['normalize']['normalize_statistic']]['mean'],
                                                          std=statistic[tf_list['normalize']['normalize_statistic']]['std']),
-                      'centercrop' : transforms.CenterCrop((tf_list['centercrop']['img_width'], 
+                      'centercrop' : transforms.CenterCrop((tf_list['centercrop']['img_height'], 
                                                             tf_list['centercrop']['img_width'])),
                       'colorjitter' : transforms.ColorJitter(tf_list['colorjitter']['brightness'], 
                                                              tf_list['colorjitter']['contrast'], 

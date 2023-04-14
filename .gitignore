@@ -8,3 +8,6 @@ __pycache__
 /checkpoint
 /wandb
 .git
+/saved_model
+wandb_info/
+data.tar.gz
