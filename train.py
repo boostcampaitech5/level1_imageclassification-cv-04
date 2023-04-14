@@ -14,8 +14,10 @@ import time
 import multiprocessing
 import sklearn
 import sys
+import wandb_info
 from accelerate import Accelerator
 
+from tqdm import tqdm
 
 def torch_seed(random_seed):
     torch.manual_seed(random_seed)
@@ -43,7 +45,7 @@ def run(args, args_dict):
 
     if args.use_wandb:
         print('Initialize WandB ...')
-        wandb.init(name = f'{args.wandb_exp_name}_bs{args.batch_size}_ep{args.epochs}_{optimizer_name}_lr{args.learning_rate}_{args.load_model}.jy',
+        wandb.init(name = f'{args.wandb_exp_name}{args.exp_num}_bs{args.batch_size}_ep{args.epochs}_adam_lr{args.learning_rate}_{args.load_model}.{args.user_name}',
                    project = args.wandb_project_name,
                    entity = args.wandb_entity,
                    config = args_dict)
@@ -56,7 +58,7 @@ def run(args, args_dict):
     print(f'The device is ready\t>>\t{device}')
 
     print('Make save_path')
-    checkpoint_path = os.path.join(args.save_path, f'{args.wandb_exp_name}_bs{args.batch_size}_ep{args.epochs}_adam_lr{args.learning_rate}_{args.load_model}')
+    checkpoint_path = os.path.join(args.save_path, f'{args.wandb_exp_name}_bs{args.batch_size}_ep{args.epochs}_{optimizer_name}_lr{args.learning_rate}_{args.load_model}')
     os.makedirs(checkpoint_path, exist_ok=True)
 
     print(f'Transform\t>>\t{args.transform_list}')
@@ -68,25 +70,28 @@ def run(args, args_dict):
                                     transform=transform)
 
     n_train_set = int(args.train_val_split*len(dataset))
-    train_set, val_set = random_split(dataset, [n_train_set, len(dataset)-n_train_set])
+    train_set, val_set, train_idx, val_idx = train_valid_split_by_sklearn(dataset,args.train_val_split,args.seed)
     print(f'The number of training images\t>>\t{len(train_set)}')
     print(f'The number of validation images\t>>\t{len(val_set)}')
 
+
+
     print('The data loader is ready ...')
-    train_sampler = weighted_sampler(train_set, args.num_classes)
-    val_sampler = weighted_sampler(val_set, args.num_classes)
+    train_sampler = weighted_sampler(dataset, train_idx, args.num_classes)
+    val_sampler = weighted_sampler(dataset,val_idx, args.num_classes)
     
     train_iter = DataLoader(train_set,
                             batch_size=args.batch_size,
                             drop_last=True,
-                            num_workers=multiprocessing.cpu_count() // 2,
-                            sampler = train_sampler)
-    
+                            num_workers=multiprocessing.cpu_count() // 2
+                            ,sampler = train_sampler
+                            )   
     val_iter = DataLoader(val_set,
                           batch_size=args.batch_size,
                           drop_last=True,
-                          num_workers=multiprocessing.cpu_count() // 2,
-                          sampler = val_sampler)
+                          num_workers=multiprocessing.cpu_count() // 2
+                          ,sampler = val_sampler
+                          )
 
     print('The model is ready ...')
     model = Classifier(args).to(device)
@@ -109,9 +114,11 @@ def run(args, args_dict):
         start_time = time.time()
         train_epoch_loss = 0
         model.train()
-        for train_img, train_target in train_iter:
-            # train_img, train_target = train_img.to(device), train_target.to(device)
-            
+        train_iter_loss=0
+        pbar = tqdm(train_iter)
+        for _,(train_img, train_target) in enumerate(pbar):
+            pbar.set_description(f"Train. Epoch:{epoch}/{args.epochs} | Loss:{train_iter_loss:4.3f}")
+            train_img, train_target = train_img.to(device), train_target.to(device)
             optimizer.zero_grad()
 
             train_pred = model(train_img)
@@ -132,11 +139,12 @@ def run(args, args_dict):
         # Validation
         with torch.no_grad():
             val_epoch_loss = 0
+            val_iter_loss = 0
             model.eval()
-
-            for val_img, val_target in val_iter:
+            pbar = tqdm(val_iter)
+            for _,(val_img, val_target) in enumerate(pbar):
                 # val_img, val_target = val_img.to(device), val_target.to(device)
-
+                pbar.set_description(f"Val. Epoch:{epoch}/{args.epochs} | Loss:{val_iter_loss:4.3f}")
                 val_pred = model(val_img)
                 val_iter_loss = criterion(val_pred, val_target).detach()
 
@@ -186,7 +194,7 @@ if __name__ == '__main__':
                  'csv_path' : './input/data/train/train_info.csv',
                  'save_path' : './checkpoint',
                  'use_wandb' : False,
-                 'wandb_exp_name' : 'exp5',
+                 'wandb_exp_name' : 'exp',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 18,
@@ -202,7 +210,8 @@ if __name__ == '__main__':
                  'transform_list' : ['resize', 'randomhorizontalflip', 'randomrotation', 'totensor', 'normalize'],
                  'not_freeze_layer' : ['layer4'],
                  'weight_decay': 1e-2}
-    
+    wandb_data = wandb_info.get_wandb_info()
+    args_dict.update(wandb_data)
     from collections import namedtuple
     Args = namedtuple('Args', args_dict.keys())
     args = Args(**args_dict)
