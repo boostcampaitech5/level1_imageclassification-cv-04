@@ -175,7 +175,7 @@ if __name__ == '__main__':
                  'epochs' : 100,
                  'train_val_split': 0.8,
                  'save_mode' : 'both',
-                 'save_epoch' : 1,
+                 'save_epoch' : 10,
                  'load_model':'resnet50',
                  'transform_path' : './transform_list.json',
                  'transform_list' : ['centercrop', 'totensor', 'normalize']}
