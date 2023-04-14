@@ -14,6 +14,8 @@ import time
 import multiprocessing
 import sklearn
 import sys
+from accelerate import Accelerator
+
 
 def torch_seed(random_seed):
     torch.manual_seed(random_seed)
@@ -28,6 +30,12 @@ def torch_seed(random_seed):
     os.environ['PYTHONHASHSEED'] = str(random_seed)
 
 def run(args, args_dict):
+    
+    accelerator = Accelerator(
+        gradient_accumulation_steps = 1,
+        mixed_precision             = 'fp16'
+    )
+    
     if args.weight_decay > 0:
         optimizer_name = 'adamw'
     else:
@@ -43,7 +51,8 @@ def run(args, args_dict):
     print(f'Seed\t>>\t{args.seed}')
     torch_seed(args.seed)
 
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    device = accelerator.device
     print(f'The device is ready\t>>\t{device}')
 
     print('Make save_path')
@@ -52,7 +61,8 @@ def run(args, args_dict):
 
     print(f'Transform\t>>\t{args.transform_list}')
     transform, config = get_transform(args)
-    wandb.config.update(config)                                
+    if args.use_wandb:
+        wandb.config.update(config)                                
 
     dataset = ClassificationDataset(csv_path = args.csv_path,
                                     transform=transform)
@@ -88,6 +98,11 @@ def run(args, args_dict):
 
     print('The loss function is ready ...')
     criterion = nn.CrossEntropyLoss()
+    
+    #Accelerator 적용
+    model, optimizer, train_iter, val_iter = accelerator.prepare(
+        model, optimizer, train_iter, val_iter
+    )
 
     print("Starting training ...")
     for epoch in range(args.epochs):
@@ -95,13 +110,14 @@ def run(args, args_dict):
         train_epoch_loss = 0
         model.train()
         for train_img, train_target in train_iter:
-            train_img, train_target = train_img.to(device), train_target.to(device)
+            # train_img, train_target = train_img.to(device), train_target.to(device)
             
             optimizer.zero_grad()
 
             train_pred = model(train_img)
             train_iter_loss = criterion(train_pred, train_target)
-            train_iter_loss.backward()
+            # train_iter_loss.backward()
+            accelerator.backward(train_iter_loss)
             optimizer.step()
 
             train_epoch_loss += train_iter_loss
@@ -119,7 +135,7 @@ def run(args, args_dict):
             model.eval()
 
             for val_img, val_target in val_iter:
-                val_img, val_target = val_img.to(device), val_target.to(device)
+                # val_img, val_target = val_img.to(device), val_target.to(device)
 
                 val_pred = model(val_img)
                 val_iter_loss = criterion(val_pred, val_target).detach()
@@ -169,7 +185,7 @@ if __name__ == '__main__':
     args_dict = {'seed' : 223,
                  'csv_path' : './input/data/train/train_info.csv',
                  'save_path' : './checkpoint',
-                 'use_wandb' : True,
+                 'use_wandb' : False,
                  'wandb_exp_name' : 'exp5',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
