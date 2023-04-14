@@ -30,9 +30,9 @@ def weighted_sampler(dataset, data_idx, num_classes):
 
     return sampler
 
-def train_valid_split_by_sklearn(dataset,seed=223):
+def train_valid_split_by_sklearn(dataset, train_ratio=0.8, seed=223):
     train_idx, val_idx = train_test_split(np.arange(len(dataset))
-                                      ,train_size=0.8
+                                      ,train_size=train_ratio
                                       ,stratify=dataset.df['ans']
                                       ,random_state=seed
                                       )
