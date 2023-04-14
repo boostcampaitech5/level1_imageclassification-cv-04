@@ -14,15 +14,15 @@ level1_imageclassification-cv-04 created by GitHub Classroom
 ## Root
 ```bash
 ├── input
-│   ├── data
-│   ├── eval
-│   │   ├── images
-│   │   ├── info.csv
-│   │   └── eval_info.csv
-│   └── train
-│       ├── images
-│       ├── train.csv
-│       └── train_info.csv
+│   └── data
+│       ├── eval
+│       │   ├── images
+│       │   ├── info.csv
+│       │   └── eval_info.csv
+│       └── train
+│           ├── images
+│           ├── train.csv
+│           └── train_info.csv
 └── code
     ├── dataloader
     │   ├── __init__.py
