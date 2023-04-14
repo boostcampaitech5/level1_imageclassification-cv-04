@@ -2,6 +2,8 @@ import torch
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+
 
 def plot_confusion_matrix(cm, num_classes, normalize=False, save_path=None):
     if normalize:
@@ -27,11 +29,20 @@ def plot_confusion_matrix(cm, num_classes, normalize=False, save_path=None):
     return ax
 
 
+def cnt_per_classes(df_path):
+    info_df = pd.read_csv('./input/data/train/train_info.csv')
+    class_counts = info_df["ans"].value_counts()
+    class_counts.sort_index(inplace= True)
+
+    return class_counts.tolist()
+
 if __name__ == '__main__':
-    num_classes = 3
-    cm = [[5, 1, 1],
-          [0, 5, 2],
-          [1, 0, 5]]
-    cm = torch.FloatTensor(cm)
-    fig = plot_confusion_matrix(cm, 3, normalize=True)
-    plt.savefig('./test_imgs/plot_cm_normalize.png')
+    
+    print(cnt_per_classes("./input/data/train/train_info.csv"))
+    # num_classes = 3
+    # cm = [[5, 1, 1],
+    #       [0, 5, 2],
+    #       [1, 0, 5]]
+    # cm = torch.FloatTensor(cm)
+    # fig = plot_confusion_matrix(cm, 3, normalize=True)
+    # plt.savefig('./test_imgs/plot_cm_normalize.png')

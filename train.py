@@ -2,7 +2,7 @@ from dataloader import *
 from model import *
 from metric import *
 from utils import *
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, random_split,  WeightedRandomSampler
 from torchvision import transforms 
 from torch import optim
 import numpy as np
@@ -58,19 +58,30 @@ def run(args, args_dict):
     print(f'The number of training images\t>>\t{len(train_set)}')
     print(f'The number of validation images\t>>\t{len(val_set)}')
     
-    num_samples = len(dataset)
-    print(num_samples)
-
+    
+    class_count = cnt_per_classes(args.csv_path)
+    weights = []
+    for i in class_count:
+        weights.append(round(i / sum(class_count),3))
+        
+    print(sum(weights))
+    train_sampler = WeightedRandomSampler(class_count, len(train_set))
+    val_sampler = WeightedRandomSampler(class_count, len(val_set))
+    # class_count >> 
+    sys.exit()
+    
     train_iter = DataLoader(train_set,
                             batch_size=args.batch_size,
-                            shuffle = True,
                             drop_last=True,
-                            num_workers=multiprocessing.cpu_count() // 2,)
+                            num_workers=multiprocessing.cpu_count() // 2,
+                            sampler=train_sampler)
+    
     val_iter = DataLoader(val_set,
                           batch_size=args.batch_size,
                           shuffle = True,
                           drop_last=True,
-                          num_workers=multiprocessing.cpu_count() // 2,)
+                          num_workers=multiprocessing.cpu_count() // 2,
+                          sampler=val_sampler)
     
 
     print('The model is ready ...')
