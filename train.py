@@ -17,6 +17,7 @@ import sys
 import wandb_info
 from accelerate import Accelerator
 
+from tqdm import tqdm
 
 def torch_seed(random_seed):
     torch.manual_seed(random_seed)
@@ -113,7 +114,10 @@ def run(args, args_dict):
         start_time = time.time()
         train_epoch_loss = 0
         model.train()
-        for train_img, train_target in train_iter:
+        train_iter_loss=0
+        pbar = tqdm(train_iter)
+        for _,(train_img, train_target) in enumerate(pbar):
+            pbar.set_description(f"Train. Epoch:{epoch}/{args.epochs} | Loss:{train_iter_loss:4.3f}")
             train_img, train_target = train_img.to(device), train_target.to(device)
             optimizer.zero_grad()
 
@@ -135,11 +139,12 @@ def run(args, args_dict):
         # Validation
         with torch.no_grad():
             val_epoch_loss = 0
+            val_iter_loss = 0
             model.eval()
-
-            for val_img, val_target in val_iter:
+            pbar = tqdm(val_iter)
+            for _,(val_img, val_target) in enumerate(pbar):
                 # val_img, val_target = val_img.to(device), val_target.to(device)
-
+                pbar.set_description(f"Val. Epoch:{epoch}/{args.epochs} | Loss:{val_iter_loss:4.3f}")
                 val_pred = model(val_img)
                 val_iter_loss = criterion(val_pred, val_target).detach()
 
@@ -188,7 +193,7 @@ if __name__ == '__main__':
     args_dict = {'seed' : 223,
                  'csv_path' : './input/data/train/train_info.csv',
                  'save_path' : './checkpoint',
-                 'use_wandb' : True,
+                 'use_wandb' : False,
                  'wandb_exp_name' : 'exp',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
