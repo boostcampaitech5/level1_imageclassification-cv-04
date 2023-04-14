@@ -45,7 +45,7 @@ def run(args, args_dict):
 
     if args.use_wandb:
         print('Initialize WandB ...')
-        wandb.init(name = f'{args.wandb_exp_name}{args.exp_num}_bs{args.batch_size}_ep{args.epochs}_adam_lr{args.learning_rate}_{args.load_model}.{args.user_name}',
+        wandb.init(name = f'{args.wandb_exp_name}_{args.exp_num}_bs{args.batch_size}_ep{args.epochs}_{optimizer_name}_lr{args.learning_rate}_{args.load_model}.{args.user_name}',
                    project = args.wandb_project_name,
                    entity = args.wandb_entity,
                    config = args_dict)
@@ -167,9 +167,9 @@ def run(args, args_dict):
                     'model_state_dict': model.state_dict(),
                     'optimizer_state_dict': optimizer.state_dict(),
                     }, os.path.join(checkpoint_path, f'epoch({epoch})_acc({val_acc:.3f})_loss({val_epoch_loss:.3f})_f1({val_f1:.3f})_state_dict.pt'))
-            if args.save_mode == 'model' or args.save_mode == 'both':
-                # 모델 자체를 저장
-                torch.save(model, os.path.join(checkpoint_path, f'epoch({epoch})_acc({val_acc:.3f})_loss({val_epoch_loss:.3f})_f1({val_f1:.3f})_model.pt'))
+            # if args.save_mode == 'model' or args.save_mode == 'both':
+            #     # 모델 자체를 저장
+            #     torch.save(model, os.path.join(checkpoint_path, f'epoch({epoch})_acc({val_acc:.3f})_loss({val_epoch_loss:.3f})_f1({val_f1:.3f})_model.pt'))
 
         if args.use_wandb:
             wandb.log({'Train Acc': train_acc,
@@ -193,9 +193,9 @@ if __name__ == '__main__':
     args_dict = {'seed' : 223,
                  'csv_path' : './input/data/train/train_info.csv',
                  'save_path' : './checkpoint',
-                 'use_wandb' : False,
-                 'wandb_exp_name' : 'exp',
-                 'wandb_project_name' : 'Image_classification_mask',
+                 'use_wandb' : True,
+                 'wandb_exp_name' : 'input_size_resize_512_384',
+                 'wandb_project_name' : 'Transform_Exp',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 18,
                  'model_summary' : True,
@@ -203,12 +203,12 @@ if __name__ == '__main__':
                  'learning_rate' : 1e-4,
                  'epochs' : 100,
                  'train_val_split': 0.8,
-                 'save_mode' : 'model',
+                 'save_mode' : 'state_dict',
                  'save_epoch' : 10,
                  'load_model':'resnet50',
                  'transform_path' : './transform_list.json',
-                 'transform_list' : ['resize', 'randomhorizontalflip', 'randomrotation', 'totensor', 'normalize'],
-                 'not_freeze_layer' : ['layer4'],
+                 'transform_list' : ['resize', 'totensor', 'normalize'],
+                 'not_freeze_layer' : [],
                  'weight_decay': 1e-2}
     wandb_data = wandb_info.get_wandb_info()
     args_dict.update(wandb_data)
