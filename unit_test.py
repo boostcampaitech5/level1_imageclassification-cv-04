@@ -7,6 +7,7 @@ import numpy as np
 import torch
 from utils.sampler import *
 
+#sklearn train_test_split동작확인
 def split_test():
     transform = transforms.Compose([transforms.ToTensor()])
 
@@ -33,6 +34,7 @@ def split_test():
     dataloader = DataLoader(train_set)
     #print(next(iter(dataloader)))
 
+#weighted_sampler 동작 확인
 def w_sampler_test():
     transform = transforms.Compose([transforms.ToTensor()])
 

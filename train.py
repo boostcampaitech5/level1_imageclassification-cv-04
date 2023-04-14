@@ -69,7 +69,7 @@ def run(args, args_dict):
                                     transform=transform)
 
     n_train_set = int(args.train_val_split*len(dataset))
-    train_set, val_set, train_idx, val_idx = train_valid_split_by_sklearn(dataset,args.seed)
+    train_set, val_set, train_idx, val_idx = train_valid_split_by_sklearn(dataset,args.train_val_ratio,args.seed)
     print(f'The number of training images\t>>\t{len(train_set)}')
     print(f'The number of validation images\t>>\t{len(val_set)}')
 
@@ -83,13 +83,13 @@ def run(args, args_dict):
                             batch_size=args.batch_size,
                             drop_last=True,
                             num_workers=multiprocessing.cpu_count() // 2
-                            #, sampler = train_sampler
+                            ,sampler = train_sampler
                             )   
     val_iter = DataLoader(val_set,
                           batch_size=args.batch_size,
                           drop_last=True,
                           num_workers=multiprocessing.cpu_count() // 2
-                          #,sampler = val_sampler
+                          ,sampler = val_sampler
                           )
 
     print('The model is ready ...')
@@ -188,7 +188,7 @@ if __name__ == '__main__':
     args_dict = {'seed' : 223,
                  'csv_path' : './input/data/train/train_info.csv',
                  'save_path' : './checkpoint',
-                 'use_wandb' : False,
+                 'use_wandb' : True,
                  'wandb_exp_name' : 'exp',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
