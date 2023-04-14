@@ -63,7 +63,7 @@ def run(args):
 
 
 if __name__ == '__main__':
-    args_dict = {'eval_path' : './input/data/eval',
+    args_dict = {'eval_path' : '../input/data/eval',
                  'checkpoint' : './checkpoint/exp5_bs64_ep100_adam_lr0.0001_resnet50/epoch(49)_acc(0.975)_loss(0.093)_f1(0.975)_model.pt',
                  'load_mode' : 'model',
                  'num_classes' : 18,
