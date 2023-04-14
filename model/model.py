@@ -11,8 +11,8 @@ class Classifier(nn.Module):
         self.load_model = load_model
         if load_model:
             self.backbone = load_backbone(load_model)
-            for name, param in self.backbone.named_parameters():
-                param.requires_grad = False
+            # for name, param in self.backbone.named_parameters():
+            #     param.requires_grad = False
         self.backbone.fc = nn.Linear(2048, 1000)
 
         self.fc = nn.Sequential(nn.Linear(1000, 512),
