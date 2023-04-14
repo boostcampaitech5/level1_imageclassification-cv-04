@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torchvision import models
 from torchsummary import summary
+from timm import create_model, list_models
 
 class Classifier(nn.Module):
     def __init__(self, args):
@@ -10,23 +11,19 @@ class Classifier(nn.Module):
         self.num_classes = args.num_classes
         self.load_model = args.load_model
         if self.load_model:
-            self.backbone = load_backbone(self.load_model)
-            for name, param in self.backbone.named_parameters():
-                for layer_name in args.not_freeze_layer:
-                    if name.find(layer_name) == -1:
-                        param.requires_grad = False
-        self.backbone.fc = nn.Linear(2048, 1000)
+            # list_models('resnet*', pretrained=True)
+            self.backbone = create_model('resnet50', pretrained=True, num_classes=args.num_classes)
+        # self.backbone.fc = nn.Linear(2048, 1000)
 
-        self.fc = nn.Sequential(nn.Linear(1000, 512),
-                                nn.Dropout(0.5),
-                                nn.Linear(512, 128),
-                                nn.Linear(128, self.num_classes))
+        # self.fc = nn.Sequential(nn.Linear(1000, 512),
+        #                         nn.Dropout(0.5),
+        #                         nn.Linear(512, 128),
+        #                         nn.Linear(128, self.num_classes))
         
 
     def forward(self, x):
         if self.load_model:
             x = self.backbone(x)
-        x = self.fc(x)
         return x
 
 
@@ -70,4 +67,3 @@ if __name__ == '__main__':
     # img = torch.randn(3, 3, 224, 224)
     # output = model(img)
     # print(output.shape)
-
