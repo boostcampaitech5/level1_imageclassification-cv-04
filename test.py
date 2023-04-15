@@ -28,7 +28,7 @@ NUM_CLASSES = 18
 DEVICE_IDS = [0]
 TRAIN_IMG_DIR = "/opt/ml/input/data/eval/"
 OUT_PATH = "./level1_imageclassification-cv-04/data_out/model_save/"
-MODEL = "Resnet18"
+MODEL = "resnet18"
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Device >> {device}")
@@ -39,7 +39,7 @@ transform_list = [transforms.CenterCrop(IMAGE_DIM),
 
 model = fineTune(models.resnet18(pretrained=True).to(device), MODEL, NUM_CLASSES).to(device)
 
-model.load_state_dict(torch.load(OUT_PATH + "resnet18_80.pt"))
+model.load_state_dict(torch.load(OUT_PATH + "resnet18_60.pt"))
 model.eval()
 
 test_dataset = IC_Test_Dataset(TRAIN_IMG_DIR,transform_list)
@@ -66,4 +66,4 @@ for x,y in test_dataloader:
         predict = torch.argmax(out[i])
         df.loc[df["ImageID"] == y[i],"ans"] = predict.item()
 
-df.to_csv("./level1_imageclassification-cv-04/data_out/test_1.csv",index = False)
+df.to_csv("./level1_imageclassification-cv-04/data_out/test_2.csv",index = False)
