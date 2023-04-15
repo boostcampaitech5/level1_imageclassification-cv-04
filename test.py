@@ -39,13 +39,13 @@ def run(args):
                            num_workers=multiprocessing.cpu_count() // 2)
     
     print('The model is ready ...')
-    # model_mask = Classifier(args.num_mask_classes, load_model='resnet18').to(device_mask)
-    # model_gender = Classifier(args.num_gender_classes, load_model='resnet18').to(device_gender)
-    # model_age = Classifier(args.num_age_classes, load_model='resnet18').to(device_age)
-    model_mask = Classifier(args.num_mask_classes, load_model='resnet18').to(device)
-    model_gender = Classifier(args.num_gender_classes, load_model='resnet18').to(device)
-    model_age = Classifier(args.num_age_classes, load_model='resnet18').to(device)
-    
+    # model_mask = Classifier2(args.load_model, args.num_mask_classes).to(device_mask)
+    # model_gender = Classifier2(args.load_model, args.num_gender_classes).to(device_gender)
+    # model_age = Classifier2(args.load_model, args.num_age_classes).to(device_age)
+    model_mask = Classifier2(args.load_model, args.num_mask_classes).to(device)
+    model_gender = Classifier2(args.load_model, args.num_gender_classes).to(device)
+    model_age = Classifier2(args.load_model, args.num_age_classes).to(device)
+
     if args.model_summary:
         print('model_mask')
         print(summary(model_mask, (3, 256, 256)))
@@ -88,6 +88,7 @@ if __name__ == '__main__':
     args_dict = {'eval_path' : '../input/data/eval',
                  'checkpoint' : './checkpoint/separate_learning_bs64_ep100_adamw_lr0.0001_resnet18/epoch(89)_acc(0.963)_loss(0.186)_f1(0.964)_state_dict.pt',
                  'load_mode' : 'state_dict', #'model'
+                 'load_model' : 'resnet18',
                  'num_classes' : 18,
                  'num_mask_classes' : 3,
                  'num_gender_classes' : 2,
