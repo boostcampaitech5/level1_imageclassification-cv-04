@@ -33,7 +33,15 @@ def torch_seed(random_seed):
 
 def run(args, args_dict):
     
-    accelerator = Accelerator(
+    accelerator_mask = Accelerator(
+        gradient_accumulation_steps = 1,
+        mixed_precision             = 'fp16'
+    )
+    accelerator_gender = Accelerator(
+        gradient_accumulation_steps = 1,
+        mixed_precision             = 'fp16'
+    )
+    accelerator_age = Accelerator(
         gradient_accumulation_steps = 1,
         mixed_precision             = 'fp16'
     )
@@ -54,8 +62,12 @@ def run(args, args_dict):
     torch_seed(args.seed)
 
     # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    device = accelerator.device
-    print(f'The device is ready\t>>\t{device}')
+    device_mask = accelerator_mask.device
+    device_gender = accelerator_gender.device
+    device_age = accelerator_age.device
+    print(f'The device_mask is ready\t>>\t{device_mask}')
+    print(f'The device_gender is ready\t>>\t{device_gender}')
+    print(f'The device_age is ready\t>>\t{device_age}')
 
     print('Make save_path')
     checkpoint_path = os.path.join(args.save_path, f'{args.wandb_exp_name}_bs{args.batch_size}_ep{args.epochs}_{optimizer_name}_lr{args.learning_rate}_{args.load_model}')
@@ -73,8 +85,6 @@ def run(args, args_dict):
     train_set, val_set, train_idx, val_idx = train_valid_split_by_sklearn(dataset,args.train_val_split,args.seed)
     print(f'The number of training images\t>>\t{len(train_set)}')
     print(f'The number of validation images\t>>\t{len(val_set)}')
-
-
 
     print('The data loader is ready ...')
     train_sampler = weighted_sampler(dataset, train_idx, args.num_classes)
@@ -94,89 +104,187 @@ def run(args, args_dict):
                           )
 
     print('The model is ready ...')
-    model = Classifier(args).to(device)
+    args.num_classes = 3
+    model_mask = Classifier(args).to(device_mask)
+    args.num_classes = 2
+    model_gender = Classifier(args).to(device_gender)
+    args.num_classes = 3
+    model_age = Classifier(args).to(device_age)
+    args.num_classes = 18
+
     if args.model_summary:
-        print(summary(model, (3, 256, 256)))
+        print('model_mask\n', summary(model_mask, (3, 256, 256)))
+        print('model_gender\n', summary(model_gender, (3, 256, 256)))
+        print('model_age\n', summary(model_age, (3, 256, 256)))
 
     print('The optimizer is ready ...')
-    optimizer = optim.Adam(params=model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
+    optimizer_mask = optim.Adam(params=model_mask.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
+    optimizer_gender = optim.Adam(params=model_gender.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
+    optimizer_age = optim.Adam(params=model_age.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
 
     print('The loss function is ready ...')
     criterion = nn.CrossEntropyLoss()
     
     #Accelerator 적용
-    model, optimizer, train_iter, val_iter = accelerator.prepare(
-        model, optimizer, train_iter, val_iter
-    )
+    model_mask, optimizer_mask, train_iter, val_iter = accelerator_mask.prepare(model, optimizer_mask, train_iter, val_iter)
+    model_gender, optimizer_gender, train_iter, val_iter = accelerator_gender.prepare(model, optimizer_gender, train_iter, val_iter)
+    model_age, optimizer_age, train_iter, val_iter = accelerator_age.prepare(model, optimizer_age, train_iter, val_iter)
 
     print("Starting training ...")
     for epoch in range(args.epochs):
         start_time = time.time()
-        train_epoch_loss = 0
-        model.train()
-        train_iter_loss=0
+
+        train_mask_epoch_loss = 0
+        train_gender_epoch_loss = 0
+        train_age_epoch_loss = 0
+
+        train_sum_epoch_loss = 0
+
+        model_mask.train()
+        model_gender.train()
+        model_age.train()
+
+        train_mask_iter_loss=0
+        train_gender_iter_loss=0
+        train_age_iter_loss=0
+
+        train_sum_iter_loss=0
+
+        train_cm_data = []
+
         pbar = tqdm(train_iter)
         for _,(train_img, train_target) in enumerate(pbar):
-            pbar.set_description(f"Train. Epoch:{epoch}/{args.epochs} | Loss:{train_iter_loss:4.3f}")
-            train_img, train_target = train_img.to(device), train_target.to(device)
-            optimizer.zero_grad()
+            pbar.set_description(f"Train. Epoch:{epoch}/{args.epochs} | Loss:{train_sum_iter_loss:4.3f}")
+            
+            train_mask_target = train_target // 6           # 'Wear': 0, 'Incorrect': 1, 'Not Wear': 2
+            train_gender_target = (train_target // 3) % 2   # 'Male': 0, 'Female': 1
+            train_age_target = train_target % 3             # '< 30': 0, '>= 30 and < 60': 1, '>= 60': 2
 
-            train_pred = model(train_img)
-            train_iter_loss = criterion(train_pred, train_target)
+            train_img, train_mask_target = train_img.to(device_mask), train_mask_target.to(device_mask)
+            train_img, train_gender_target = train_img.to(device_gender), train_gender_target.to(device_gender)
+            train_img, train_age_target = train_img.to(device_age), train_age_target.to(device_age)
+
+            optimizer_mask.zero_grad()
+            optimizer_gender.zero_grad()
+            optimizer_age.zero_grad()
+
+            train_mask_pred = model_mask(train_img)
+            train_gender_pred = model_gender(train_img)
+            train_age_pred = model_age(train_img)
+
+            train_pred = torch.max(train_mask_pred, 1)[1] * 6.0 + torch.max(train_gender_pred, 1)[1] * 3.0 + torch.max(train_age_pred, 1)[1]
+            train_cm_data.append([train_pred, train_target])
+
+            train_mask_iter_loss = criterion(train_mask_pred, train_mask_target)
+            train_gender_iter_loss = criterion(train_gender_pred, train_gender_target)
+            train_age_iter_loss = criterion(train_age_pred, train_age_target)
+            
+            train_sum_iter_loss = train_age_iter_loss + train_gender_iter_loss + train_age_iter_loss # not for calculation but just for report
+
             # train_iter_loss.backward()
-            accelerator.backward(train_iter_loss)
-            optimizer.step()
+            accelerator_mask.backward(train_mask_iter_loss)
+            accelerator_gender.backward(train_gender_iter_loss)
+            accelerator_age.backward(train_age_iter_loss)
 
-            train_epoch_loss += train_iter_loss
+            optimizer_mask.step()
+            optimizer_gender.step()
+            optimizer_age.step()
 
-        train_epoch_loss = train_epoch_loss / len(train_iter)
+            train_mask_epoch_loss += train_mask_iter_loss
+            train_gender_epoch_loss += train_gender_iter_loss
+            train_age_epoch_loss += train_age_iter_loss
 
-        train_cm = confusion_matrix(model, train_iter, device, args.num_classes)
+            train_sum_epoch_loss += train_sum_iter_loss # not for calculation but just for report
+
+        train_sum_epoch_loss = train_sum_epoch_loss / len(train_iter)
+
+        # train_cm = confusion_matrix(model, train_iter, device, args.num_classes)
+        train_cm = confusion_matrix2(train_cm_data)
 
         train_acc = accuracy(train_cm, args.num_classes)
         train_f1 = f1_score(train_cm, args.num_classes)
 
         # Validation
         with torch.no_grad():
-            val_epoch_loss = 0
-            val_iter_loss = 0
-            model.eval()
+            val_mask_epoch_loss = 0
+            val_gender_epoch_loss = 0
+            val_age_epoch_loss = 0
+
+            val_sum_epoch_loss = 0
+
+            val_mask_iter_loss = 0
+            val_gender_iter_loss = 0
+            val_age_iter_loss = 0
+            
+            val_sum_iter_loss = 0
+
+            model_mask.eval()
+            model_gender.eval()
+            model_age.eval()
+
+            val_cm_data = []
+            
             pbar = tqdm(val_iter)
             for _,(val_img, val_target) in enumerate(pbar):
                 # val_img, val_target = val_img.to(device), val_target.to(device)
                 pbar.set_description(f"Val. Epoch:{epoch}/{args.epochs} | Loss:{val_iter_loss:4.3f}")
-                val_pred = model(val_img)
-                val_iter_loss = criterion(val_pred, val_target).detach()
 
-                val_epoch_loss += val_iter_loss
-        val_epoch_loss = val_epoch_loss / len(val_iter)
+                val_mask_target = val_target // 6           # 'Wear': 0, 'Incorrect': 1, 'Not Wear': 2
+                val_gender_target = (val_target // 3) % 2   # 'Male': 0, 'Female': 1
+                val_age_target = val_target % 3             # '< 30': 0, '>= 30 and < 60': 1, '>= 60': 2
 
-        val_cm = confusion_matrix(model, val_iter, device, args.num_classes)
+                val_mask_pred = model_mask(val_img)
+                val_gender_pred = model_gender(val_img)
+                val_age_pred = model_age(val_img)
+
+                val_pred = torch.max(val_mask_pred, 1)[1] * 6.0 + torch.max(val_gender_pred, 1)[1] * 3.0 + torch.max(val_age_pred, 1)[1]
+                val_cm_data.append([val_pred, val_target])
+
+                val_mask_iter_loss = criterion(val_mask_pred, val_mask_target).detach()
+                val_gender_iter_loss = criterion(val_gender_pred, val_gender_target).detach()
+                val_age_iter_loss = criterion(val_age_pred, val_age_target).detach()
+
+                val_sum_iter_loss = val_age_iter_loss + val_gender_iter_loss + val_age_iter_loss # not for calculation but just for report
+
+                val_mask_epoch_loss += val_mask_iter_loss
+                val_gender_epoch_loss += val_gender_iter_loss
+                val_age_epoch_loss += val_age_iter_loss
+
+                val_sum_epoch_loss += val_sum_iter_loss # not for calculation but just for report
+                
+        val_sum_epoch_loss = val_sum_epoch_loss / len(val_iter)
+
+        #val_cm = confusion_matrix(model, val_iter, device, args.num_classes)
+        val_cm = confusion_matrix2(val_cm_data)
 
         val_acc = accuracy(val_cm, args.num_classes)
         val_f1 = f1_score(val_cm, args.num_classes)
 
         print('time >> {:.4f}\tepoch >> {:04d}\ttrain_acc >> {:.4f}\ttrain_loss >> {:.4f}\ttrain_f1 >> {:.4f}\tval_acc >> {:.4f}\tval_loss >> {:.4f}\tval_f1 >> {:.4f}'
-              .format(time.time()-start_time, epoch, train_acc, train_epoch_loss, train_f1, val_acc, val_epoch_loss, val_f1))
+              .format(time.time()-start_time, epoch, train_acc, train_sum_epoch_loss, train_f1, val_acc, val_sum_epoch_loss, val_f1))
         
         if (epoch+1) % args.save_epoch == 0:
             if args.save_mode == 'state_dict' or args.save_mode == 'both':
                 # 모델의 parameter들을 저장
                 torch.save({
                     'epoch': epoch,
-                    'model_state_dict': model.state_dict(),
-                    'optimizer_state_dict': optimizer.state_dict(),
-                    }, os.path.join(checkpoint_path, f'epoch({epoch})_acc({val_acc:.3f})_loss({val_epoch_loss:.3f})_f1({val_f1:.3f})_state_dict.pt'))
+                    'model_mask_state_dict': model_mask.state_dict(),
+                    'model_gender_state_dict': model_gender.state_dict(),
+                    'model_age_state_dict': model_age.state_dict(),
+                    'optimizer_mask_state_dict': optimizer_mask.state_dict(),
+                    'optimizer_gender_state_dict': optimizer_gender.state_dict(),
+                    'optimizer_age_state_dict': optimizer_age.state_dict(),
+                    }, os.path.join(checkpoint_path, f'epoch({epoch})_acc({val_acc:.3f})_loss({val_sum_epoch_loss:.3f})_f1({val_f1:.3f})_state_dict.pt'))
             if args.save_mode == 'model' or args.save_mode == 'both':
                 # 모델 자체를 저장
-                torch.save(model, os.path.join(checkpoint_path, f'epoch({epoch})_acc({val_acc:.3f})_loss({val_epoch_loss:.3f})_f1({val_f1:.3f})_model.pt'))
+                torch.save(model, os.path.join(checkpoint_path, f'epoch({epoch})_acc({val_acc:.3f})_loss({val_sum_epoch_loss:.3f})_f1({val_f1:.3f})_model.pt'))
 
         if args.use_wandb:
             wandb.log({'Train Acc': train_acc,
-                       'Train Loss': train_epoch_loss,
+                       'Train Loss': train_sum_epoch_loss,
                        'Train F1-Score': train_f1,
                        'Val Acc': val_acc,
-                       'Val Loss': val_epoch_loss,
+                       'Val Loss': val_sum_epoch_loss,
                        'Val F1-Score': val_f1})
 
             if (epoch+1) % args.save_epoch == 0:
@@ -193,7 +301,7 @@ if __name__ == '__main__':
     args_dict = {'seed' : 223,
                  'csv_path' : '../input/data/train/train_info.csv',
                  'save_path' : './checkpoint',
-                 'use_wandb' : False,
+                 'use_wandb' : True, #False
                  'wandb_exp_name' : 'exp',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
@@ -203,7 +311,7 @@ if __name__ == '__main__':
                  'learning_rate' : 1e-4,
                  'epochs' : 100,
                  'train_val_split': 0.8,
-                 'save_mode' : 'model',
+                 'save_mode' : 'state_dict', #'model'
                  'save_epoch' : 10,
                  'load_model':'resnet50',
                  'transform_path' : './transform_list.json',

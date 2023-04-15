@@ -12,7 +12,8 @@ class Classifier(nn.Module):
         self.load_model = args.load_model
         if self.load_model:
             # list_models('resnet*', pretrained=True)
-            self.backbone = create_model('resnet50', pretrained=True, num_classes=args.num_classes)
+            #self.backbone = create_model('resnet50', pretrained=True, num_classes=args.num_classes)
+            self.backbone = create_model('resnet18', pretrained=True, num_classes=args.num_classes)
 
     def forward(self, x):
         if self.load_model:
@@ -22,7 +23,7 @@ class Classifier(nn.Module):
 
 if __name__ == '__main__':
     args_dict = {'seed' : 223,
-                'csv_path' : './input/data/train/train_info.csv',
+                'csv_path' : '../../input/data/train/train_info.csv',
                 'save_path' : './checkpoint',
                 'use_wandb' : True,
                 'wandb_exp_name' : 'exp4',
