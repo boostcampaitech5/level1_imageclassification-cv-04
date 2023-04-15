@@ -71,7 +71,8 @@ def run(args):
     result = []
 
     pbar_test = tqdm(test_iter)
-    for test_img, _ in enumerate(pbar_test):
+    for _, (test_img, _) in enumerate(pbar_test):
+        pbar_test.set_description(f"Test. iter:")
         with torch.no_grad():
             test_img = test_img.to(device)
             test_mask_pred = model_mask(test_img)
