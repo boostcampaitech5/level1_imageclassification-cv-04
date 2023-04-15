@@ -10,7 +10,7 @@ import multiprocessing
 
 def run(args):
     csv_path = os.path.join(args.eval_path, 'info.csv')
-    save_csv_path = os.path.join(args.eval_path, 'eval_info.csv')
+    save_csv_path = os.path.join(args.eval_path, 'eval_info_exp5.csv')
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(f'The device is ready\t>>\t{device}')
