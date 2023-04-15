@@ -109,9 +109,12 @@ def run(args, args_dict):
     model_age = Classifier2(args.load_model, args.num_age_classes).to(device_age)
 
     if args.model_summary:
-        print('model_mask\n', summary(model_mask, (3, 256, 256)))
-        print('model_gender\n', summary(model_gender, (3, 256, 256)))
-        print('model_age\n', summary(model_age, (3, 256, 256)))
+        print('model_mask')
+        print(summary(model_mask, (3, 256, 256)))
+        print('model_gender')
+        print(summary(model_gender, (3, 256, 256)))
+        print('model_age')
+        print(summary(model_age, (3, 256, 256)))
 
     print('The optimizer is ready ...')
     optimizer_mask = optim.Adam(params=model_mask.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
@@ -298,7 +301,7 @@ if __name__ == '__main__':
                  'csv_path' : '../input/data/train/train_info.csv',
                  'save_path' : './checkpoint',
                  'use_wandb' : True, #False
-                 'wandb_exp_name' : 'exp',
+                 'wandb_exp_name' : 'separate_learning',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 18,
@@ -312,7 +315,7 @@ if __name__ == '__main__':
                  'train_val_split': 0.8,
                  'save_mode' : 'state_dict', #'model'
                  'save_epoch' : 10,
-                 'load_model':'resnet50',
+                 'load_model':'resnet18',
                  'transform_path' : './transform_list.json',
                  'transform_list' : ['resize', 'randomhorizontalflip', 'randomrotation', 'totensor', 'normalize'],
                  'not_freeze_layer' : ['layer4'],
