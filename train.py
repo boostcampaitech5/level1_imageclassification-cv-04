@@ -81,7 +81,7 @@ def run(args, args_dict):
     dataset = ClassificationDataset(csv_path = args.csv_path,
                                     transform=transform)
 
-    n_train_set = int(args.train_val_split*len(dataset))
+    #n_train_set = int(args.train_val_split*len(dataset))
     train_set, val_set, train_idx, val_idx = train_valid_split_by_sklearn(dataset,args.train_val_split,args.seed)
     print(f'The number of training images\t>>\t{len(train_set)}')
     print(f'The number of validation images\t>>\t{len(val_set)}')
@@ -104,13 +104,9 @@ def run(args, args_dict):
                           )
 
     print('The model is ready ...')
-    args.num_classes = 3
-    model_mask = Classifier(args).to(device_mask)
-    args.num_classes = 2
-    model_gender = Classifier(args).to(device_gender)
-    args.num_classes = 3
-    model_age = Classifier(args).to(device_age)
-    args.num_classes = 18
+    model_mask = Classifier2(args.load_model, args.num_mask_classes).to(device_mask)
+    model_gender = Classifier2(args.load_model, args.num_gender_classes).to(device_gender)
+    model_age = Classifier2(args.load_model, args.num_age_classes).to(device_age)
 
     if args.model_summary:
         print('model_mask\n', summary(model_mask, (3, 256, 256)))
@@ -126,9 +122,9 @@ def run(args, args_dict):
     criterion = nn.CrossEntropyLoss()
     
     #Accelerator 적용
-    model_mask, optimizer_mask, train_iter, val_iter = accelerator_mask.prepare(model, optimizer_mask, train_iter, val_iter)
-    model_gender, optimizer_gender, train_iter, val_iter = accelerator_gender.prepare(model, optimizer_gender, train_iter, val_iter)
-    model_age, optimizer_age, train_iter, val_iter = accelerator_age.prepare(model, optimizer_age, train_iter, val_iter)
+    model_mask, optimizer_mask, train_iter, val_iter = accelerator_mask.prepare(model_mask, optimizer_mask, train_iter, val_iter)
+    model_gender, optimizer_gender, train_iter, val_iter = accelerator_gender.prepare(model_gender, optimizer_gender, train_iter, val_iter)
+    model_age, optimizer_age, train_iter, val_iter = accelerator_age.prepare(model_age, optimizer_age, train_iter, val_iter)
 
     print("Starting training ...")
     for epoch in range(args.epochs):
@@ -172,7 +168,7 @@ def run(args, args_dict):
             train_gender_pred = model_gender(train_img)
             train_age_pred = model_age(train_img)
 
-            train_pred = torch.max(train_mask_pred, 1)[1] * 6.0 + torch.max(train_gender_pred, 1)[1] * 3.0 + torch.max(train_age_pred, 1)[1]
+            train_pred = torch.max(train_mask_pred, 1)[1] * 6 + torch.max(train_gender_pred, 1)[1] * 3 + torch.max(train_age_pred, 1)[1]
             train_cm_data.append([train_pred, train_target])
 
             train_mask_iter_loss = criterion(train_mask_pred, train_mask_target)
@@ -199,7 +195,7 @@ def run(args, args_dict):
         train_sum_epoch_loss = train_sum_epoch_loss / len(train_iter)
 
         # train_cm = confusion_matrix(model, train_iter, device, args.num_classes)
-        train_cm = confusion_matrix2(train_cm_data)
+        train_cm = confusion_matrix2(train_cm_data, args.num_classes)
 
         train_acc = accuracy(train_cm, args.num_classes)
         train_f1 = f1_score(train_cm, args.num_classes)
@@ -227,7 +223,7 @@ def run(args, args_dict):
             pbar = tqdm(val_iter)
             for _,(val_img, val_target) in enumerate(pbar):
                 # val_img, val_target = val_img.to(device), val_target.to(device)
-                pbar.set_description(f"Val. Epoch:{epoch}/{args.epochs} | Loss:{val_iter_loss:4.3f}")
+                pbar.set_description(f"Val. Epoch:{epoch}/{args.epochs} | Loss:{val_sum_iter_loss:4.3f}")
 
                 val_mask_target = val_target // 6           # 'Wear': 0, 'Incorrect': 1, 'Not Wear': 2
                 val_gender_target = (val_target // 3) % 2   # 'Male': 0, 'Female': 1
@@ -237,7 +233,7 @@ def run(args, args_dict):
                 val_gender_pred = model_gender(val_img)
                 val_age_pred = model_age(val_img)
 
-                val_pred = torch.max(val_mask_pred, 1)[1] * 6.0 + torch.max(val_gender_pred, 1)[1] * 3.0 + torch.max(val_age_pred, 1)[1]
+                val_pred = torch.max(val_mask_pred, 1)[1] * 6 + torch.max(val_gender_pred, 1)[1] * 3 + torch.max(val_age_pred, 1)[1]
                 val_cm_data.append([val_pred, val_target])
 
                 val_mask_iter_loss = criterion(val_mask_pred, val_mask_target).detach()
@@ -255,7 +251,7 @@ def run(args, args_dict):
         val_sum_epoch_loss = val_sum_epoch_loss / len(val_iter)
 
         #val_cm = confusion_matrix(model, val_iter, device, args.num_classes)
-        val_cm = confusion_matrix2(val_cm_data)
+        val_cm = confusion_matrix2(val_cm_data, args.num_classes)
 
         val_acc = accuracy(val_cm, args.num_classes)
         val_f1 = f1_score(val_cm, args.num_classes)
@@ -306,6 +302,9 @@ if __name__ == '__main__':
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 18,
+                 'num_mask_classes' : 3,
+                 'num_gender_classes' : 2,
+                 'num_age_classes' : 3,
                  'model_summary' : True,
                  'batch_size' : 64,
                  'learning_rate' : 1e-4,

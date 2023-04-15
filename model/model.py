@@ -19,6 +19,23 @@ class Classifier(nn.Module):
         if self.load_model:
             x = self.backbone(x)
         return x
+    
+
+class Classifier2(nn.Module):
+    def __init__(self, load_model, num_classes):
+        super(Classifier2, self).__init__()
+
+        self.num_classes = num_classes
+        self.load_model = load_model
+        if self.load_model:
+            # list_models('resnet*', pretrained=True)
+            #self.backbone = create_model('resnet50', pretrained=True, num_classes=args.num_classes)
+            self.backbone = create_model('resnet18', pretrained=True, num_classes=self.num_classes)
+
+    def forward(self, x):
+        if self.load_model:
+            x = self.backbone(x)
+        return x
 
 
 if __name__ == '__main__':
