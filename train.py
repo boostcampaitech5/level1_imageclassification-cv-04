@@ -45,7 +45,7 @@ def run(args, args_dict):
 
     if args.use_wandb:
         print('Initialize WandB ...')
-        wandb.init(name = f'{args.wandb_exp_name}{args.exp_num}_bs{args.batch_size}_ep{args.epochs}_{optimizer_name}_lr{args.learning_rate}_{args.load_model}.{args.user_name}',
+        wandb.init(name = f'{args.wandb_exp_name}_{args.exp_num}_bs{args.batch_size}_ep{args.epochs}_{optimizer_name}_lr{args.learning_rate}_{args.load_model}.{args.user_name}',
                    project = args.wandb_project_name,
                    entity = args.wandb_entity,
                    config = args_dict)
@@ -191,7 +191,7 @@ def run(args, args_dict):
 
 if __name__ == '__main__':
     args_dict = {'seed' : 223,
-                 'csv_path' : './input/data/train/train_info.csv',
+                 'csv_path' : '../input/data/train/train_info.csv',
                  'save_path' : './checkpoint',
                  'use_wandb' : False,
                  'wandb_exp_name' : 'exp5',

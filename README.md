@@ -23,23 +23,24 @@ level1_imageclassification-cv-04 created by GitHub Classroom
 │           ├── images
 │           ├── train.csv
 │           └── train_info.csv
-├── dataloader
-│   ├── __init__.py
-│   └── dataset.py
-├── metric
-│   ├── __init__.py
-│   └── metric.py
-├── model
-│   ├── __init__.py
-│   └── model.py
-├── utils
-│   ├── __init__.py
-│   ├── plot.py
-│   ├── sampler.py
-│   └── transform.py
-├── transform_list.json
-├── train.py
-└── test.py
+└── code
+    ├── dataloader
+    │   ├── __init__.py
+    │   └── dataset.py
+    ├── metric
+    │   ├── __init__.py
+    │   └── metric.py
+    ├── model
+    │   ├── __init__.py
+    │   └── model.py
+    ├── utils
+    │   ├── __init__.py
+    │   ├── plot.py
+    │   ├── sampler.py
+    │   └── transform.py
+    ├── transform_list.json
+    ├── train.py
+    └── test.py
 ```
 ## Accelerator 설치방법
 ---
