@@ -11,7 +11,7 @@ def weighted_sampler(dataset, data_idx, num_classes):
 
     class_counts = target_df['ans'].value_counts().sort_index().to_numpy()
     labels = target_df['ans'].to_numpy()
-    num_samples = len(dataset)
+    num_samples = len(target_df)
 
     class_weights = num_samples / class_counts 
 
