@@ -151,9 +151,9 @@ def run(args, args_dict):
 
         train_cm_data = []
 
-        pbar = tqdm(train_iter)
-        for _,(train_img, train_target) in enumerate(pbar):
-            pbar.set_description(f"Train. Epoch:{epoch}/{args.epochs} | Loss:{train_sum_iter_loss:4.3f}")
+        pbar_train = tqdm(train_iter)
+        for _,(train_img, train_target) in enumerate(pbar_train):
+            pbar_train.set_description(f"Train. Epoch:{epoch}/{args.epochs} | Loss:{train_sum_iter_loss:4.3f}")
             
             train_mask_target = train_target // 6           # 'Wear': 0, 'Incorrect': 1, 'Not Wear': 2
             train_gender_target = (train_target // 3) % 2   # 'Male': 0, 'Female': 1
@@ -223,10 +223,10 @@ def run(args, args_dict):
 
             val_cm_data = []
             
-            pbar = tqdm(val_iter)
-            for _,(val_img, val_target) in enumerate(pbar):
+            pbar_val = tqdm(val_iter)
+            for _,(val_img, val_target) in enumerate(pbar_val):
                 # val_img, val_target = val_img.to(device), val_target.to(device)
-                pbar.set_description(f"Val. Epoch:{epoch}/{args.epochs} | Loss:{val_sum_iter_loss:4.3f}")
+                pbar_val.set_description(f"Val. Epoch:{epoch}/{args.epochs} | Loss:{val_sum_iter_loss:4.3f}")
 
                 val_mask_target = val_target // 6           # 'Wear': 0, 'Incorrect': 1, 'Not Wear': 2
                 val_gender_target = (val_target // 3) % 2   # 'Male': 0, 'Female': 1
@@ -250,7 +250,8 @@ def run(args, args_dict):
                 val_age_epoch_loss += val_age_iter_loss
 
                 val_sum_epoch_loss += val_sum_iter_loss # not for calculation but just for report
-                
+            pbar_val.close()
+        pbar_train.close()
         val_sum_epoch_loss = val_sum_epoch_loss / len(val_iter)
 
         #val_cm = confusion_matrix(model, val_iter, device, args.num_classes)

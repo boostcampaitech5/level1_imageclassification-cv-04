@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms 
 from torchsummary import summary
 import multiprocessing
-
+from tqdm import tqdm
 
 def run(args):
     csv_path = os.path.join(args.eval_path, 'info.csv')
@@ -69,7 +69,9 @@ def run(args):
     model_gender.eval()
     model_age.eval()
     result = []
-    for test_img, _ in test_iter:
+
+    pbar_test = tqdm(test_iter)
+    for test_img, _ in enumerate(pbar_test):
         with torch.no_grad():
             test_img = test_img.to(device)
             test_mask_pred = model_mask(test_img)
@@ -77,6 +79,7 @@ def run(args):
             test_age_pred = model_age(test_img)
             test_pred = torch.max(test_mask_pred, 1)[1] * 6 + torch.max(test_gender_pred, 1)[1] * 3 + torch.max(test_age_pred, 1)[1]
             result.append(test_pred.item())
+    pbar_test.close()
 
     print('Save CSV file')
     df = pd.read_csv(csv_path)
