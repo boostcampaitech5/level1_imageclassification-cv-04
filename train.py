@@ -71,7 +71,7 @@ def run(args, args_dict):
 
     print('Make save_path')
     checkpoint_path = os.path.join(args.save_path, 
-                                   f'{args.wandb_exp_name}_{args.wandb_exp_num}_bs{args.batch_size}_ep{args.epochs}_{optimizer_name}_lr{args.learning_rate}_{args.load_model}')
+                                   f'{args.wandb_exp_name}_{args.exp_num}_bs{args.batch_size}_ep{args.epochs}_{optimizer_name}_lr{args.learning_rate}_{args.load_model}')
     os.makedirs(checkpoint_path, exist_ok=True)
 
     print(f'Transform\t>>\t{args.transform_list}')
