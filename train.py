@@ -101,6 +101,8 @@ def run(args, args_dict):
     print('The optimizer is ready ...')
     optimizer = optim.Adam(params=model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
 
+    lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
+    
     print('The loss function is ready ...')
     criterion = nn.CrossEntropyLoss()
     
@@ -156,6 +158,8 @@ def run(args, args_dict):
         val_acc = accuracy(val_cm, args.num_classes)
         val_f1 = f1_score(val_cm, args.num_classes)
 
+        lr_scheduler.step()
+        
         print('time >> {:.4f}\tepoch >> {:04d}\ttrain_acc >> {:.4f}\ttrain_loss >> {:.4f}\ttrain_f1 >> {:.4f}\tval_acc >> {:.4f}\tval_loss >> {:.4f}\tval_f1 >> {:.4f}'
               .format(time.time()-start_time, epoch, train_acc, train_epoch_loss, train_f1, val_acc, val_epoch_loss, val_f1))
         
@@ -191,11 +195,11 @@ def run(args, args_dict):
 
 if __name__ == '__main__':
     args_dict = {'seed' : 223,
-                 'csv_path' : '../input/data/train/train_info.csv',
+                 'csv_path' : './input/data/train/train_info.csv',
                  'save_path' : './checkpoint',
-                 'use_wandb' : False,
-                 'wandb_exp_name' : 'exp5',
-                 'wandb_project_name' : 'Transform_Exp',
+                 'use_wandb' : True,
+                 'wandb_exp_name' : 'exp',
+                 'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 18,
                  'model_summary' : True,
@@ -203,11 +207,11 @@ if __name__ == '__main__':
                  'learning_rate' : 1e-4,
                  'epochs' : 100,
                  'train_val_split': 0.8,
-                 'save_mode' : 'model',
+                 'save_mode' : 'state_dict',
                  'save_epoch' : 10,
                  'load_model':'resnet50',
                  'transform_path' : './transform_list.json',
-                 'transform_list' : ['resize', 'randomhorizontalflip', 'randomrotation', 'totensor', 'normalize'],
+                 'transform_list' : ['centercrop', 'resize' 'totensor', 'normalize'],
                  'not_freeze_layer' : ['layer4'],
                  'weight_decay': 1e-2}
     wandb_data = wandb_info.get_wandb_info()
