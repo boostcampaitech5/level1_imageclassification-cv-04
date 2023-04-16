@@ -36,7 +36,7 @@ def run(args):
         state_dict = torch.load(args.checkpoint)
 
         print('The model is ready ...')
-        model = Classifier(args.num_classes, load_model='resnet50').to(device)
+        model = Classifier(args).to(device)
         if args.model_summary:
             print(summary(model, (3, 256, 256)))
         model.load_state_dict(state_dict['model_state_dict'])
@@ -63,9 +63,10 @@ def run(args):
 
 
 if __name__ == '__main__':
-    args_dict = {'eval_path' : '../input/data/eval',
-                 'checkpoint' : './checkpoint/exp5_bs64_ep100_adam_lr0.0001_resnet50/epoch(49)_acc(0.975)_loss(0.093)_f1(0.975)_model.pt',
-                 'load_mode' : 'model',
+    args_dict = {'eval_path' : './input/data/eval',
+                 'checkpoint' : 'checkpoint/exp_bs64_ep100_adamw_lr0.0001_resnet50/epoch(99)_acc(0.977)_loss(0.063)_f1(0.977)_state_dict.pt',
+                 'load_model':'resnet50',
+                 'load_mode' : 'state_dict',
                  'num_classes' : 18,
                  'batch_size' : 1,
                  'model_summary' : True}
