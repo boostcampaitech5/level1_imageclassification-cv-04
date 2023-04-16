@@ -70,7 +70,8 @@ def run(args, args_dict):
     print(f'The device_age is ready\t>>\t{device_age}')
 
     print('Make save_path')
-    checkpoint_path = os.path.join(args.save_path, f'{args.wandb_exp_name}_bs{args.batch_size}_ep{args.epochs}_{optimizer_name}_lr{args.learning_rate}_{args.load_model}')
+    checkpoint_path = os.path.join(args.save_path, 
+                                   f'{args.wandb_exp_name}_{args.wandb_exp_num}_bs{args.batch_size}_ep{args.epochs}_{optimizer_name}_lr{args.learning_rate}_{args.load_model}')
     os.makedirs(checkpoint_path, exist_ok=True)
 
     print(f'Transform\t>>\t{args.transform_list}')
@@ -296,6 +297,8 @@ def run(args, args_dict):
                 # # WARNING wandb.plots.* functions are deprecated and will be removed in a future release. Please use wandb.plot.* instead.
                 # wandb.log({'Confusion Matrix Heatmap': wandb.plots.HeatMap(list(range(0,18)), list(range(0,18)), val_cm, show_text=True)})
 
+        end_time = time.time()
+        print('elapsed time:', end_time - start_time)
 
 if __name__ == '__main__':
     args_dict = {'seed' : 223,
@@ -308,7 +311,7 @@ if __name__ == '__main__':
                  'model_summary' : True,
                  'batch_size' : 64,
                  'learning_rate' : 1e-4,
-                 'epochs' : 100,
+                 'epochs' : 200,
                  'train_val_split': 0.8,
                  'save_mode' : 'state_dict', #'model'
                  'save_epoch' : 10,
@@ -316,7 +319,7 @@ if __name__ == '__main__':
                  'transform_path' : './transform_list.json',
                  'transform_list' : ['resize', 'randomhorizontalflip', 'randomrotation', 'totensor', 'normalize'],
                  'not_freeze_layer' : ['layer4'],
-                 'weight_decay': 1e-2}
+                 'weight_decay': 5e-4}
     wandb_data = wandb_info.get_wandb_info()
     args_dict.update(wandb_data)
     from collections import namedtuple

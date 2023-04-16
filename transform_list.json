@@ -27,5 +27,9 @@
 		"kernel_size": 3,
 		"sigma_min": 0.1,
 		"sigma_max": 2.0
+	},
+	"randaugment": {
+		"num_ops": 3,
+		"magnitude": 7
 	}
 }
