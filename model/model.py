@@ -30,11 +30,23 @@ class Classifier2(nn.Module):
         if self.load_model:
             # list_models('resnet*', pretrained=True)
             #self.backbone = create_model('resnet50', pretrained=True, num_classes=args.num_classes)
-            self.backbone = create_model('resnet18', pretrained=True, num_classes=self.num_classes)
+            #self.backbone = create_model('resnet18', pretrained=True, num_classes=self.num_classes)
+            #self.backbone = create_model('densenet121', pretrained=True, num_classes=self.num_classes)
+            self.backbone = create_model('resnet18', pretrained=True)
+            self.spine = nn.Sequential(nn.Linear(1000, 500), 
+                                       nn.ReLU(), 
+                                       nn.Linear(500, 250), 
+                                       nn.ReLU(), 
+                                       nn.Linear(250, 125), 
+                                       nn.ReLU(), 
+                                       nn.Linear(125, 50), 
+                                       nn.ReLU(), 
+                                       nn.Linear(50, self.num_classes))
 
     def forward(self, x):
         if self.load_model:
             x = self.backbone(x)
+            x = self.spine(x)
         return x
 
 
@@ -54,7 +66,7 @@ if __name__ == '__main__':
                 'train_val_split': 0.8,
                 'save_mode' : 'model',
                 'save_epoch' : 10,
-                'load_model':'resnet50',
+                'load_model':'resnet18',
                 'transform_path' : './transform_list.json',
                 'transform_list' : ['resize', 'randomhorizontalflip', 'randomrotation', 'totensor', 'normalize'],
                 'not_freeze_layer' : ['layer4']}

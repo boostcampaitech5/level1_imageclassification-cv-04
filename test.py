@@ -2,6 +2,7 @@ from dataloader import *
 from model import *
 from metric import *
 from utils import *
+import wandb_info
 from torch.utils.data import DataLoader
 from torchvision import transforms 
 from torchsummary import summary
@@ -10,7 +11,7 @@ from tqdm import tqdm
 
 def run(args):
     csv_path = os.path.join(args.eval_path, 'info.csv')
-    save_csv_path = os.path.join(args.eval_path, 'eval_info.csv')
+    save_csv_path = os.path.join(args.eval_path, f'eval_info_{args.wandb_exp_name}_{args.exp_num}.csv')
 
     # device_mask = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     # device_gender = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -90,7 +91,7 @@ def run(args):
 
 if __name__ == '__main__':
     args_dict = {'eval_path' : '../input/data/eval',
-                 'checkpoint' : './checkpoint/separate_learning_bs64_ep100_adamw_lr0.0001_resnet18/epoch(89)_acc(0.963)_loss(0.186)_f1(0.964)_state_dict.pt',
+                 'checkpoint' : './checkpoint/separate_learning_bs64_ep100_adamw_lr0.0001_resnet18/epoch(99)_acc(0.944)_loss(0.245)_f1(0.945)_state_dict.pt', #'checkpoint' : './checkpoint/separate_learning_bs64_ep100_adamw_lr0.0001_resnet18/epoch(89)_acc(0.963)_loss(0.186)_f1(0.964)_state_dict.pt',
                  'load_mode' : 'state_dict', #'model'
                  'load_model' : 'resnet18',
                  'num_classes' : 18,
@@ -100,6 +101,8 @@ if __name__ == '__main__':
                  'batch_size' : 1,
                  'model_summary' : True}
     
+    wandb_data = wandb_info.get_wandb_info()
+    args_dict.update(wandb_data)
     from collections import namedtuple
     Args = namedtuple('Args', args_dict.keys())
     args = Args(**args_dict)

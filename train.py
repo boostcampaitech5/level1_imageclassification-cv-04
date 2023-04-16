@@ -301,10 +301,6 @@ if __name__ == '__main__':
     args_dict = {'seed' : 223,
                  'csv_path' : '../input/data/train/train_info.csv',
                  'save_path' : './checkpoint',
-                 'use_wandb' : True, #False
-                 'wandb_exp_name' : 'separate_learning',
-                 'wandb_project_name' : 'Image_classification_mask',
-                 'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 18,
                  'num_mask_classes' : 3,
                  'num_gender_classes' : 2,
@@ -316,7 +312,7 @@ if __name__ == '__main__':
                  'train_val_split': 0.8,
                  'save_mode' : 'state_dict', #'model'
                  'save_epoch' : 10,
-                 'load_model':'resnet18',
+                 'load_model': 'resnet18', #'densenet121', #'resnet18',
                  'transform_path' : './transform_list.json',
                  'transform_list' : ['resize', 'randomhorizontalflip', 'randomrotation', 'totensor', 'normalize'],
                  'not_freeze_layer' : ['layer4'],
