@@ -26,7 +26,10 @@ def get_transform(args):
                       'randomhorizontalflip' : transforms.RandomHorizontalFlip(tf_list['randomhorizontalflip']['flip_prob']),
                       'randomrotation' : transforms.RandomRotation(tf_list['randomrotation']['degrees']),
                       'gaussianblur' : transforms.GaussianBlur(tf_list['gaussianblur']['kernel_size'],
-                                                               (tf_list['gaussianblur']['sigma_min'], tf_list['gaussianblur']['sigma_max']))}
+                                                               (tf_list['gaussianblur']['sigma_min'], tf_list['gaussianblur']['sigma_max'])),
+                      'randomcrop' : transforms.RandomCrop((tf_list['randomcrop']['img_height'], 
+                                                            tf_list['randomcrop']['img_width']))   
+                     }
     
     list_ = []
     config = {}
@@ -56,7 +59,7 @@ class CustomTransform():
 if __name__ == '__main__':
     args_dict = {'transform_path' : './transform_list.json',
                  'transform_list' : ['resize', 'totensor', 'normalize', 'centercrop',
-                                     'colorjitter', 'randomhorizontalflip', 'randomrotation', 'gaussianblur']}
+                                     'colorjitter', 'randomhorizontalflip', 'randomrotation', 'gaussianblur', 'randomcrop']}
     
     from collections import namedtuple
     Args = namedtuple('Args', args_dict.keys())

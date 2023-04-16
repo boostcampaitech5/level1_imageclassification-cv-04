@@ -4,8 +4,9 @@ def confusion_matrix(model, data_iter, device, num_classes):
     with torch.no_grad():
         model.eval()
         cm = torch.zeros((num_classes, num_classes), dtype=torch.long)
-        for data, target in data_iter:
-            model_pred, y_target = model(data.to(device)), target.to(device)
+        for data, y_target in data_iter:
+            # model_pred, y_target = model(data.to(device)), target.to(device)
+            model_pred = model(data)
             _, y_pred = torch.max(model_pred.data, 1)
             for y_p, y_t in zip(y_pred, y_target):
                 if y_p == y_t:

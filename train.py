@@ -194,7 +194,7 @@ if __name__ == '__main__':
                  'csv_path' : '../input/data/train/train_info.csv',
                  'save_path' : './checkpoint',
                  'use_wandb' : True,
-                 'wandb_exp_name' : 'input_size_resize_512_384',
+                 'wandb_exp_name' : 'input_size_resize_384_384',
                  'wandb_project_name' : 'Transform_Exp',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 18,
@@ -218,5 +218,4 @@ if __name__ == '__main__':
 
     # Config parser 하나만 넣어주면 됨(임시방편)
     run(args, args_dict)
-    
     

@@ -12,7 +12,7 @@ class Classifier(nn.Module):
         self.load_model = args.load_model
         if self.load_model:
             # list_models('resnet*', pretrained=True)
-            self.backbone = create_model('resnet50', pretrained=True, num_classes=args.num_classes)
+            self.backbone = create_model(self.load_model, pretrained=True, num_classes=args.num_classes)
 
     def forward(self, x):
         if self.load_model:

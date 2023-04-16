@@ -16,7 +16,7 @@ def run(args):
     print(f'The device is ready\t>>\t{device}')
 
     # Image size 조절과 tensor로만 만들어주면 됨(normalize까지는 해야 할 듯)
-    transform = transforms.Compose([transforms.Resize((256, 256)),
+    transform = transforms.Compose([transforms.Resize((512, 384)),
                                     transforms.ToTensor(),
                                     transforms.Normalize(mean=(0.485, 0.456, 0.406),
                                                          std=(0.229, 0.224, 0.225))])
@@ -36,7 +36,7 @@ def run(args):
         state_dict = torch.load(args.checkpoint)
 
         print('The model is ready ...')
-        model = Classifier(args.num_classes, load_model='resnet50').to(device)
+        model = Classifier(args).to(device)
         if args.model_summary:
             print(summary(model, (3, 256, 256)))
         model.load_state_dict(state_dict['model_state_dict'])
@@ -64,11 +64,12 @@ def run(args):
 
 if __name__ == '__main__':
     args_dict = {'eval_path' : '../input/data/eval',
-                 'checkpoint' : './checkpoint/exp5_bs64_ep100_adam_lr0.0001_resnet50/epoch(49)_acc(0.975)_loss(0.093)_f1(0.975)_model.pt',
-                 'load_mode' : 'model',
+                 'checkpoint' : './checkpoint/input_size_resize_512_384_bs64_ep100_adamw_lr0.0001_resnet50/epoch(29)_acc(0.922)_loss(0.248)_f1(0.923)_state_dict.pt',
+                 'load_mode' : 'state_dict',
                  'num_classes' : 18,
                  'batch_size' : 1,
-                 'model_summary' : True}
+                 'model_summary' : True,
+                 'load_model' : 'resnet50'}
     
     from collections import namedtuple
     Args = namedtuple('Args', args_dict.keys())
