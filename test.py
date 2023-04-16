@@ -21,9 +21,8 @@ def run(args):
                                     transforms.Normalize(mean=(0.485, 0.456, 0.406),
                                                          std=(0.229, 0.224, 0.225))])
 
-    dataset = ClassificationDataset(csv_path = csv_path,
+    dataset = TestDataset(csv_path = csv_path,
                                     transform=transform,
-                                    train=False,
                                     eval_path=args.eval_path)
     print(f'The number of testing images\t>>\t{len(dataset)}')
 

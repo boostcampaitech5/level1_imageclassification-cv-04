@@ -12,8 +12,10 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import multiprocessing as mp
 import pickle
+import sklearn
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
+from sklearn.model_selection import train_test_split
 
 
 def get_img_stats(img_dir, img_ids):
@@ -134,11 +136,12 @@ if __name__ == '__main__':
     make_csv = False
     test_make_csv = False
     tSNE = False
-    class_distribution = True
-    save_csv_path = './input/data/train/train_info.csv'
+    class_distribution = False
+    make_split_csv = True
+    save_csv_path = '../input/data/train/train_info.csv'
 
     class cfg:
-        data_dir = './input/data/train'
+        data_dir = '../input/data/train'
         img_dir = f'{data_dir}/images'
         df_path = f'{data_dir}/train.csv'
 
@@ -429,7 +432,7 @@ if __name__ == '__main__':
 
             exts = get_ext(cfg.img_dir, img_id)
             for class_name in num2class:
-                ans = 0
+                ans = ''
                 for ext in exts:
                     try:
                         img_path = os.path.join(cfg.img_dir, img_id, class_name + ext)
@@ -438,32 +441,24 @@ if __name__ == '__main__':
                     except:
                         continue
                 if class_name == 'incorrect_mask':
-                    if gen == 'male':
-                        if age < 30: ans = 6
-                        elif age >= 60: ans = 8
-                        else: ans = 7
-                    else:
-                        if age < 30: ans = 9
-                        elif age >= 60: ans = 11
-                        else: ans = 10
+                    ans += '1'
                 elif class_name == 'normal':
-                    if gen == 'male':
-                        if age < 30: ans = 12
-                        elif age >= 60: ans = 14
-                        else: ans = 13
-                    else:
-                        if age < 30: ans = 15
-                        elif age >= 60: ans = 17
-                        else: ans = 16
+                    ans += '2'
                 else:
-                    if gen == 'male':
-                        if age < 30: ans = 0
-                        elif age >= 60: ans = 2
-                        else: ans = 1
-                    else:
-                        if age < 30: ans = 3
-                        elif age >= 60: ans = 5
-                        else: ans = 4
+                    ans += '0'
+                
+                if gen == 'male':
+                    ans += '0'
+                else:
+                    ans += '1'
+
+                if age < 30:
+                    ans += '0'
+                elif age >= 60:
+                    ans += '2'
+                else:
+                    ans += '1'
+
                 data.append([img_path, ans])
 
         result_df = pd.DataFrame(data, columns=['ImageID', 'ans'])
@@ -478,7 +473,7 @@ if __name__ == '__main__':
         print(result_df['ans'].value_counts())
 
     if class_distribution:
-        info_df = pd.read_csv('./input/data/train/train_info.csv')
+        info_df = pd.read_csv('../input/data/train/train_info.csv')
         label = info_df['ans'].value_counts()
         label_dict = sorted(dict(label).items(), key=lambda x:x[0])
 
@@ -492,4 +487,25 @@ if __name__ == '__main__':
                      fontsize=11, fontweight='semibold'
                 )
         plt.tight_layout()
-        plt.savefig(os.path.join(save_path, 'train_info_ans.png'))
+        plt.savefig(os.path.join(save_path, 'train_info_ans2.png'))
+
+    if make_split_csv:
+        dtype_dict = {'ImageID':'str', 'ans':'str'}
+        df = pd.read_csv('../input/data/train/train_info.csv', dtype=dtype_dict)
+        class_list = ['000', '001', '002', '010', '011', '012',
+                      '100', '101', '102', '110', '111', '112',
+                      '200', '201', '202', '210', '211', '212']
+        np.random.seed(223)
+        new_df = pd.DataFrame(columns=['ImageID', 'ans', 'type'])
+        for class_num in class_list:
+            class_df = df[df['ans']==class_num]
+            shuffle_df = sklearn.utils.shuffle(class_df, random_state=223)
+            train_df = shuffle_df[20:].reset_index(drop=True)
+            val_df = shuffle_df[:20].reset_index(drop=True)
+            train_df['type'] = 'train'
+            val_df['type'] = 'val'
+            new_df = pd.concat([new_df, train_df, val_df], ignore_index=True)
+
+        new_df = sklearn.utils.shuffle(new_df, random_state=223)
+        
+        new_df.to_csv('../input/data/train/train_info2.csv', index=False)
