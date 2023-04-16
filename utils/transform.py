@@ -26,9 +26,11 @@ def get_transform(args):
                       'randomhorizontalflip' : transforms.RandomHorizontalFlip(tf_list['randomhorizontalflip']['flip_prob']),
                       'randomrotation' : transforms.RandomRotation(tf_list['randomrotation']['degrees']),
                       'gaussianblur' : transforms.GaussianBlur(tf_list['gaussianblur']['kernel_size'],
-                                                               (tf_list['gaussianblur']['sigma_min'], tf_list['gaussianblur']['sigma_max'])),
-                      'randaugment' : transforms.RandAugment(tf_list['randaugment']['num_ops'],
-                                                             tf_list['randaugment']['magnitude'])}
+                                                               (tf_list['gaussianblur']['sigma_min'],
+                                                                tf_list['gaussianblur']['sigma_max']))#,
+                      #'randaugment' : transforms.RandAugment(tf_list['randaugment']['num_ops'],
+                      #                                       tf_list['randaugment']['magnitude'])
+                    }
     
     list_ = []
     config = {}
