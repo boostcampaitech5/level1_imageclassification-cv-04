@@ -37,9 +37,8 @@ class ClassificationDataset(Dataset):
                 y[1]=(45+age)//2
             else:
                 y[1]=(75+age)//2
-
-            y[1]=age
-        #   print(image_name,y,label)
+            
+           #print(image_name,y,label)
         else:
             img_path = os.path.join(self.eval_path, 'images', self.df.iloc[idx].ImageID)
             img = Image.open(img_path)

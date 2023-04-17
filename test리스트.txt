@@ -23,4 +23,10 @@ test3(id=1)
 
 test4(2)
 age_classification을 복원 및
-모델의 y-age를 각 구간의 평균으로 이동
+
+
+210~
+1. age 정밀 측정 모델
+2. 모델의 y-age를 각 구간의 평균으로 이동 및 sampler 사용
+3. sampler false
+
