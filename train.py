@@ -61,7 +61,7 @@ def run(args, args_dict):
     print(f'The device is ready\t>>\t{device}')
 
     print('Make save_path')
-    checkpoint_path = os.path.join(args.save_path, f'{args.wandb_exp_name}_bs{args.batch_size}_ep{args.epochs}_{optimizer_name}_lr{args.learning_rate}_{args.load_model}')
+    checkpoint_path = os.path.join(args.save_path, f'{args.exp_num}_{args.wandb_exp_name}_bs{args.batch_size}_ep{args.epochs}_{optimizer_name}_lr{args.learning_rate}_{args.load_model}')
     os.makedirs(checkpoint_path, exist_ok=True)
 
     print(f'Transform\t>>\t{args.transform_list}')
