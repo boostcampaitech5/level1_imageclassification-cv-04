@@ -12,7 +12,8 @@ class Classifier(nn.Module):
         self.load_model = args.load_model
         if self.load_model:
             # list_models('resnet*', pretrained=True)
-            self.backbone = create_model('resnet18', pretrained=True, num_classes=args.num_classes)
+            self.backbone = create_model(self.load_model, pretrained=True, num_classes=args.num_classes)
+            
 
     def forward(self, x):
         if self.load_model:
@@ -36,7 +37,7 @@ if __name__ == '__main__':
                 'train_val_split': 0.8,
                 'save_mode' : 'model',
                 'save_epoch' : 10,
-                'load_model':'resnet50',
+                'load_model':'resnet18',
                 'transform_path' : './transform_list.json',
                 'transform_list' : ['resize', 'randomhorizontalflip', 'randomrotation', 'totensor', 'normalize'],
                 'not_freeze_layer' : ['layer4']}
