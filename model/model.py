@@ -31,7 +31,7 @@ class Classifier(nn.Module):
             nn.Linear(512,256),
             nn.Sigmoid(),
             nn.Dropout(0.2),
-            nn.Linear(256,3)
+            nn.Linear(256,1)
         )
         self.mask_fc = nn.Sequential(
             nn.Linear(512,256),

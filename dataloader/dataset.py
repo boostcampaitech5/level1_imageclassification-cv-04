@@ -32,12 +32,13 @@ class ClassificationDataset(Dataset):
             y[0]=label%6//3
             age = int(age)
             if age<30:
-                y[1]=0
+                y[1]=(15+age)//2
             elif age<60:
-                y[1]=1
+                y[1]=(45+age)//2
             else:
-                y[1]=2
-            #y[1]=age
+                y[1]=(75+age)//2
+
+            y[1]=age
         #   print(image_name,y,label)
         else:
             img_path = os.path.join(self.eval_path, 'images', self.df.iloc[idx].ImageID)

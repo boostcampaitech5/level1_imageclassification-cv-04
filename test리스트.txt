@@ -19,7 +19,8 @@ test2
 
 test2
 test3(id=1)
-모델의 age loss로 mse와 CE 결합해보기
-
-test4
 모델의 age_classification을 단순 onehot-방식으로 변경
+
+test4(2)
+age_classification을 복원 및
+모델의 y-age를 각 구간의 평균으로 이동

@@ -130,6 +130,7 @@ def run(args, args_dict):
             train_pred = model(train_img)
             train_iter_loss = criterion(train_pred, train_target)
             # train_iter_loss.backward()
+            #print(train_pred[:3],train_target[:3])
             for t_loss in train_iter_loss:
                 accelerator.backward(t_loss,retain_graph=True)
             optimizer.step()
@@ -157,6 +158,7 @@ def run(args, args_dict):
                 val_iter_loss = criterion(val_pred, val_target)
 
                 val_epoch_loss += sum(val_iter_loss)
+                break
         print(val_pred[:3])
         print(metric.convert_pred(val_pred[:3]))
         print(val_target[:3])
@@ -182,6 +184,7 @@ def run(args, args_dict):
             if args.save_mode == 'model' or args.save_mode == 'both':
                 # 모델 자체를 저장
                 torch.save(model, os.path.join(checkpoint_path, f'epoch({epoch})_acc({val_acc:.3f})_loss({val_epoch_loss:.3f})_f1({val_f1:.3f})_model.pt'))
+        fig = plot_confusion_matrix(val_cm, args.num_classes, normalize=True, save_path=None)
 
         if args.use_wandb:
             wandb.log({'Train Acc': train_acc,
@@ -193,6 +196,7 @@ def run(args, args_dict):
 
             if (epoch+1) % args.save_epoch == 0:
                 fig = plot_confusion_matrix(val_cm, args.num_classes, normalize=True, save_path=None)
+
                 wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")})
                 # wandb.log({"Confusion Matrix Plot" : wandb.plot.confusion_matrix(probs=None,
                 #                                                             preds=pred_list, y_true=target_list,
