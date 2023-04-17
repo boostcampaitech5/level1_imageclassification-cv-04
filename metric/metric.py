@@ -1,20 +1,41 @@
 import torch
 
-def confusion_matrix(model, data_iter, device, num_classes):
+def confusion_matrix(model, data_iter, device, num_classes,convert=False):
     with torch.no_grad():
         model.eval()
         cm = torch.zeros((num_classes, num_classes), dtype=torch.long)
         for data, target in data_iter:
             model_pred, y_target = model(data.to(device)), target.to(device)
-            _, y_pred = torch.max(model_pred.data, 1)
-            for y_p, y_t in zip(y_pred, y_target):
-                if y_p == y_t:
+            #_, y_pred = torch.max(model_pred.data, 1)
+            if convert:
+                model_pred = convert_pred(model_pred)
+                #print(model_pred[0],y_target[0])
+                model_pred = convert_class(model_pred)
+                y_target = convert_class(y_target)
+           # print(model_pred,y_target)
+            for y_p, y_t in zip(model_pred, y_target):
+                if y_p.data == y_t.data:
                     cm[y_t][y_t] += 1
                 else:
                     cm[y_t][y_p] += 1
 
     return cm
+def convert_pred(pred,convert=False):
+    class_pred = pred[:,:2].argmax(dim=1)
+    mask_pred = pred[:,3:].argmax(dim=1)
 
+
+    return torch.cat((class_pred.view(-1,1),pred[:,2:3],mask_pred.view(-1,1)),dim=1).long()
+
+def convert_class(logit):
+    bucket = torch.Tensor([30,60]).cuda()
+    age_pred = torch.bucketize(logit[:,1],bucket,right=True)
+    classes = torch.zeros(len(logit),dtype=torch.long).cuda()
+    classes += 6*logit[:,2]
+    classes += 3*logit[:,0]
+    classes += age_pred
+    return classes
+    
 
 def accuracy(cm, num_classes):
     n_total, n_correct = torch.sum(cm), 0
@@ -52,22 +73,31 @@ def recall(cm, num_classes):
 def f1_score(cm, num_classes):
     precision_val = precision(cm, num_classes)
     recall_val = recall(cm, num_classes)
+    if precision_val + recall_val == 0:
+        return 0
     f1_score_val = 2 * ((precision_val * recall_val) / (precision_val + recall_val))
 
     return f1_score_val
     
 
 if __name__ == '__main__':
-    num_classes = 3
+    # num_classes = 3
 
-    cm = [[5, 1, 1],
-          [0, 5, 2],
-          [1, 0, 5]]
-    cm = torch.LongTensor(cm)
-    print(accuracy(cm, num_classes))
-    print(precision(cm, num_classes))
-    print(recall(cm, num_classes))
-    print(f1_score(cm, num_classes))
-
+    # cm = [[5, 1, 1],
+    #       [0, 5, 2],
+    #       [1, 0, 5]]
+    # cm = torch.LongTensor(cm)
+    # # print(accuracy(cm, num_classes))
+    # # print(precision(cm, num_classes))
+    # # print(recall(cm, num_classes))
+    # # print(f1_score(cm, num_classes))
+    logit = torch.Tensor([[-3,3,63.5,-1,-0.8,3]]).cuda()
+    label = torch.Tensor([[1,61,2]]).long().cuda()
+    l=convert_pred(logit)
+    print(l)
+    l=convert_class(l)
+    print(l)
+    l=convert_class(label)
+    print(l)
 
 

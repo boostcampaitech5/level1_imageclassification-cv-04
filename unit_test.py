@@ -53,6 +53,7 @@ def w_sampler_test():
     class_list = torch.zeros(18)
     for x,y in loader:
         class_list[y]+=1
+        print(x.shape)
     print(class_list)
 if __name__ == '__main__':
     #split_test()

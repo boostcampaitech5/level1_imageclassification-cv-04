@@ -1,0 +1,18 @@
+test1
+classifier 단순 1차 레이어
+test2
+lr 0.001로 빠른 학습결과 확인하기
+test3
+학습 결과 샘플 확인하기 좋게 출력
+학습 진행률을 확인하고 classifier 레이어 깊게 쌓음
+test4
+gender파악이 잘 안됨을 확인하고 gender_claasifier 레이어 추가
+test5
+이미 특성을 나눠서 학습하므로 골고루 데이터 뽑아오도록 sampler 제거
+test1
+sampler를 사용할 시 augmentation을 강하게 줘보기
+
+test1
+백본 resnet18로 변경
+test2
+백본의 avgpool출력에 batchnorm적용

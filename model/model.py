@@ -12,12 +12,42 @@ class Classifier(nn.Module):
         self.load_model = args.load_model
         if self.load_model:
             # list_models('resnet*', pretrained=True)
-            self.backbone = create_model('resnet50', pretrained=True, num_classes=args.num_classes)
+            self.backbone = create_model('resnet18', pretrained=True)
+        for p in self.backbone.parameters():
+            p.requires_grad = False
+        self.backbone = nn.Sequential(*list(self.backbone.children())[:-1])
+        self.batch = nn.BatchNorm1d(512)
 
+        self.gender_fc = nn.Sequential(
+            nn.Linear(512,256),
+            nn.ReLU(),
+            nn.BatchNorm1d(256),
+            nn.Dropout(0.2),
+            nn.Linear(256,2)
+        )
+        self.age_fc = nn.Sequential(
+            nn.Linear(512,256),
+            nn.Sigmoid(),
+            nn.Dropout(0.2),
+            nn.Linear(256,1)
+        )
+        self.mask_fc = nn.Sequential(
+            nn.Linear(512,256),
+            nn.ReLU(),
+            nn.BatchNorm1d(256),
+            nn.Dropout(0.2),
+            nn.Linear(256,3)
+        )
+        
     def forward(self, x):
         if self.load_model:
             x = self.backbone(x)
-        return x
+        x=self.batch(x)
+        gender = self.gender_fc(x)
+        age = self.age_fc(x)
+        mask = self.mask_fc(x)
+        logit = torch.cat((gender,age,mask),dim=1)
+        return logit
 
 
 if __name__ == '__main__':
@@ -46,6 +76,8 @@ if __name__ == '__main__':
     args = Args(**args_dict)
 
     model = Classifier(args)
+    #print(model)
+    #print(model.load_model.resnet50)
     for name, param in model.named_parameters():
         print(name, param.requires_grad)
 

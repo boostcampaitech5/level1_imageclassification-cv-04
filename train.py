@@ -1,6 +1,8 @@
 from dataloader import *
 from model import *
+from metric import loss
 from metric import *
+
 from utils import *
 from torch.utils.data import DataLoader, random_split, WeightedRandomSampler
 from torchvision import transforms 
@@ -77,9 +79,12 @@ def run(args, args_dict):
 
 
     print('The data loader is ready ...')
-    train_sampler = weighted_sampler(dataset, train_idx, args.num_classes)
-    val_sampler = weighted_sampler(dataset,val_idx, args.num_classes)
-    
+    if args.use_sampler:
+        train_sampler = weighted_sampler(dataset, train_idx, args.num_classes)
+        val_sampler = weighted_sampler(dataset,val_idx, args.num_classes)
+    else:
+        train_sampler = None
+        val_sampler = None
     train_iter = DataLoader(train_set,
                             batch_size=args.batch_size,
                             drop_last=True,
@@ -102,8 +107,8 @@ def run(args, args_dict):
     optimizer = optim.Adam(params=model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
 
     print('The loss function is ready ...')
-    criterion = nn.CrossEntropyLoss()
-    
+    #criterion = nn.CrossEntropyLoss()
+    criterion = loss.CustomLoss
     #Accelerator 적용
     model, optimizer, train_iter, val_iter = accelerator.prepare(
         model, optimizer, train_iter, val_iter
@@ -114,24 +119,26 @@ def run(args, args_dict):
         start_time = time.time()
         train_epoch_loss = 0
         model.train()
-        train_iter_loss=0
+        train_iter_loss=[0]
         pbar = tqdm(train_iter)
         for _,(train_img, train_target) in enumerate(pbar):
-            pbar.set_description(f"Train. Epoch:{epoch}/{args.epochs} | Loss:{train_iter_loss:4.3f}")
+            pbar.set_description(f"Train. Epoch:{epoch}/{args.epochs} | Loss:{sum(train_iter_loss):4.3f}")
             train_img, train_target = train_img.to(device), train_target.to(device)
             optimizer.zero_grad()
 
             train_pred = model(train_img)
             train_iter_loss = criterion(train_pred, train_target)
             # train_iter_loss.backward()
-            accelerator.backward(train_iter_loss)
+            for t_loss in train_iter_loss:
+                accelerator.backward(t_loss,retain_graph=True)
             optimizer.step()
-
-            train_epoch_loss += train_iter_loss
+            #print(train_iter_loss,train_pred[:,2],train_target[:,1])
+            train_epoch_loss += sum(train_iter_loss)
+            
 
         train_epoch_loss = train_epoch_loss / len(train_iter)
 
-        train_cm = confusion_matrix(model, train_iter, device, args.num_classes)
+        train_cm = confusion_matrix(model, train_iter, device, args.num_classes,args.convert_pred)
 
         train_acc = accuracy(train_cm, args.num_classes)
         train_f1 = f1_score(train_cm, args.num_classes)
@@ -139,23 +146,27 @@ def run(args, args_dict):
         # Validation
         with torch.no_grad():
             val_epoch_loss = 0
-            val_iter_loss = 0
+            val_iter_loss = [0]
             model.eval()
             pbar = tqdm(val_iter)
             for _,(val_img, val_target) in enumerate(pbar):
                 # val_img, val_target = val_img.to(device), val_target.to(device)
-                pbar.set_description(f"Val. Epoch:{epoch}/{args.epochs} | Loss:{val_iter_loss:4.3f}")
+                pbar.set_description(f"Val. Epoch:{epoch}/{args.epochs} | Loss:{sum(val_iter_loss):4.3f}")
                 val_pred = model(val_img)
-                val_iter_loss = criterion(val_pred, val_target).detach()
+                val_iter_loss = criterion(val_pred, val_target)
 
-                val_epoch_loss += val_iter_loss
+                val_epoch_loss += sum(val_iter_loss)
+        print(val_pred[:3])
+        print(metric.convert_pred(val_pred[:3]))
+        print(val_target[:3])
+
+
         val_epoch_loss = val_epoch_loss / len(val_iter)
 
-        val_cm = confusion_matrix(model, val_iter, device, args.num_classes)
+        val_cm = confusion_matrix(model, val_iter, device, args.num_classes,args.convert_pred)
 
         val_acc = accuracy(val_cm, args.num_classes)
         val_f1 = f1_score(val_cm, args.num_classes)
-
         print('time >> {:.4f}\tepoch >> {:04d}\ttrain_acc >> {:.4f}\ttrain_loss >> {:.4f}\ttrain_f1 >> {:.4f}\tval_acc >> {:.4f}\tval_loss >> {:.4f}\tval_f1 >> {:.4f}'
               .format(time.time()-start_time, epoch, train_acc, train_epoch_loss, train_f1, val_acc, val_epoch_loss, val_f1))
         
@@ -194,12 +205,13 @@ if __name__ == '__main__':
                  'csv_path' : './input/data/train/train_info.csv',
                  'save_path' : './checkpoint',
                  'use_wandb' : True,
-                 'wandb_exp_name' : 'input_size_resize_192_192_',
-                 'wandb_project_name' : 'Transform_Exp',
+                 'wandb_exp_name' : 'ensamble_model_',
+                 'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
-                 'num_classes' : 18,
+                 'num_classes' : 1024,
                  'model_summary' : True,
                  'batch_size' : 64,
+                 'use_sampler': True,
                  'learning_rate' : 1e-4,
                  'epochs' : 100,
                  'train_val_split': 0.8,
@@ -207,9 +219,10 @@ if __name__ == '__main__':
                  'save_epoch' : 10,
                  'load_model':'resnet50',
                  'transform_path' : './transform_list.json',
-                 'transform_list' : ['resize',  'totensor', 'normalize'],
+                 'transform_list' : ['resize',  'totensor', 'normalize','randomhorizontalflip','randomrotation'],
                  'not_freeze_layer' : ['layer4'],
-                 'weight_decay': 1e-2}
+                 'weight_decay': 1e-3,
+                 'convert_pred':True}
     wandb_data = wandb_info.get_wandb_info()
     args_dict.update(wandb_data)
     from collections import namedtuple

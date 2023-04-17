@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms 
 from torchsummary import summary
 import multiprocessing
-
+from tqdm import tqdm
 
 def run(args):
     csv_path = os.path.join(args.eval_path, 'info.csv')
@@ -31,12 +31,12 @@ def run(args):
                            batch_size=args.batch_size,
                            num_workers=multiprocessing.cpu_count() // 2)
     
-    if args.load_mode == 'state_dict':
+    if args.load_model == 'state_dict':
         print('Loading checkpoint ...')
         state_dict = torch.load(args.checkpoint)
 
         print('The model is ready ...')
-        model = Classifier(args.num_classes, load_model='resnet50').to(device)
+        model = Classifier(args).to(device)
         if args.model_summary:
             print(summary(model, (3, 256, 256)))
         model.load_state_dict(state_dict['model_state_dict'])
@@ -49,12 +49,18 @@ def run(args):
     print("Starting testing ...")
     model.eval()
     result = []
-    for test_img, _ in test_iter:
+    for test_img, _ in iter(tqdm(test_iter)):
         with torch.no_grad():
             test_img = test_img.to(device)
             test_pred = model(test_img)
-            _, max_pred = torch.max(test_pred, 1)
-            result.append(max_pred.item())
+            #_, max_pred = torch.max(test_pred, 1)
+            # print(test_pred)
+            test_pred = metric.convert_pred(test_pred)
+            # print(test_pred)
+            test_pred = metric.convert_class(test_pred)
+            # print(test_pred)
+            # raise NotImplemented
+            result.append(test_pred.item())
 
     print('Save CSV file')
     df = pd.read_csv(csv_path)
@@ -64,11 +70,11 @@ def run(args):
 
 if __name__ == '__main__':
     args_dict = {'eval_path' : './input/data/eval',
-                 'checkpoint' : './checkpoint/exp5_bs64_ep100_adam_lr0.0001_resnet50/epoch(49)_acc(0.975)_loss(0.093)_f1(0.975)_model.pt',
-                 'load_mode' : 'model',
-                 'num_classes' : 18,
+                 'checkpoint' : '/opt/ml/level1_imageclassification-cv-04/checkpoint/ensamble_model__bs64_ep100_adamw_lr0.0001_resnet50/epoch(89)_acc(0.010)_loss(248.692)_f1(0.001)_state_dict.pt',
+                 'load_model' : 'state_dict',
+                 'num_classes' : 1024,
                  'batch_size' : 1,
-                 'model_summary' : True}
+                 'model_summary' : False}
     
     from collections import namedtuple
     Args = namedtuple('Args', args_dict.keys())

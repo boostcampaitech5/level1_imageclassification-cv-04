@@ -20,17 +20,26 @@ class ClassificationDataset(Dataset):
 
 
     def __getitem__(self, idx):
+        image_name = self.df.iloc[idx].ImageID
+        y=0
         if self.train:
             img = Image.open(self.df.iloc[idx].ImageID)
+            label = self.df.iloc[idx].ans
+            age = str(image_name).split('/')[-2].split('_')[-1]
+        #  print(age)
+            y = torch.zeros(3,dtype=torch.long)
+            y[2]=(label)//6
+            y[0]=label%6//3
+            y[1]=int(age)
+        #   print(image_name,y,label)
         else:
             img_path = os.path.join(self.eval_path, 'images', self.df.iloc[idx].ImageID)
             img = Image.open(img_path)
-        label = self.df.iloc[idx].ans
-
+        
         if self.transform:
             img = self.transform(img)
 
-        return img, torch.LongTensor([label]).squeeze()
+        return img, y
 
 
 if __name__ == '__main__':
