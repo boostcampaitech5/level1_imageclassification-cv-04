@@ -12,7 +12,7 @@ def confusion_matrix(model, data_iter, device, num_classes,convert=False):
                 #print(model_pred[0],y_target[0])
                 model_pred = convert_class(model_pred)
                 y_target = convert_class(y_target)
-           # print(model_pred,y_target)
+            #print(model_pred,y_target)
             for y_p, y_t in zip(model_pred, y_target):
                 if y_p.data == y_t.data:
                     cm[y_t][y_t] += 1
@@ -22,9 +22,9 @@ def confusion_matrix(model, data_iter, device, num_classes,convert=False):
     return cm
 def convert_pred(pred,convert=False):
     class_pred = pred[:,:2].argmax(dim=1)
-    mask_pred = pred[:5:].argmax(dim=1)
+    mask_pred = pred[:,5:].argmax(dim=1)
     age_pred = pred[:,2:5].argmax(dim=1)
-
+    #print(class_pred,mask_pred,age_pred)
 
     return torch.cat((class_pred.view(-1,1),age_pred.view(-1,1),mask_pred.view(-1,1)),dim=1).long()
 

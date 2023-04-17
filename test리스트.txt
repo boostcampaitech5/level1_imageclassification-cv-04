@@ -1,4 +1,4 @@
-test1
+dtest1
 classifier 단순 1차 레이어
 test2
 lr 0.001로 빠른 학습결과 확인하기
@@ -16,3 +16,10 @@ test1
 백본 resnet18로 변경
 test2
 백본의 avgpool출력에 batchnorm적용
+
+test2
+test3(id=1)
+모델의 age loss로 mse와 CE 결합해보기
+
+test4
+모델의 age_classification을 단순 onehot-방식으로 변경
