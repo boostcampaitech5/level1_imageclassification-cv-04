@@ -30,3 +30,7 @@ age_classification을 복원 및
 2. 모델의 y-age를 각 구간의 평균으로 이동 및 sampler 사용
 3. sampler false
 
+227~
+1.백본 resnet50
+2.60세이상 좀 더 먼 거리로
+3.CELoss weight추가
