@@ -15,6 +15,8 @@ import multiprocessing
 import sklearn
 import sys
 import wandb_info
+from model.model_finetune import fineTune
+
 from accelerate import Accelerator
 
 from tqdm import tqdm
@@ -78,7 +80,6 @@ def run(args, args_dict):
 
     print('The data loader is ready ...')
     train_sampler = weighted_sampler(dataset, train_idx, args.num_classes)
-    val_sampler = weighted_sampler(dataset,val_idx, args.num_classes)
     
     train_iter = DataLoader(train_set,
                             batch_size=args.batch_size,
@@ -90,11 +91,13 @@ def run(args, args_dict):
                           batch_size=args.batch_size,
                           drop_last=True,
                           num_workers=multiprocessing.cpu_count() // 2
-                          ,sampler = val_sampler
                           )
 
     print('The model is ready ...')
-    model = Classifier(args).to(device)
+    # model = Classifier(args).to(device)
+    
+    model = fineTune(models.resnet18(pretrained=True), 'resnet18', args.num_classes).to(device)
+    
     if args.model_summary:
         print(summary(model, (3, 256, 256)))
 
@@ -203,15 +206,15 @@ if __name__ == '__main__':
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 18,
                  'model_summary' : True,
-                 'batch_size' : 64,
+                 'batch_size' : 128,
                  'learning_rate' : 1e-4,
                  'epochs' : 100,
                  'train_val_split': 0.8,
                  'save_mode' : 'state_dict',
                  'save_epoch' : 10,
-                 'load_model':'resnet50',
+                 'load_model':'resnet18',
                  'transform_path' : './transform_list.json',
-                 'transform_list' : ['centercrop', 'resize' 'totensor', 'normalize'],
+                 'transform_list' : ['centercrop', 'resize','totensor', 'normalize'],
                  'not_freeze_layer' : ['layer4'],
                  'weight_decay': 1e-2}
     wandb_data = wandb_info.get_wandb_info()
