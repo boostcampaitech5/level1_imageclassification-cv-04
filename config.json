@@ -1,7 +1,7 @@
 {"seed" : 223,
                  "csv_path" : "./input/data/train/train_info.csv",
                  "save_path" : "./checkpoint",
-                 "use_wandb" : false,
+                 "use_wandb" : true,
                  "wandb_exp_name" : "ensamble_model_",
                  "wandb_project_name" : "Image_classification_mask",
                  "wandb_entity" : "connect-cv-04",

@@ -2,6 +2,7 @@ dataloader/__pycache__
 model/__pycache__
 data/
 __pycache__
+./wandb_info
 wandbAPI.json
 saved_model/
 wandb/
@@ -11,7 +12,8 @@ wandb.json
 .git
 eda/
 util
-./wandb.json
 config.json
+wandb_info/
 data.tar.gz
 checkpoint
+config.json
