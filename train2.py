@@ -62,8 +62,7 @@ def run(args, args_dict):
 
     print(f'Transform\t>>\t{args.transform_list}')
     train_transform, config = get_transform(args)
-    val_transform = transforms.Compose([transforms.CenterCrop((256, 256)),
-                                        transforms.ToTensor(),
+    val_transform = transforms.Compose([transforms.ToTensor(),
                                         transforms.Normalize(mean=(0.485, 0.456, 0.406),
                                                              std=(0.229, 0.224, 0.225))])
     if args.use_wandb:
