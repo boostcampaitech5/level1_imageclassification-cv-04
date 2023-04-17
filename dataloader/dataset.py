@@ -30,7 +30,14 @@ class ClassificationDataset(Dataset):
             y = torch.zeros(3,dtype=torch.long)
             y[2]=(label)//6
             y[0]=label%6//3
-            y[1]=int(age)
+            age = int(age)
+            if age<30:
+                y[1]=0
+            elif age<60:
+                y[1]=1
+            else:
+                y[1]=2
+            #y[1]=age
         #   print(image_name,y,label)
         else:
             img_path = os.path.join(self.eval_path, 'images', self.df.iloc[idx].ImageID)

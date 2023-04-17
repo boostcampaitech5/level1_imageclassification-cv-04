@@ -22,18 +22,19 @@ def confusion_matrix(model, data_iter, device, num_classes,convert=False):
     return cm
 def convert_pred(pred,convert=False):
     class_pred = pred[:,:2].argmax(dim=1)
-    mask_pred = pred[:,3:].argmax(dim=1)
+    mask_pred = pred[:5:].argmax(dim=1)
+    age_pred = pred[:,2:5].argmax(dim=1)
 
 
-    return torch.cat((class_pred.view(-1,1),pred[:,2:3],mask_pred.view(-1,1)),dim=1).long()
+    return torch.cat((class_pred.view(-1,1),age_pred.view(-1,1),mask_pred.view(-1,1)),dim=1).long()
 
 def convert_class(logit):
-    bucket = torch.Tensor([30,60]).cuda()
-    age_pred = torch.bucketize(logit[:,1],bucket,right=True)
+    # bucket = torch.Tensor([30,60]).cuda()
+    # age_pred = torch.bucketize(logit[:,1],bucket,right=True)
     classes = torch.zeros(len(logit),dtype=torch.long).cuda()
     classes += 6*logit[:,2]
     classes += 3*logit[:,0]
-    classes += age_pred
+    classes += logit[:,1]
     return classes
     
 

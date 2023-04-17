@@ -20,6 +20,7 @@ import wandb_info
 from accelerate import Accelerator
 
 from tqdm import tqdm
+import argparse
 
 def torch_seed(random_seed):
     torch.manual_seed(random_seed)
@@ -201,28 +202,15 @@ def run(args, args_dict):
 
 
 if __name__ == '__main__':
-    args_dict = {'seed' : 223,
-                 'csv_path' : './input/data/train/train_info.csv',
-                 'save_path' : './checkpoint',
-                 'use_wandb' : True,
-                 'wandb_exp_name' : 'ensamble_model_',
-                 'wandb_project_name' : 'Image_classification_mask',
-                 'wandb_entity' : 'connect-cv-04',
-                 'num_classes' : 1024,
-                 'model_summary' : True,
-                 'batch_size' : 64,
-                 'use_sampler': True,
-                 'learning_rate' : 1e-4,
-                 'epochs' : 100,
-                 'train_val_split': 0.8,
-                 'save_mode' : 'state_dict',
-                 'save_epoch' : 10,
-                 'load_model':'resnet50',
-                 'transform_path' : './transform_list.json',
-                 'transform_list' : ['resize',  'totensor', 'normalize','randomhorizontalflip','randomrotation'],
-                 'not_freeze_layer' : ['layer4'],
-                 'weight_decay': 1e-3,
-                 'convert_pred':True}
+    parser = argparse.ArgumentParser(
+        prog = "Trainer.py",
+        description = "Auto Train program",
+        epilog=""
+    )
+    parser.add_argument('-c','--config', type=str, default='config.json')
+
+    args = parser.parse_args()
+    args_dict = read_json(args.config)
     wandb_data = wandb_info.get_wandb_info()
     args_dict.update(wandb_data)
     from collections import namedtuple

@@ -16,6 +16,8 @@ class Classifier(nn.Module):
         for p in self.backbone.parameters():
             p.requires_grad = False
         self.backbone = nn.Sequential(*list(self.backbone.children())[:-1])
+
+            
         self.batch = nn.BatchNorm1d(512)
 
         self.gender_fc = nn.Sequential(
@@ -29,7 +31,7 @@ class Classifier(nn.Module):
             nn.Linear(512,256),
             nn.Sigmoid(),
             nn.Dropout(0.2),
-            nn.Linear(256,1)
+            nn.Linear(256,3)
         )
         self.mask_fc = nn.Sequential(
             nn.Linear(512,256),
