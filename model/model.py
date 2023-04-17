@@ -29,9 +29,10 @@ class Classifier(nn.Module):
         )
         self.age_fc = nn.Sequential(
             nn.Linear(2048,1024),
-            nn.Sigmoid(),
+            nn.ReLU(),
+            nn.BatchNorm1d(1024),
             nn.Dropout(0.2),
-            nn.Linear(1024,1)
+            nn.Linear(1024,3)
         )
         self.mask_fc = nn.Sequential(
             nn.Linear(2048,1024),
