@@ -8,7 +8,7 @@
                  "num_classes" : 1024,
                  "model_summary" : false,
                  "batch_size" : 64,
-                 "use_sampler": false,
+                 "use_sampler": true,
                  "learning_rate" : 1e-3,
                  "epochs" : 100,
                  "train_val_split": 0.8,
