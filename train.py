@@ -125,6 +125,7 @@ def run(args, args_dict):
         train_iter_loss=[0]
         pbar = tqdm(train_iter)
         for _,(train_img, train_target) in enumerate(pbar):
+            torch.cuda.empty_cache()
             pbar.set_description(f"Train. Epoch:{epoch}/{args.epochs} | Loss:{sum(train_iter_loss):4.3f}")
             train_img, train_target = train_img.to(device), train_target.to(device)
             optimizer.zero_grad()
