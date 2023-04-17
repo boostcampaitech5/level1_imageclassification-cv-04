@@ -3,7 +3,7 @@ import torch
 def confusion_matrix(model, data_iter, device, num_classes,convert=False):
     with torch.no_grad():
         model.eval()
-        cm = torch.zeros((num_classes, num_classes), dtype=torch.long)
+        cm = torch.zeros((18, 18), dtype=torch.long)
         for data, target in data_iter:
             model_pred, y_target = model(data.to(device)), target.to(device)
             #_, y_pred = torch.max(model_pred.data, 1)
@@ -12,7 +12,7 @@ def confusion_matrix(model, data_iter, device, num_classes,convert=False):
                 #print(model_pred[0],y_target[0])
                 model_pred = convert_class(model_pred)
                 y_target = convert_class(y_target)
-            #print(model_pred,y_target)
+           # print(model_pred,y_target)
             for y_p, y_t in zip(model_pred, y_target):
                 if y_p.data == y_t.data:
                     cm[y_t][y_t] += 1
@@ -22,25 +22,24 @@ def confusion_matrix(model, data_iter, device, num_classes,convert=False):
     return cm
 def convert_pred(pred,convert=False):
     class_pred = pred[:,:2].argmax(dim=1)
-    mask_pred = pred[:,5:].argmax(dim=1)
-    age_pred = pred[:,2:5].argmax(dim=1)
-    #print(class_pred,mask_pred,age_pred)
+    mask_pred = pred[:,3:].argmax(dim=1)
 
-    return torch.cat((class_pred.view(-1,1),age_pred.view(-1,1),mask_pred.view(-1,1)),dim=1).long()
+
+    return torch.cat((class_pred.view(-1,1),pred[:,2:3],mask_pred.view(-1,1)),dim=1).long()
 
 def convert_class(logit):
-    # bucket = torch.Tensor([30,60]).cuda()
-    # age_pred = torch.bucketize(logit[:,1],bucket,right=True)
+    bucket = torch.Tensor([30,60]).cuda()
+    age_pred = torch.bucketize(logit[:,1],bucket,right=True)
     classes = torch.zeros(len(logit),dtype=torch.long).cuda()
     classes += 6*logit[:,2]
     classes += 3*logit[:,0]
-    classes += logit[:,1]
+    classes += age_pred
     return classes
     
 
 def accuracy(cm, num_classes):
     n_total, n_correct = torch.sum(cm), 0
-    for i in range(num_classes):
+    for i in range(18):
         n_correct += cm[i][i]
     acc = (n_correct/n_total)
 
@@ -49,31 +48,31 @@ def accuracy(cm, num_classes):
 
 def precision(cm, num_classes):
     predict_positive = torch.sum(cm, 0) # TP + FP
-    precision_val = torch.zeros(num_classes)
-    for i in range(num_classes):
+    precision_val = torch.zeros(18)
+    for i in range(18):
         val = cm[i][i] / predict_positive[i] # TP / (TP + FP)
         if not torch.isnan(val):
             precision_val[i] = val
-    precision_val = torch.sum(precision_val).item() / num_classes
+    precision_val = torch.sum(precision_val).item() / 18
 
     return precision_val
 
 
 def recall(cm, num_classes):
     actual_positive = torch.sum(cm, 1) # TP + FN
-    recall_val = torch.zeros(num_classes)
-    for i in range(num_classes):
+    recall_val = torch.zeros(18)
+    for i in range(18):
         val = cm[i][i] / actual_positive[i] # TP / (TP + FN)
         if not torch.isnan(val):
             recall_val[i] = val
-    recall_val = torch.sum(recall_val).item() / num_classes
+    recall_val = torch.sum(recall_val).item() / 18
 
     return recall_val
 
 
 def f1_score(cm, num_classes):
-    precision_val = precision(cm, num_classes)
-    recall_val = recall(cm, num_classes)
+    precision_val = precision(cm, 18)
+    recall_val = recall(cm, 18)
     if precision_val + recall_val == 0:
         return 0
     f1_score_val = 2 * ((precision_val * recall_val) / (precision_val + recall_val))
