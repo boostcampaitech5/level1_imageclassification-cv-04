@@ -7,7 +7,7 @@
                  "wandb_entity" : "connect-cv-04",
                  "num_classes" : 1024,
                  "model_summary" : false,
-                 "batch_size" : 32,
+                 "batch_size" : 16,
                  "use_sampler": false,
                  "learning_rate" : 1e-4,
                  "epochs" : 150,

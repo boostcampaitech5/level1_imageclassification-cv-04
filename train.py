@@ -139,10 +139,7 @@ def run(args, args_dict):
             optimizer.step()
             #print(train_iter_loss,train_pred[:,2],train_target[:,1])
             train_epoch_loss += sum(train_iter_loss)
-            del train_img
-            del train_target
-            del train_pred
-            torch.cuda.empty_cache()
+
 
         train_epoch_loss = train_epoch_loss / len(train_iter)
 
