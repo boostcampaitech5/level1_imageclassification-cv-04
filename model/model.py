@@ -17,7 +17,9 @@ class Classifier(nn.Module):
             self.backbone3 = create_model('resnet50', pretrained=True)
         # for p in self.backbone.parameters():
         #     p.requires_grad = False
-        self.backbone = nn.Sequential(*list(self.backbone.children())[:-1])
+        self.backbone1 = nn.Sequential(*list(self.backbone1.children())[:-1])
+        self.backbone2 = nn.Sequential(*list(self.backbone2.children())[:-1])
+        self.backbone3 = nn.Sequential(*list(self.backbone3.children())[:-1])
 
             
         self.batch = nn.BatchNorm1d(2048)
