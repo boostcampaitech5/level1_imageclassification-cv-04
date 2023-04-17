@@ -90,13 +90,15 @@ def run(args, args_dict):
                             batch_size=args.batch_size,
                             drop_last=True,
                             num_workers=multiprocessing.cpu_count() // 2
-                            ,sampler = train_sampler
+                            ,sampler = train_sampler,
+                            shuffle = True
                             )   
     val_iter = DataLoader(val_set,
                           batch_size=args.batch_size,
                           drop_last=True,
                           num_workers=multiprocessing.cpu_count() // 2
                           ,sampler = val_sampler
+                          ,shuffle = True
                           )
 
     print('The model is ready ...')
@@ -187,17 +189,24 @@ def run(args, args_dict):
         fig = plot_confusion_matrix(val_cm, args.num_classes, normalize=True, save_path=None)
 
         if args.use_wandb:
-            wandb.log({'Train Acc': train_acc,
-                       'Train Loss': train_epoch_loss,
-                       'Train F1-Score': train_f1,
-                       'Val Acc': val_acc,
-                       'Val Loss': val_epoch_loss,
-                       'Val F1-Score': val_f1})
+            if (epoch+1) % args.save_epoch != 0:
+                wandb.log({'Train Acc': train_acc,
+                        'Train Loss': train_epoch_loss,
+                        'Train F1-Score': train_f1,
+                        'Val Acc': val_acc,
+                        'Val Loss': val_epoch_loss,
+                        'Val F1-Score': val_f1})
 
             if (epoch+1) % args.save_epoch == 0:
                 fig = plot_confusion_matrix(val_cm, args.num_classes, normalize=True, save_path=None)
 
-                wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")})
+                wandb.log({'Train Acc': train_acc,
+                        'Train Loss': train_epoch_loss,
+                        'Train F1-Score': train_f1,
+                        'Val Acc': val_acc,
+                        'Val Loss': val_epoch_loss,
+                        'Val F1-Score': val_f1,
+                        'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")})
                 # wandb.log({"Confusion Matrix Plot" : wandb.plot.confusion_matrix(probs=None,
                 #                                                             preds=pred_list, y_true=target_list,
                 #                                                             class_names=list(map(str,range(0, 18))))})
