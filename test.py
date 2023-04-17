@@ -70,7 +70,7 @@ def run(args):
 
 if __name__ == '__main__':
     args_dict = {'eval_path' : './input/data/eval',
-                 'checkpoint' : '/opt/ml/level1_imageclassification-cv-04/checkpoint/ensamble_model__bs64_ep100_adamw_lr0.0001_resnet50/epoch(89)_acc(0.010)_loss(248.692)_f1(0.001)_state_dict.pt',
+                 'checkpoint' : '/opt/ml/level1_imageclassification-cv-04/checkpoint/ensamble_model__bs64_ep100_adamw_lr0.001_resnet50/epoch(89)_acc(0.879)_loss(0.590)_f1(0.841)_state_dict.pt',
                  'load_model' : 'state_dict',
                  'num_classes' : 1024,
                  'batch_size' : 1,
