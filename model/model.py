@@ -12,41 +12,39 @@ class Classifier(nn.Module):
         self.load_model = args.load_model
         if self.load_model:
             # list_models('resnet*', pretrained=True)
-            self.backbone1 = create_model('resnet50', pretrained=True)
-            self.backbone2 = create_model('resnet50', pretrained=True)
-            self.backbone3 = create_model('resnet50', pretrained=True)
+            self.backbone1 = create_model('resnet18', pretrained=True)
+            self.backbone2 = create_model('resnet18', pretrained=True)
+            self.backbone3 = create_model('resnet18', pretrained=True)
         # for p in self.backbone.parameters():
         #     p.requires_grad = False
         self.backbone1 = nn.Sequential(*list(self.backbone1.children())[:-1])
         self.backbone2 = nn.Sequential(*list(self.backbone2.children())[:-1])
         self.backbone3 = nn.Sequential(*list(self.backbone3.children())[:-1])
 
-            
-        self.batch = nn.BatchNorm1d(2048)
 
         self.gender_fc = nn.Sequential(
-            nn.BatchNorm1d(2048),
-            nn.Linear(2048,1024),
+            nn.BatchNorm1d(512),
+            nn.Linear(512,256),
             nn.ReLU(),
-            nn.BatchNorm1d(1024),
+            nn.BatchNorm1d(256),
             nn.Dropout(0.2),
-            nn.Linear(1024,2)
+            nn.Linear(256,2)
         )
         self.age_fc = nn.Sequential(
-            nn.BatchNorm1d(2048),
-            nn.Linear(2048,1024),
+            nn.BatchNorm1d(512),
+            nn.Linear(512,256),
             nn.ReLU(),
-            nn.BatchNorm1d(1024),
+            nn.BatchNorm1d(256),
             nn.Dropout(0.2),
-            nn.Linear(1024,1)
+            nn.Linear(256,1)
         )
         self.mask_fc = nn.Sequential(
-            nn.BatchNorm1d(2048),
-            nn.Linear(2048,1024),
+            nn.BatchNorm1d(512),
+            nn.Linear(512,256),
             nn.ReLU(),
-            nn.BatchNorm1d(1024),
+            nn.BatchNorm1d(256),
             nn.Dropout(0.2),
-            nn.Linear(1024,3)
+            nn.Linear(256,3)
         )
         
     def forward(self, x):
