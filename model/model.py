@@ -12,15 +12,18 @@ class Classifier(nn.Module):
         self.load_model = args.load_model
         if self.load_model:
             # list_models('resnet*', pretrained=True)
-            self.backbone = create_model('resnet50', pretrained=True)
-        for p in self.backbone.parameters():
-            p.requires_grad = False
+            self.backbone1 = create_model('resnet50', pretrained=True)
+            self.backbone2 = create_model('resnet50', pretrained=True)
+            self.backbone3 = create_model('resnet50', pretrained=True)
+        # for p in self.backbone.parameters():
+        #     p.requires_grad = False
         self.backbone = nn.Sequential(*list(self.backbone.children())[:-1])
 
             
         self.batch = nn.BatchNorm1d(2048)
 
         self.gender_fc = nn.Sequential(
+            nn.BatchNorm1d(2048),
             nn.Linear(2048,1024),
             nn.ReLU(),
             nn.BatchNorm1d(1024),
@@ -28,13 +31,15 @@ class Classifier(nn.Module):
             nn.Linear(1024,2)
         )
         self.age_fc = nn.Sequential(
+            nn.BatchNorm1d(2048),
             nn.Linear(2048,1024),
             nn.ReLU(),
             nn.BatchNorm1d(1024),
             nn.Dropout(0.2),
-            nn.Linear(1024,3)
+            nn.Linear(1024,1)
         )
         self.mask_fc = nn.Sequential(
+            nn.BatchNorm1d(2048),
             nn.Linear(2048,1024),
             nn.ReLU(),
             nn.BatchNorm1d(1024),
@@ -44,11 +49,13 @@ class Classifier(nn.Module):
         
     def forward(self, x):
         if self.load_model:
-            x = self.backbone(x)
-        x=self.batch(x)
-        gender = self.gender_fc(x)
-        age = self.age_fc(x)
-        mask = self.mask_fc(x)
+            x1 = self.backbone1(x)
+            x2 = self.backbone2(x)
+            x3 = self.backbone3(x)
+       # x1=self.batch(x1)
+        gender = self.gender_fc(x1)
+        age = self.age_fc(x2)
+        mask = self.mask_fc(x3)
         logit = torch.cat((gender,age,mask),dim=1)
         return logit
 

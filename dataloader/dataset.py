@@ -32,14 +32,14 @@ class ClassificationDataset(Dataset):
             y[0]=label%6//3
             age = int(age)
             if age<30:
-                # y[1]=(15+age)//2
-                y[1]=0
+                y[1]=(15+age)//2
+                # y[1]=0
             elif age<60:
-                #y[1]=(45+age)//2
-                y[1]=1
+                y[1]=(45+age)//2
+                # y[1]=1
             else:
-                # y[1]=(90+age)//2
-                y[1]=2
+                y[1]=(90+age)//2
+                # y[1]=2
             
            #print(image_name,y,label)
         else:
