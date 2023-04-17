@@ -36,7 +36,7 @@ class ClassificationDataset(Dataset):
             elif age<60:
                 y[1]=(45+age)//2
             else:
-                y[1]=(75+age)//2
+                y[1]=(90+age)//2
             
            #print(image_name,y,label)
         else:
