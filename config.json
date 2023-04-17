@@ -1,7 +1,7 @@
 {"seed" : 223,
                  "csv_path" : "./input/data/train/train_info.csv",
                  "save_path" : "./checkpoint",
-                 "use_wandb" : false,
+                 "use_wandb" : true,
                  "wandb_exp_name" : "ensemble_model_",
                  "wandb_project_name" : "Image_classification_mask",
                  "wandb_entity" : "connect-cv-04",
@@ -16,7 +16,7 @@
                  "save_epoch" : 5,
                  "load_model":"resnet50",
                  "transform_path" : "./transform_list.json",
-                 "transform_list" : ["resize",  "totensor", "normalize","randomrotation"],
+                 "transform_list" : ["resize",  "totensor", "normalize"],
                  "not_freeze_layer" : ["layer4"],
                  "weight_decay": 1e-3,
                  "convert_pred":true}
