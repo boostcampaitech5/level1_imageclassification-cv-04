@@ -62,7 +62,7 @@ def run(args, args_dict):
 
     print(f'Transform\t>>\t{args.transform_list}')
     train_transform, config = get_transform(args)
-    val_transform = transforms.Compose([transforms.CenterCrop((256, 256)),
+    val_transform = transforms.Compose([transforms.Resize((128, 98)),
                                         transforms.ToTensor(),
                                         transforms.Normalize(mean=(0.485, 0.456, 0.406),
                                                              std=(0.229, 0.224, 0.225))])
@@ -80,13 +80,10 @@ def run(args, args_dict):
     print(f'The number of validation images\t>>\t{len(val_set)}')
 
     print('The data loader is ready ...')
-    train_sampler = weighted_sampler(train_set, args.num_classes)
-    
     train_iter = DataLoader(train_set,
                             batch_size=args.batch_size,
-                            drop_last=True,
                             num_workers=multiprocessing.cpu_count() // 2,
-                            sampler = train_sampler)   
+                            shuffle=True)   
     val_iter = DataLoader(val_set,
                           batch_size=args.batch_size,
                           num_workers=multiprocessing.cpu_count() // 2,
@@ -99,6 +96,9 @@ def run(args, args_dict):
 
     print('The optimizer is ready ...')
     optimizer = optim.Adam(params=model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
+
+    print('The learning rate is ready ...')
+    lr_scheduler = optim.lr_scheduler.StepLR(optimizer=optimizer, step_size =20, gamma=0.1, verbose=True)
 
     print('The loss function is ready ...')
     criterion = nn.CrossEntropyLoss()
@@ -131,6 +131,9 @@ def run(args, args_dict):
 
         train_acc = accuracy(train_cm, args.num_classes)
         train_f1 = f1_score(train_cm, args.num_classes)
+
+        if epoch >= 70:
+            lr_scheduler.step()
 
         # Validation
         with torch.no_grad():
@@ -175,23 +178,23 @@ def run(args, args_dict):
 
 if __name__ == '__main__':
     args_dict = {'seed' : 223,
-                 'csv_path' : '../input/data/train/train_info2.csv',
+                 'csv_path' : '../input/data/train/train_info3.csv',
                  'save_path' : './checkpoint',
                  'use_wandb' : True,
-                 'wandb_exp_name' : 'input_size_resize_128_98_val20fix',
+                 'wandb_exp_name' : 'train63val20fix_aug1_lrsch',
                  'wandb_project_name' : 'Transform_Exp',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 18,
                  'model_summary' : True,
                  'batch_size' : 64,
                  'learning_rate' : 1e-4,
-                 'epochs' : 100,
+                 'epochs' : 200,
                  'train_val_split': 0.8,
                  'save_mode' : 'state_dict',
                  'save_epoch' : 10,
                  'load_model':'resnet50',
                  'transform_path' : './transform_list.json',
-                 'transform_list' : ['resize', 'totensor', 'normalize'],
+                 'transform_list' : ['resize', 'randomrotation', 'totensor', 'normalize'],
                  'not_freeze_layer' : [],
                  'weight_decay': 1e-2}
     wandb_data = wandb_info.get_wandb_info()

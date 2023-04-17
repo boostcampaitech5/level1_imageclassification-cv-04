@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms 
 from torchsummary import summary
 import multiprocessing
-
+import sys
 
 def run(args):
     csv_path = os.path.join(args.eval_path, 'info.csv')
@@ -16,14 +16,14 @@ def run(args):
     print(f'The device is ready\t>>\t{device}')
 
     # Image size 조절과 tensor로만 만들어주면 됨(normalize까지는 해야 할 듯)
-    transform = transforms.Compose([transforms.Resize((256, 256)),
+    transform = transforms.Compose([transforms.Resize((128, 98)),
                                     transforms.ToTensor(),
                                     transforms.Normalize(mean=(0.485, 0.456, 0.406),
                                                          std=(0.229, 0.224, 0.225))])
 
     dataset = TestDataset(csv_path = csv_path,
-                                    transform=transform,
-                                    eval_path=args.eval_path)
+                          transform=transform,
+                          eval_path=args.eval_path)
     print(f'The number of testing images\t>>\t{len(dataset)}')
 
     test_iter = DataLoader(dataset,
@@ -35,7 +35,7 @@ def run(args):
         state_dict = torch.load(args.checkpoint)
 
         print('The model is ready ...')
-        model = Classifier(args.num_classes, load_model='resnet50').to(device)
+        model = Classifier(args).to(device)
         if args.model_summary:
             print(summary(model, (3, 256, 256)))
         model.load_state_dict(state_dict['model_state_dict'])
@@ -63,8 +63,9 @@ def run(args):
 
 if __name__ == '__main__':
     args_dict = {'eval_path' : '../input/data/eval',
-                 'checkpoint' : './checkpoint/exp5_bs64_ep100_adam_lr0.0001_resnet50/epoch(49)_acc(0.975)_loss(0.093)_f1(0.975)_model.pt',
-                 'load_mode' : 'model',
+                 'checkpoint' : './checkpoint/train500val20fix_aug1_bs64_ep200_adamw_lr0.0001_resnet50/epoch(79)_acc(0.908)_loss(0.316)_f1(0.911)_state_dict.pt',
+                 'load_mode' : 'state_dict',
+                 'load_model' : 'resnet50',
                  'num_classes' : 18,
                  'batch_size' : 1,
                  'model_summary' : True}

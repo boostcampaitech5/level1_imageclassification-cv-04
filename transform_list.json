@@ -8,12 +8,12 @@
 		"normalize_statistic": "imagenet"
 	},
 	"centercrop": {
-		"img_width": 256,
-		"img_height": 256
+		"img_width": 384,
+		"img_height": 384
 	},
 	"colorjitter": {
 		"brightness": 0,
-		"contrast": 0,
+		"contrast": [1.8, 2.0],
 		"saturation": 0,
 		"hue": 0
 	},
@@ -27,5 +27,10 @@
 		"kernel_size": 3,
 		"sigma_min": 0.1,
 		"sigma_max": 2.0
+	},
+	"randomaffine": {
+		"degrees":30,
+		"shear":[-10,10,-10,10],
+		"translate":[0.1, 0.1]
 	}
 }
