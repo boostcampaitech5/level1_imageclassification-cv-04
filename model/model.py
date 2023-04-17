@@ -12,33 +12,33 @@ class Classifier(nn.Module):
         self.load_model = args.load_model
         if self.load_model:
             # list_models('resnet*', pretrained=True)
-            self.backbone = create_model('resnet18', pretrained=True)
+            self.backbone = create_model('resnet50', pretrained=True)
         for p in self.backbone.parameters():
             p.requires_grad = False
         self.backbone = nn.Sequential(*list(self.backbone.children())[:-1])
 
             
-        self.batch = nn.BatchNorm1d(512)
+        self.batch = nn.BatchNorm1d(2048)
 
         self.gender_fc = nn.Sequential(
-            nn.Linear(512,256),
+            nn.Linear(2048,1024),
             nn.ReLU(),
-            nn.BatchNorm1d(256),
+            nn.BatchNorm1d(1024),
             nn.Dropout(0.2),
-            nn.Linear(256,2)
+            nn.Linear(1024,2)
         )
         self.age_fc = nn.Sequential(
-            nn.Linear(512,256),
+            nn.Linear(2048,1024),
             nn.Sigmoid(),
             nn.Dropout(0.2),
-            nn.Linear(256,1)
+            nn.Linear(1024,1)
         )
         self.mask_fc = nn.Sequential(
-            nn.Linear(512,256),
+            nn.Linear(2048,1024),
             nn.ReLU(),
-            nn.BatchNorm1d(256),
+            nn.BatchNorm1d(1024),
             nn.Dropout(0.2),
-            nn.Linear(256,3)
+            nn.Linear(1024,3)
         )
         
     def forward(self, x):
