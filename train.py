@@ -91,12 +91,14 @@ def run(args, args_dict):
                             drop_last=True,
                             num_workers=multiprocessing.cpu_count() // 2
                             ,sampler = train_sampler
+                            ,shuffle=True
                             )   
     val_iter = DataLoader(val_set,
                           batch_size=args.batch_size,
                           drop_last=True,
                           num_workers=multiprocessing.cpu_count() // 2
                           ,sampler = val_sampler
+                          ,shuffle=True
                           )
 
     print('The model is ready ...')
