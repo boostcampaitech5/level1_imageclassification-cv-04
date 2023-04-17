@@ -8,8 +8,8 @@
 		"normalize_statistic": "imagenet"
 	},
 	"centercrop": {
-		"img_width": 384,
-		"img_height": 384
+		"img_width": 256,
+		"img_height": 256
 	},
 	"colorjitter": {
 		"brightness": 0,
@@ -21,7 +21,7 @@
 		"flip_prob": 0.5
 	},
 	"randomrotation": {
-		"degrees": 30
+		"degrees": 20
 	},
 	"gaussianblur": {
 		"kernel_size": 3,

@@ -10,13 +10,13 @@ import multiprocessing
 
 def run(args):
     csv_path = os.path.join(args.eval_path, 'info.csv')
-    save_csv_path = os.path.join(args.eval_path, 'eval_info_exp5.csv')
+    save_csv_path = os.path.join(args.eval_path, 'eval_info_exp9_1.csv')
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(f'The device is ready\t>>\t{device}')
 
     # Image size 조절과 tensor로만 만들어주면 됨(normalize까지는 해야 할 듯)
-    transform = transforms.Compose([transforms.Resize((256, 256)),
+    transform = transforms.Compose([transforms.CenterCrop(384),
                                     transforms.ToTensor(),
                                     transforms.Normalize(mean=(0.485, 0.456, 0.406),
                                                          std=(0.229, 0.224, 0.225))])
@@ -64,8 +64,8 @@ def run(args):
 
 if __name__ == '__main__':
     args_dict = {'eval_path' : './input/data/eval',
-                 'checkpoint' : 'checkpoint/exp_bs64_ep100_adamw_lr0.0001_resnet50/epoch(99)_acc(0.977)_loss(0.063)_f1(0.977)_state_dict.pt',
-                 'load_model':'resnet50',
+                 'checkpoint' : './checkpoint/exp9_bs64_ep100_adamw_lr0.0001_resnetv2_50x1_bitm/epoch(79)_acc(0.995)_loss(0.036)_f1(0.992)_state_dict.pt',
+                 'load_model':'resnetv2_50x1_bitm',
                  'load_mode' : 'state_dict',
                  'num_classes' : 18,
                  'batch_size' : 1,
