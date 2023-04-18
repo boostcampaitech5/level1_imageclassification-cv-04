@@ -11,3 +11,4 @@ __pycache__
 /saved_model
 wandb_info/
 data.tar.gz
+/transform_exp
