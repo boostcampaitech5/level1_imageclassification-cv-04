@@ -72,122 +72,124 @@ def run(args, args_dict):
     val_transform = transforms.Compose([transforms.CenterCrop((384,384)),
                                         transforms.ToTensor(),
                                         transforms.Normalize(mean=(0.485, 0.456, 0.406),
-                                                             std=(0.229, 0.224, 0.225))])                            
+                                                             std=(0.229, 0.224, 0.225))])     
 
+    train_set = KFoldDataset(csv_path = args.csv_path,
+                             kfold = args.kfold,
+                             transform=train_transform,
+                             train=True)
+    val_set = KFoldDataset(csv_path = args.csv_path,
+                           kfold = args.kfold,
+                           transform=val_transform,
+                           train=False)           
+    
+    train_iter = DataLoader(train_set,
+                            batch_size=args.batch_size,
+                            num_workers=multiprocessing.cpu_count() // 2,
+                            shuffle=True)
+    val_iter = DataLoader(val_set,
+                            batch_size=args.batch_size,
+                            num_workers=multiprocessing.cpu_count() // 2,
+                            shuffle=True)
+        
     print('The model is ready ...')
     model = Classifier(args).to(device)
     
     if args.model_summary:
-        print(summary(model, (3, 256, 256)))
+        print(summary(model, (3, 384, 384)))
 
     print('The optimizer is ready ...')
     optimizer = optim.Adam(params=model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
     
     print('The learning scheduler is ready ...')
     if args.lr_scheduler == 'steplr':
-        lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
+        lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1, verbose=True)
     elif args.lr_scheduler == 'reduce_lr_on_plateau':
-        lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min')
+        lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', verbose=True)
+
+    print(f'The loss function({args.loss}) is ready ...')
+    train_cnt = train_set.df['ans'].value_counts().sort_index()
+    normedWeights = [1 - (x / sum(train_cnt)) for x in train_cnt]
+    normedWeights = torch.FloatTensor(normedWeights).to(device)
+    
+    if args.loss == "crossentropy":
+        criterion = nn.CrossEntropyLoss(normedWeights)
+    elif args.loss == "focalloss":
+        # criterion = FocalLoss(alpha=0.1, device = device)
+        criterion = FocalLoss()
+    elif args.loss == 'labelsmooting':
+        criterion = LabelSmoothingLoss(classes=args.num_classes, smoothing=0.0)
+    elif args.loss == 'F1Loss':
+        criterion = F1Loss(classes=args.num_classes, epsilon=1e-7)
 
     #Accelerator 적용
-    model, optimizer = accelerator.prepare(model, optimizer)
+    model, optimizer, train_iter, val_iter = accelerator.prepare(model, optimizer, train_iter, val_iter)
+    
+    print("Starting training ...")
+    for epoch in range(args.epochs):
+        start_time = time.time()
+        train_epoch_loss = 0
+        model.train()
+        train_iter_loss=0
+        for train_img, train_target in train_iter:
+            optimizer.zero_grad()
 
-    for fold in range(5):
-        print(f'KFold : {fold}')
-        train_set = KFoldDataset(args.csv_path, kfold=fold, train=True, transform=train_transform)
-        val_set = KFoldDataset(args.csv_path, kfold=fold, train=False, transform=val_transform)
-        train_iter = DataLoader(train_set,
-                                batch_size=args.batch_size,
-                                num_workers=multiprocessing.cpu_count() // 2,
-                                shuffle=True)
-        val_iter = DataLoader(val_set,
-                              batch_size=args.batch_size,
-                              num_workers=multiprocessing.cpu_count() // 2,
-                              shuffle=True)
+            train_pred = model(train_img)
+            train_iter_loss = criterion(train_pred, train_target)
+            accelerator.backward(train_iter_loss)
+            optimizer.step()
+
+            train_epoch_loss += train_iter_loss
+
+        train_loss = (train_epoch_loss / len(train_iter))
+
+        train_cm = confusion_matrix(model, train_iter, device, args.num_classes)
+
+        train_acc = accuracy(train_cm, args.num_classes)
+        train_f1 = f1_score(train_cm, args.num_classes)
+
+        # Validation
+        with torch.no_grad():
+            val_epoch_loss = 0
+            val_iter_loss = 0
+            model.eval()
+            for val_img, val_target in val_iter:
+                val_pred = model(val_img)
+                val_iter_loss = criterion(val_pred, val_target).detach()
+
+                val_epoch_loss += val_iter_loss
+        val_loss = (val_epoch_loss / len(val_iter))
+
+        val_cm = confusion_matrix(model, val_iter, device, args.num_classes)
+
+        val_acc = accuracy(val_cm, args.num_classes)
+        val_f1 = f1_score(val_cm, args.num_classes)
+
+        if args.lr_scheduler:
+            lr_scheduler.step(val_epoch_loss)
+
+        print('time >> {:.4f}\tepoch >> {:04d}\ttrain_acc >> {:.4f}\ttrain_loss >> {:.4f}\ttrain_f1 >> {:.4f}\tval_acc >> {:.4f}\tval_loss >> {:.4f}\tval_f1 >> {:.4f}'
+            .format(time.time()-start_time, epoch, train_acc, train_loss, train_f1, val_acc, val_loss, val_f1))
         
-        print('The loss function is ready ...')
-        train_cnt = train_set.df['ans'].value_counts().sort_index()
-        normedWeights = [1 - (x / sum(train_cnt)) for x in train_cnt]
-        normedWeights = torch.FloatTensor(normedWeights).to(device)
-        
-        if args.loss == "crossentropy":
-            criterion = nn.CrossEntropyLoss(normedWeights)
-        elif args.loss == "focalloss":
-            # criterion = FocalLoss(alpha=0.1, device = device)
-            criterion = FocalLoss(normedWeights)
-        elif args.loss == 'labelsmooting':
-            criterion = LabelSmoothingLoss(classes=args.num_classes, smoothing=0.0)
-        elif args.loss == 'F1Loss':
-            criterion = F1Loss(classes=args.num_classes, epsilon=1e-7)
+        if (epoch+1) % args.save_epoch == 0:
+            # 모델의 parameter들을 저장
+            torch.save({
+                'epoch': epoch,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                }, os.path.join(checkpoint_path, f'epoch({epoch})_acc({val_acc:.3f})_loss({val_loss:.3f})_f1({val_f1:.3f})_state_dict.pt'))
 
-        #Accelerator 적용
-        train_iter, val_iter = accelerator.prepare(train_iter, val_iter)
+        if args.use_wandb:
+            wandb.log({'Train Acc': train_acc,
+                    'Train Loss': train_loss,
+                    'Train F1-Score': train_f1,
+                    'Val Acc': val_acc,
+                    'Val Loss': val_loss,
+                    'Val F1-Score': val_f1})
 
-        print("Starting training ...")
-        for epoch in range(args.epochs):
-            start_time = time.time()
-            train_epoch_loss = 0
-            model.train()
-            train_iter_loss=0
-            for train_img, train_target in train_iter:
-                optimizer.zero_grad()
-
-                train_pred = model(train_img)
-                train_iter_loss = criterion(train_pred, train_target)
-                accelerator.backward(train_iter_loss)
-                optimizer.step()
-
-                train_epoch_loss += train_iter_loss
-
-            train_epoch_loss = train_epoch_loss / len(train_iter)
-
-            train_cm = confusion_matrix(model, train_iter, device, args.num_classes)
-
-            train_acc = accuracy(train_cm, args.num_classes)
-            train_f1 = f1_score(train_cm, args.num_classes)
-
-            # Validation
-            with torch.no_grad():
-                val_epoch_loss = 0
-                val_iter_loss = 0
-                model.eval()
-                for val_img, val_target in val_iter:
-                    val_pred = model(val_img)
-                    val_iter_loss = criterion(val_pred, val_target).detach()
-
-                    val_epoch_loss += val_iter_loss
-            val_epoch_loss = val_epoch_loss / len(val_iter)
-
-            val_cm = confusion_matrix(model, val_iter, device, args.num_classes)
-
-            val_acc = accuracy(val_cm, args.num_classes)
-            val_f1 = f1_score(val_cm, args.num_classes)
-
-            if args.lr_scheduler:
-                lr_scheduler.step(val_epoch_loss)
-            
-            print('time >> {:.4f}\tepoch >> {:04d}\ttrain_acc >> {:.4f}\ttrain_loss >> {:.4f}\ttrain_f1 >> {:.4f}\tval_acc >> {:.4f}\tval_loss >> {:.4f}\tval_f1 >> {:.4f}'
-                .format(time.time()-start_time, epoch, train_acc, train_epoch_loss, train_f1, val_acc, val_epoch_loss, val_f1))
-            
-            if (epoch+1) % args.save_epoch == 0:
-                # 모델의 parameter들을 저장
-                torch.save({
-                    'epoch': epoch,
-                    'model_state_dict': model.state_dict(),
-                    'optimizer_state_dict': optimizer.state_dict(),
-                    }, os.path.join(checkpoint_path, f'epoch({epoch})_acc({val_acc:.3f})_loss({val_epoch_loss:.3f})_f1({val_f1:.3f})_state_dict.pt'))
-
-            if args.use_wandb:
-                wandb.log({'Train Acc': train_acc,
-                        'Train Loss': train_epoch_loss,
-                        'Train F1-Score': train_f1,
-                        'Val Acc': val_acc,
-                        'Val Loss': val_epoch_loss,
-                        'Val F1-Score': val_f1})
-
-                if (epoch+1) % args.save_epoch == 0:
-                    fig = plot_confusion_matrix(val_cm, args.num_classes, normalize=True, save_path=None)
-                    wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")})
+        if (epoch+1) % args.save_epoch == 0:
+            fig = plot_confusion_matrix(val_cm, args.num_classes, normalize=True, save_path=None)
+            wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")})
 
 
 
@@ -198,24 +200,25 @@ if __name__ == '__main__':
                  'csv_path' : '../input/data/train/kfold.csv',
                  'save_path' : './checkpoint',
                  'use_wandb' : True,
-                 'wandb_exp_name' : 'kfold_focal_reducelr',
+                 'wandb_exp_name' : 'kfold0_focal_reducelr',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 18,
                  'model_summary' : True,
                  'batch_size' : 64,
                  'learning_rate' : 1e-4,
-                 'epochs' : 50,
+                 'epochs' : 100,
                 #  'train_val_split': 0.8,
                 #  'save_mode' : 'state_dict',
                  'save_epoch' : 10,
-                 'load_model':'resnet18',
+                 'load_model':'resnet50',
                  'loss' : "focalloss",
                  'lr_scheduler' : 'reduce_lr_on_plateau', # default lr_scheduler = ''
                  'transform_path' : './transform_list.json',
                  'transform_list' : ['centercrop',"randomrotation",'totensor', 'normalize'],
                 #  'not_freeze_layer' : ['layer4'],
-                 'weight_decay': 1e-2}
+                 'weight_decay': 1e-2,
+                 'kfold' : 0}
     wandb_data = wandb_info.get_wandb_info()
     args_dict.update(wandb_data)
     from collections import namedtuple

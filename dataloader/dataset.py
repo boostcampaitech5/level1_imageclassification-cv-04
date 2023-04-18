@@ -13,6 +13,8 @@ class ClassificationDataset(Dataset):
         self.transform = transform
         self.train = train
         self.eval_path = eval_path
+        self.labels = self.df['ans']
+        self.img_path = self.df['ImageID']
 
 
     def __len__(self):
@@ -21,11 +23,11 @@ class ClassificationDataset(Dataset):
 
     def __getitem__(self, idx):
         if self.train:
-            img = Image.open(self.df.iloc[idx].ImageID)
+            img = Image.open(self.img_path[idx])
         else:
-            img_path = os.path.join(self.eval_path, 'images', self.df.iloc[idx].ImageID)
+            img_path = os.path.join(self.eval_path, 'images', self.img_path[idx])
             img = Image.open(img_path)
-        label = self.df.iloc[idx].ans
+        label = self.labels[idx]
 
         if self.transform:
             img = self.transform(img)
