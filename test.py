@@ -66,7 +66,7 @@ def run(args):
 
 
 if __name__ == '__main__':
-    args_dict = {'eval_path' : './input/data/eval',
+    args_dict = {'eval_path' : '../input/data/eval',
                  'checkpoint' : './checkpoint/exp9_bs64_ep100_adamw_lr0.0001_resnetv2_50x1_bitm/epoch(79)_acc(0.995)_loss(0.036)_f1(0.992)_state_dict.pt',
                  'load_model':'resnetv2_50x1_bitm',
                  'load_mode' : 'state_dict',
