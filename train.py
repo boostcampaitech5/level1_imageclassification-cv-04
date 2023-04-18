@@ -127,8 +127,8 @@ def run(args, args_dict):
         train_epoch_loss = 0
         model.train()
         train_iter_loss=0
-        pbar = tqdm(train_iter)
-        for _,(train_img, train_target) in enumerate(pbar):
+        pbar_train = tqdm(train_iter)
+        for _,(train_img, train_target) in enumerate(pbar_train):
             pbar.set_description(f"Train. Epoch:{epoch}/{args.epochs} | Loss:{train_iter_loss:4.3f}")
             # train_img, train_target = train_img.to(device), train_target.to(device)
             optimizer.zero_grad()
@@ -140,6 +140,8 @@ def run(args, args_dict):
             optimizer.step()
 
             train_epoch_loss += train_iter_loss
+
+        pbar_train.close()
 
         train_epoch_loss = train_epoch_loss / len(train_iter)
 
@@ -153,14 +155,17 @@ def run(args, args_dict):
             val_epoch_loss = 0
             val_iter_loss = 0
             model.eval()
-            pbar = tqdm(val_iter)
-            for _,(val_img, val_target) in enumerate(pbar):
+            pbar_val = tqdm(val_iter)
+            for _,(val_img, val_target) in enumerate(pbar_val):
                 # val_img, val_target = val_img.to(device), val_target.to(device)
                 pbar.set_description(f"Val. Epoch:{epoch}/{args.epochs} | Loss:{val_iter_loss:4.3f}")
                 val_pred = model(val_img)
                 val_iter_loss = criterion(val_pred, val_target).detach()
 
                 val_epoch_loss += val_iter_loss
+
+            pbar_val.close()
+
         val_epoch_loss = val_epoch_loss / len(val_iter)
 
         val_cm = confusion_matrix(model, val_iter, device, args.num_classes)
