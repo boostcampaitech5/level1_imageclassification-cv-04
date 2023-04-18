@@ -135,10 +135,10 @@ if __name__ == '__main__':
     test_make_csv = False
     tSNE = False
     class_distribution = True
-    save_csv_path = './input/data/train/train_info.csv'
+    save_csv_path = '../input/data/train/train_info.csv'
 
     class cfg:
-        data_dir = './input/data/train'
+        data_dir = '../input/data/train'
         img_dir = f'{data_dir}/images'
         df_path = f'{data_dir}/train.csv'
 
@@ -478,7 +478,7 @@ if __name__ == '__main__':
         print(result_df['ans'].value_counts())
 
     if class_distribution:
-        info_df = pd.read_csv('./input/data/train/train_info.csv')
+        info_df = pd.read_csv('../input/data/train/train_info.csv')
         label = info_df['ans'].value_counts()
         label_dict = sorted(dict(label).items(), key=lambda x:x[0])
 

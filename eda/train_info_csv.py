@@ -5,7 +5,7 @@ from PIL import Image
 import os
 
 
-info_df = pd.read_csv('./input/data/train/train_info.csv')
+info_df = pd.read_csv('../input/data/train/train_info.csv')
 
 fig, axes = plt.subplots(2, 3, figsize=(12,8))
 
