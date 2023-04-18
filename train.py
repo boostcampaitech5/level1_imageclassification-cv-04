@@ -48,7 +48,7 @@ def run(args, args_dict):
 
     if args.use_wandb:
         print('Initialize WandB ...')
-        wandb.init(name = f'{args.wandb_exp_name}_{args.exp_num}_bs{args.batch_size}_ep{args.epochs}_focalloss_lr{args.learning_rate}_{args.load_model}.{args.user_name}',
+        wandb.init(name = f'{args.wandb_exp_name}_{args.exp_num}_bs{args.batch_size}_ep{args.epochs}_{args.loss}_lr{args.learning_rate}_{args.load_model}.{args.user_name}',
                    project = args.wandb_project_name,
                    entity = args.wandb_entity,
                    config = args_dict)
@@ -80,13 +80,12 @@ def run(args, args_dict):
 
 
     print('The data loader is ready ...')
-    train_sampler = weighted_sampler(dataset, train_idx, args.num_classes)
-    
+
     train_iter = DataLoader(train_set,
                             batch_size=args.batch_size,
                             drop_last=True,
-                            num_workers=multiprocessing.cpu_count() // 2
-                            ,sampler = train_sampler
+                            num_workers=multiprocessing.cpu_count() // 2,
+                            shuffle=True,
                             )   
     val_iter = DataLoader(val_set,
                           batch_size=args.batch_size,
@@ -97,15 +96,14 @@ def run(args, args_dict):
     print('The model is ready ...')
     model = Classifier(args).to(device)
     
-    # model = fineTune(models.resnet18(pretrained=True), 'resnet18', args.num_classes).to(device)
-    
     if args.model_summary:
         print(summary(model, (3, 256, 256)))
 
     print('The optimizer is ready ...')
     optimizer = optim.Adam(params=model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
-
-    lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
+    
+    if args.lr_schduler:
+        lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
     
     print('The loss function is ready ...')
     
@@ -113,8 +111,10 @@ def run(args, args_dict):
     normedWeights = [1 - (x / sum(train_cnt)) for x in train_cnt]
     normedWeights = torch.FloatTensor(normedWeights).to(device)
     
-    # criterion = nn.CrossEntropyLoss()
-    criterion = FocalLoss(gamma = 0)
+    if args.loss == "crossentropy":
+        criterion = nn.CrossEntropyLoss(normedWeights)
+    elif args.loss == "focalloss":
+        criterion = FocalLoss(alpha=0.1, device = device)
     
     #Accelerator 적용
     model, optimizer, train_iter, val_iter = accelerator.prepare(
@@ -168,7 +168,8 @@ def run(args, args_dict):
         val_acc = accuracy(val_cm, args.num_classes)
         val_f1 = f1_score(val_cm, args.num_classes)
 
-        lr_scheduler.step()
+        if args.lr_schduler:
+            lr_scheduler.step()
         
         print('time >> {:.4f}\tepoch >> {:04d}\ttrain_acc >> {:.4f}\ttrain_loss >> {:.4f}\ttrain_f1 >> {:.4f}\tval_acc >> {:.4f}\tval_loss >> {:.4f}\tval_f1 >> {:.4f}'
               .format(time.time()-start_time, epoch, train_acc, train_epoch_loss, train_f1, val_acc, val_epoch_loss, val_f1))
@@ -208,7 +209,7 @@ if __name__ == '__main__':
     args_dict = {'seed' : 223,
                  'csv_path' : './input/data/train/train_info.csv',
                  'save_path' : './checkpoint',
-                 'use_wandb' : True,
+                 'use_wandb' : False,
                  'wandb_exp_name' : 'exp',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
@@ -221,6 +222,8 @@ if __name__ == '__main__':
                  'save_mode' : 'state_dict',
                  'save_epoch' : 10,
                  'load_model':'resnet18',
+                 'loss' : "focalloss",
+                 'lr_schduler' : False,
                  'transform_path' : './transform_list.json',
                  'transform_list' : ['centercrop',"randomrotation",'totensor', 'normalize'],
                  'not_freeze_layer' : ['layer4'],
