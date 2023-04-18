@@ -2,7 +2,7 @@ import os
 import cv2
 
 
-image_path = './input/data/eval/images'
+image_path = '../input/data/eval/images'
 
 image_list = os.listdir(image_path)
 

@@ -11,7 +11,7 @@ from utils.sampler import *
 def split_test():
     transform = transforms.Compose([transforms.ToTensor()])
 
-    dataset = ClassificationDataset(csv_path = './input/data/train/train_info.csv',
+    dataset = ClassificationDataset(csv_path = '../input/data/train/train_info.csv',
                                     transform=transform)
     print('-'*10)
     print(dataset.df.columns)
@@ -38,7 +38,7 @@ def split_test():
 def w_sampler_test():
     transform = transforms.Compose([transforms.ToTensor()])
 
-    dataset = ClassificationDataset(csv_path = './input/data/train/train_info.csv',
+    dataset = ClassificationDataset(csv_path = '../input/data/train/train_info.csv',
                                     transform=transform)
     print('-'*10)
     print(dataset.df.columns)
