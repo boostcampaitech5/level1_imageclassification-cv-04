@@ -31,6 +31,32 @@ class ClassificationDataset(Dataset):
             img = self.transform(img)
 
         return img, torch.LongTensor([label]).squeeze()
+    
+
+class KFoldDataset(Dataset):
+    """Data loader를 만들기 위한 base dataset class"""
+
+    def __init__(self, csv_path, kfold=-1, train=True, transform=None):
+        df = pd.read_csv(csv_path)
+        if train:
+            self.df = df[df['fold'] != kfold]
+        else:
+            self.df = df[df['fold']==kfold]
+        self.transform = transform
+
+
+    def __len__(self):
+        return len(self.df)
+
+
+    def __getitem__(self, idx):
+        img = Image.open(self.df.iloc[idx].ImageID)
+        label = self.df.iloc[idx].ans
+
+        if self.transform:
+            img = self.transform(img)
+
+        return img, torch.LongTensor([label]).squeeze()
 
 
 if __name__ == '__main__':

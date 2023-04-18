@@ -134,21 +134,22 @@ if __name__ == '__main__':
     make_csv = False
     test_make_csv = False
     tSNE = False
-    class_distribution = True
-    save_csv_path = './input/data/train/train_info.csv'
+    class_distribution = False
+    kfold_csv = True
+    # save_csv_path = './input/data/train/train_info.csv'
 
-    class cfg:
-        data_dir = './input/data/train'
-        img_dir = f'{data_dir}/images'
-        df_path = f'{data_dir}/train.csv'
+    # class cfg:
+    #     data_dir = './input/data/train'
+    #     img_dir = f'{data_dir}/images'
+    #     df_path = f'{data_dir}/train.csv'
 
-    num2class = ['incorrect_mask', 'mask1', 'mask2', 'mask3',
-                 'mask4', 'mask5', 'normal']
-    class2num = {k: v for v, k in enumerate(num2class)}
+    # num2class = ['incorrect_mask', 'mask1', 'mask2', 'mask3',
+    #              'mask4', 'mask5', 'normal']
+    # class2num = {k: v for v, k in enumerate(num2class)}
 
-    df = pd.read_csv(cfg.df_path)
+    # df = pd.read_csv(cfg.df_path)
 
-    print(df.head())
+    # print(df.head())
     
     if stats:
         img_info = get_img_stats(cfg.img_dir, df.path.values)
@@ -493,3 +494,30 @@ if __name__ == '__main__':
                 )
         plt.tight_layout()
         plt.savefig(os.path.join(save_path, 'train_info_ans.png'))
+
+    if kfold_csv:
+        from sklearn.model_selection import KFold, StratifiedKFold
+        import sklearn
+
+        df = pd.read_csv('../input/data/train/train_info.csv')
+        np.random.seed(223)
+        new_df = pd.DataFrame(columns=['ImageID', 'ans', 'fold'])
+        kfold = 5
+        for class_num in range(0, 18):
+            class_df = df[df['ans']==class_num]
+            shuffle_df = sklearn.utils.shuffle(class_df, random_state=223)
+            last_fold = 0
+            for fold in range(kfold-1):
+                length = len(shuffle_df)//5
+                last_fold = (fold+1)*length
+                train_df = shuffle_df[fold*length:(fold+1)*length].reset_index(drop=True)
+                train_df['fold'] = fold
+                new_df = pd.concat([new_df, train_df], ignore_index=True)
+
+            train_df = shuffle_df[last_fold:].reset_index(drop=True)
+            train_df['fold'] = kfold-1
+            new_df = pd.concat([new_df, train_df], ignore_index=True)
+
+        new_df = sklearn.utils.shuffle(new_df, random_state=223)
+        
+        new_df.to_csv('../input/data/train/kfold.csv', index=False)
