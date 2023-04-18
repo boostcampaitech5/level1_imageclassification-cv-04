@@ -135,11 +135,14 @@ if __name__ == '__main__':
     test_make_csv = False
     tSNE = False
     class_distribution = False
-    kfold_csv = True
+    kfold_csv = False
+    make_csv2 = False
+    make_csv4 = False
+    kfold_csv4 = False
     # save_csv_path = './input/data/train/train_info.csv'
 
     # class cfg:
-    #     data_dir = './input/data/train'
+    #     data_dir = '../input/data/train'
     #     img_dir = f'{data_dir}/images'
     #     df_path = f'{data_dir}/train.csv'
 
@@ -499,7 +502,7 @@ if __name__ == '__main__':
         from sklearn.model_selection import KFold, StratifiedKFold
         import sklearn
 
-        df = pd.read_csv('../input/data/train/train_info.csv')
+        df = pd.read_csv('../input/data/train/train_info3.csv')
         np.random.seed(223)
         new_df = pd.DataFrame(columns=['ImageID', 'ans', 'fold'])
         kfold = 5
@@ -520,4 +523,190 @@ if __name__ == '__main__':
 
         new_df = sklearn.utils.shuffle(new_df, random_state=223)
         
-        new_df.to_csv('../input/data/train/kfold.csv', index=False)
+        new_df.to_csv('../input/data/train/kfold3.csv', index=False)
+
+    if make_csv2:
+        class cfg:
+            data_dir = '../input/data/train'
+            img_dir = f'{data_dir}/images'
+            df_path = f'{data_dir}/train.csv'
+
+        df = pd.read_csv(cfg.df_path)
+        data = []
+        num2class = ['incorrect_mask', 'mask1', 'mask2', 'mask3',
+                    'mask4', 'mask5', 'normal']
+        np.random.seed(223)
+
+        for idx in tqdm(range(len(df))):
+            img_id = df.iloc[idx].path
+            gen = df.iloc[idx].gender
+            age = df.iloc[idx].age
+            mask_random = np.random.randint(1, 6)
+            if age < 60:
+                choice_class = [num2class[0], num2class[mask_random], num2class[-1]]
+            else:
+                choice_class = num2class
+
+            exts = get_ext(cfg.img_dir, img_id)
+            for class_name in choice_class:
+                ans = 0
+                for ext in exts:
+                    try:
+                        img_path = os.path.join(cfg.img_dir, img_id, class_name + ext)
+                        img = np.array(Image.open(img_path))
+                        break
+                    except:
+                        continue
+                if class_name == 'incorrect_mask':
+                    if gen == 'male':
+                        if age < 30: ans = 6
+                        elif age >= 60: ans = 8
+                        else: ans = 7
+                    else:
+                        if age < 30: ans = 9
+                        elif age >= 60: ans = 11
+                        else: ans = 10
+                elif class_name == 'normal':
+                    if gen == 'male':
+                        if age < 30: ans = 12
+                        elif age >= 60: ans = 14
+                        else: ans = 13
+                    else:
+                        if age < 30: ans = 15
+                        elif age >= 60: ans = 17
+                        else: ans = 16
+                else:
+                    if gen == 'male':
+                        if age < 30: ans = 0
+                        elif age >= 60: ans = 2
+                        else: ans = 1
+                    else:
+                        if age < 30: ans = 3
+                        elif age >= 60: ans = 5
+                        else: ans = 4
+                data.append([img_path, ans])
+
+        result_df = pd.DataFrame(data, columns=['ImageID', 'ans'])
+        result_df.to_csv('./train_info3.csv', index=False)
+
+    # info_df = pd.read_csv('./train_info3.csv')
+    # label = info_df['ans'].value_counts()
+    # label_dict = sorted(dict(label).items(), key=lambda x:x[0])
+
+    # x = [str(key) for key, val in label_dict]
+    # y = [val for key, val in label_dict]
+    # colors = ['#87CEFA'] * 18
+    # plt.bar(x, y, color=colors)
+    # for idx, val in enumerate(y):
+    #     plt.text(x=idx, y=val, s=val,
+    #                 va='bottom', ha='center',
+    #                 fontsize=11, fontweight='semibold'
+    #         )
+    # plt.tight_layout()
+    # plt.savefig('train_info3.png')
+
+    if make_csv4:
+        class cfg:
+            data_dir = '../input/data/train'
+            img_dir = f'{data_dir}/images'
+            df_path = f'{data_dir}/train.csv'
+
+        df = pd.read_csv(cfg.df_path)
+        data = []
+        num2class = ['incorrect_mask', 'mask1', 'mask2', 'mask3',
+                    'mask4', 'mask5', 'normal']
+        np.random.seed(223)
+
+        for idx in tqdm(range(len(df))):
+            img_id = df.iloc[idx].path
+            gen = df.iloc[idx].gender
+            age = df.iloc[idx].age
+            mask_random = np.random.randint(1, 6)
+            if age < 60:
+                choice_class = [num2class[0], num2class[mask_random], num2class[-1]]
+            else:
+                choice_class = num2class
+
+            exts = get_ext(cfg.img_dir, img_id)
+            for class_name in choice_class:
+                ans = 0
+                for ext in exts:
+                    try:
+                        img_path = os.path.join(cfg.img_dir, img_id, class_name + ext)
+                        img = np.array(Image.open(img_path))
+                        break
+                    except:
+                        continue
+                if class_name == 'incorrect_mask':
+                    if gen == 'male':
+                        if age < 30: ans = 6
+                        elif age >= 60: ans = 8
+                        else: ans = 7
+                    else:
+                        if age < 30: ans = 9
+                        elif age >= 60: ans = 11
+                        else: ans = 10
+                elif class_name == 'normal':
+                    if gen == 'male':
+                        if age < 30: ans = 12
+                        elif age >= 60: ans = 14
+                        else: ans = 13
+                    else:
+                        if age < 30: ans = 15
+                        elif age >= 60: ans = 17
+                        else: ans = 16
+                else:
+                    if gen == 'male':
+                        if age < 30: ans = 0
+                        elif age >= 60: ans = 2
+                        else: ans = 1
+                    else:
+                        if age < 30: ans = 3
+                        elif age >= 60: ans = 5
+                        else: ans = 4
+                data.append([img_path, ans, idx])
+
+        result_df = pd.DataFrame(data, columns=['ImageID', 'ans', 'HumanID'])
+        result_df.to_csv('./train_info4.csv', index=False)
+
+    if kfold_csv4:
+        from sklearn.model_selection import KFold, StratifiedKFold
+        import sklearn
+
+        df = pd.read_csv('../input/data/train/train_info4.csv')
+        df = sklearn.utils.shuffle(df, random_state=223)
+        
+        np.random.seed(223)
+        length = df['ans'].value_counts().sort_index().values
+        kfold = [[[] for _ in range(5)] for _ in range(18)]
+        kfold_fold = [[0 for _ in range(5)] for _ in range(18)]
+        order = np.array([0]*18)
+        max_fold = np.round(np.array(length) / 5).astype(np.int)
+
+        for key, group in df.groupby(['HumanID']):
+            fold = max(order[group['ans'].values])
+            for i in range(len(group)):
+                img_path = group.iloc[i].ImageID
+                ans = group.iloc[i].ans
+                id_ = group.iloc[i].HumanID
+                kfold[ans][fold].append([img_path, ans, id_, fold])
+                kfold_fold[ans][fold] += 1
+                if order[ans] < 4 and kfold_fold[ans][fold] == max_fold[ans]:
+                    order[ans] += 1
+        total_list = []
+        for fold in kfold:
+            for i in range(5):
+                for j in range(len(fold[i])):
+                    total_list.append(fold[i][j])
+
+        new_df = pd.DataFrame(data=total_list,columns=['ImageID', 'ans', 'HumanID', 'fold'])
+        new_df = sklearn.utils.shuffle(new_df, random_state=223)
+
+        new_df.to_csv('../input/data/train/kfold4.csv', index=False)
+
+
+    df = pd.read_csv('../input/data/train/kfold4.csv')
+    print(df.head())
+    
+    for i in range(5):
+        print(df[df['fold']==i]['ans'].value_counts().sort_index().values)

@@ -10,7 +10,7 @@ import multiprocessing
 
 def run(args):
     csv_path = os.path.join(args.eval_path, 'info.csv')
-    save_csv_path = os.path.join(args.eval_path, 'eval_info_exp9_1.csv')
+    save_csv_path = 'eval_info.csv'
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(f'The device is ready\t>>\t{device}')
@@ -31,20 +31,14 @@ def run(args):
                            batch_size=args.batch_size,
                            num_workers=multiprocessing.cpu_count() // 2)
     
-    if args.load_mode == 'state_dict':
-        print('Loading checkpoint ...')
-        state_dict = torch.load(args.checkpoint)
+    print('Loading checkpoint ...')
+    state_dict = torch.load(args.checkpoint)
 
-        print('The model is ready ...')
-        model = Classifier(args).to(device)
-        if args.model_summary:
-            print(summary(model, (3, 256, 256)))
-        model.load_state_dict(state_dict['model_state_dict'])
-    else:
-        print('The model is ready ...')
-        model = torch.load(args.checkpoint).to(device)
-        if args.model_summary:
-            print(summary(model, (3, 256, 256)))
+    print('The model is ready ...')
+    model = Classifier(args).to(device)
+    if args.model_summary:
+        print(summary(model, (3, 384, 384)))
+    model.load_state_dict(state_dict['model_state_dict'])
 
     print("Starting testing ...")
     model.eval()
@@ -63,9 +57,9 @@ def run(args):
 
 
 if __name__ == '__main__':
-    args_dict = {'eval_path' : './input/data/eval',
-                 'checkpoint' : './checkpoint/exp9_bs64_ep100_adamw_lr0.0001_resnetv2_50x1_bitm/epoch(79)_acc(0.995)_loss(0.036)_f1(0.992)_state_dict.pt',
-                 'load_model':'resnetv2_50x1_bitm',
+    args_dict = {'eval_path' : '../input/data/eval',
+                 'checkpoint' : './checkpoint/kfold0_focal_reducelr14_bs64_ep100_adamw_lr0.0001_resnet50/epoch(39)_acc(0.983)_loss(0.029)_f1(0.962)_state_dict.pt',
+                 'load_model':'resnet50',
                  'load_mode' : 'state_dict',
                  'num_classes' : 18,
                  'batch_size' : 1,

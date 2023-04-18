@@ -70,6 +70,7 @@ def run(args, args_dict):
         wandb.config.update(config)
 
     val_transform = transforms.Compose([transforms.CenterCrop((384,384)),
+                                        transforms.Resize((224,224)),
                                         transforms.ToTensor(),
                                         transforms.Normalize(mean=(0.485, 0.456, 0.406),
                                                              std=(0.229, 0.224, 0.225))])     
@@ -100,12 +101,12 @@ def run(args, args_dict):
 
     print('The optimizer is ready ...')
     optimizer = optim.Adam(params=model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
-    
+
     print('The learning scheduler is ready ...')
     if args.lr_scheduler == 'steplr':
         lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1, verbose=True)
     elif args.lr_scheduler == 'reduce_lr_on_plateau':
-        lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', verbose=True)
+        lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=5, verbose=True)
 
     print(f'The loss function({args.loss}) is ready ...')
     train_cnt = train_set.df['ans'].value_counts().sort_index()
@@ -191,16 +192,24 @@ def run(args, args_dict):
             fig = plot_confusion_matrix(val_cm, args.num_classes, normalize=True, save_path=None)
             wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")})
 
-
+        if optimizer.param_groups[0]["lr"] < 1e-7:
+            print(f'Early Stopping\t>>\tepoch : {epoch} lr : {optimizer.param_groups[0]["lr"]}')
+            if (epoch+1) % args.save_epoch != 0:
+                torch.save({
+                    'epoch': epoch,
+                    'model_state_dict': model.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    }, os.path.join(checkpoint_path, f'epoch({epoch})_acc({val_acc:.3f})_loss({val_loss:.3f})_f1({val_f1:.3f})_state_dict.pt'))
+            break
 
 
 if __name__ == '__main__':
     args_dict = {'seed' : 223,
                 #  'csv_path' : '../input/data/train/train_info.csv',
-                 'csv_path' : '../input/data/train/kfold.csv',
+                 'csv_path' : '../input/data/train/kfold4.csv',
                  'save_path' : './checkpoint',
                  'use_wandb' : True,
-                 'wandb_exp_name' : 'kfold0_focal_reducelr',
+                 'wandb_exp_name' : 'kfold4_1_focal_reducelr',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 18,
@@ -215,10 +224,10 @@ if __name__ == '__main__':
                  'loss' : "focalloss",
                  'lr_scheduler' : 'reduce_lr_on_plateau', # default lr_scheduler = ''
                  'transform_path' : './transform_list.json',
-                 'transform_list' : ['centercrop',"randomrotation",'totensor', 'normalize'],
+                 'transform_list' : ['centercrop','resize', "randomrotation",'totensor', 'normalize'],
                 #  'not_freeze_layer' : ['layer4'],
                  'weight_decay': 1e-2,
-                 'kfold' : 0}
+                 'kfold' : 1}
     wandb_data = wandb_info.get_wandb_info()
     args_dict.update(wandb_data)
     from collections import namedtuple
