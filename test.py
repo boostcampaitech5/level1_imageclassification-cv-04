@@ -64,8 +64,8 @@ def run(args):
 
 if __name__ == '__main__':
     args_dict = {'eval_path' : './input/data/eval',
-                 'checkpoint' : './checkpoint/exp9_bs64_ep100_adamw_lr0.0001_resnetv2_50x1_bitm/epoch(79)_acc(0.995)_loss(0.036)_f1(0.992)_state_dict.pt',
-                 'load_model':'resnetv2_50x1_bitm',
+                 'checkpoint' : './checkpoint/exp10_bs64_ep100_adamw_lr0.0001_resnet18/epoch(89)_acc(0.997)_loss(0.019)_f1(0.997)_state_dict.pt',
+                 'load_model':'resnet18',
                  'load_mode' : 'state_dict',
                  'num_classes' : 18,
                  'batch_size' : 1,

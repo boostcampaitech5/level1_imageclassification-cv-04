@@ -48,7 +48,7 @@ def run(args, args_dict):
 
     if args.use_wandb:
         print('Initialize WandB ...')
-        wandb.init(name = f'{args.wandb_exp_name}_{args.exp_num}_bs{args.batch_size}_ep{args.epochs}_{args.loss}_lr{args.learning_rate}_{args.load_model}.{args.user_name}',
+        wandb.init(name = f'{args.wandb_exp_name}_{args.exp_num}_{args.loss}_lr{args.learning_rate}_noWS.{args.user_name}',
                    project = args.wandb_project_name,
                    entity = args.wandb_entity,
                    config = args_dict)
@@ -114,7 +114,7 @@ def run(args, args_dict):
     if args.loss == "crossentropy":
         criterion = nn.CrossEntropyLoss(normedWeights)
     elif args.loss == "focalloss":
-        criterion = FocalLoss(alpha=0.1, device = device)
+        criterion = FocalLoss(weight = normedWeights)
     
     #Accelerator 적용
     model, optimizer, train_iter, val_iter = accelerator.prepare(
@@ -209,7 +209,7 @@ if __name__ == '__main__':
     args_dict = {'seed' : 223,
                  'csv_path' : './input/data/train/train_info.csv',
                  'save_path' : './checkpoint',
-                 'use_wandb' : False,
+                 'use_wandb' : True,
                  'wandb_exp_name' : 'exp',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',

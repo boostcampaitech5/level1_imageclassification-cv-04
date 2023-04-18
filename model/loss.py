@@ -3,6 +3,25 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 
+class FocalLoss(nn.Module):
+    def __init__(self, weight=None,
+                 gamma=2., reduction='mean'):
+        nn.Module.__init__(self)
+        self.weight = weight
+        self.gamma = gamma
+        self.reduction = reduction
+
+    def forward(self, input_tensor, target_tensor):
+        log_prob = F.log_softmax(input_tensor, dim=-1)
+        prob = torch.exp(log_prob)
+        return F.nll_loss(
+            ((1 - prob) ** self.gamma) * log_prob,
+            target_tensor,
+            weight=self.weight,
+            reduction=self.reduction
+        )
+
+
 # class FocalLoss(nn.Module):
 #     def __init__(self, gamma=0, alpha=None, size_average=True):
 #         super(FocalLoss, self).__init__()
@@ -34,41 +53,41 @@ from torch.autograd import Variable
 #         if self.size_average: return loss.mean()
 #         else: return loss.sum()
         
-class FocalLoss(nn.Module):
-    def __init__(self, gamma=2, alpha=0.25, size_average=True, device='cpu'):
-        super(FocalLoss, self).__init__()
-        """
-        gamma(int) : focusing parameter.
-        alpha(list) : alpha-balanced term.
-        size_average(bool) : whether to apply reduction to the output.
-        """
-        self.gamma = gamma
-        self.alpha = alpha
-        self.size_average = size_average
-        self.device = device
+# class FocalLoss(nn.Module):
+#     def __init__(self, gamma=2, alpha=0.25, size_average=True, device='cpu'):
+#         super(FocalLoss, self).__init__()
+#         """
+#         gamma(int) : focusing parameter.
+#         alpha(list) : alpha-balanced term.
+#         size_average(bool) : whether to apply reduction to the output.
+#         """
+#         self.gamma = gamma
+#         self.alpha = alpha
+#         self.size_average = size_average
+#         self.device = device
 
 
-    def forward(self, input, target):
-        # input : N * C (btach_size, num_class)
-        # target : N (batch_size)
+#     def forward(self, input, target):
+#         # input : N * C (btach_size, num_class)
+#         # target : N (batch_size)
 
-        CE = F.cross_entropy(input, target, reduction='none')  # -log(pt)
-        pt = torch.exp(-CE)  # pt
-        loss = (1 - pt) ** self.gamma * CE * self.alpha  # -(1-pt)^rlog(pt)
+#         CE = F.cross_entropy(input, target, reduction='none')  # -log(pt)
+#         pt = torch.exp(-CE)  # pt
+#         loss = (1 - pt) ** self.gamma * CE * self.alpha  # -(1-pt)^rlog(pt)
 
-        # if self.alpha is not None:
-        #     alpha = torch.Tensor(self.alpha).to(self.device)
-        #     # in case that a minority class is not selected when mini-batch sampling
-        #     if len(self.alpha) != len(torch.unique(target)):
-        #         temp = torch.zeros(len(self.alpha)).to(self.device)
-        #         temp[torch.unique(target)] = alpha.index_select(0, torch.unique(target))
-        #         alpha_t = temp.gather(0, target)
-        #         loss = alpha_t * loss
-        #     else:
-        #         alpha_t = alpha.gather(0, target)
-        #         loss = alpha_t * loss
+#         # if self.alpha is not None:
+#         #     alpha = torch.Tensor(self.alpha).to(self.device)
+#         #     # in case that a minority class is not selected when mini-batch sampling
+#         #     if len(self.alpha) != len(torch.unique(target)):
+#         #         temp = torch.zeros(len(self.alpha)).to(self.device)
+#         #         temp[torch.unique(target)] = alpha.index_select(0, torch.unique(target))
+#         #         alpha_t = temp.gather(0, target)
+#         #         loss = alpha_t * loss
+#         #     else:
+#         #         alpha_t = alpha.gather(0, target)
+#         #         loss = alpha_t * loss
 
-        if self.size_average:
-            loss = torch.mean(loss)
+#         if self.size_average:
+#             loss = torch.mean(loss)
 
-        return loss
+#         return loss

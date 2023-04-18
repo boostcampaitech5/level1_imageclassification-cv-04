@@ -8,8 +8,8 @@
 		"normalize_statistic": "imagenet"
 	},
 	"centercrop": {
-		"img_width": 256,
-		"img_height": 256
+		"img_width": 386,
+		"img_height": 386
 	},
 	"colorjitter": {
 		"brightness": 0,
