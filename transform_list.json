@@ -5,7 +5,7 @@
 	},
 	"totensor": {},
 	"normalize": {
-		"normalize_statistic": "imagenet"
+		"normalize_statistic": "mask"
 	},
 	"centercrop": {
 		"img_width": 384,

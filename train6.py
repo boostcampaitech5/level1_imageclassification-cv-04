@@ -3,8 +3,7 @@ from model import *
 from metric import *
 from utils import *
 from torch.utils.data import DataLoader, random_split, WeightedRandomSampler
-from torchvision import transforms 
-from torchvision import ops
+from torchvision import transforms
 from torch import optim
 import numpy as np
 import random
@@ -62,6 +61,12 @@ def run(args, args_dict):
     os.makedirs(checkpoint_path, exist_ok=True)
 
     print(f'Transform\t>>\t{args.transform_list}')
+    # train_transform = transforms.Compose([
+    #     transforms.Resize((128, 98)),
+    #     transforms.RandAugment(num_ops= 3, magnitude= 9),
+    #     transforms.ToTensor(),
+    #     transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
+
     train_transform, config = get_transform(args)
     val_transform = transforms.Compose([transforms.Resize((128, 98)),
                                         transforms.ToTensor(),
@@ -81,13 +86,10 @@ def run(args, args_dict):
     print(f'The number of validation images\t>>\t{len(val_set)}')
 
     print('The data loader is ready ...')
-    train_sampler = weighted_sampler(train_set, args.num_classes)
-    
     train_iter = DataLoader(train_set,
                             batch_size=args.batch_size,
-                            drop_last=True,
                             num_workers=multiprocessing.cpu_count() // 2,
-                            sampler = train_sampler)   
+                            shuffle=True)   
     val_iter = DataLoader(val_set,
                           batch_size=args.batch_size,
                           num_workers=multiprocessing.cpu_count() // 2,
@@ -101,9 +103,26 @@ def run(args, args_dict):
     print('The optimizer is ready ...')
     optimizer = optim.Adam(params=model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
 
+    print('The learning rate is ready ...')
+    lr_scheduler = optim.lr_scheduler.StepLR(optimizer=optimizer, step_size =20, gamma=0.1, verbose=True)
+
+    #################### CE weight ####################
+    if args.ce_weight:
+        with open('./train_cnt.json', 'r') as f:
+            train_cnt = f.read()
+        train_cnt = json.loads(train_cnt)
+        total_cnt = sum(list(train_cnt.values()))
+        weight = torch.zeros(args.num_classes)
+        for i in map(str, range(0,18)):
+            weight[int(i)] = total_cnt / train_cnt[i]
+        weight = weight / torch.sum(weight)
+    else:
+        weight = None
+    ##################################################
+    
     print('The loss function is ready ...')
-    # criterion = nn.CrossEntropyLoss()
-    critertion = FocalLoss(device=device)
+    criterion = nn.CrossEntropyLoss(weight=weight, label_smoothing = args.label_smoothing)
+    # criterion = FocalLoss(alpha=weight, gamma=2, device=device)
     
     #Accelerator 적용
     model, optimizer, train_iter, val_iter = accelerator.prepare(
@@ -114,26 +133,40 @@ def run(args, args_dict):
     for epoch in range(args.epochs):
         start_time = time.time()
         train_epoch_loss = 0
+        train_acc = 0
         model.train()
         train_iter_loss=0
+        train_iter_acc = 0
+        total = 0
         for train_img, train_target in train_iter:
-            train_img, train_target = train_img.to(device), train_target.to(device)
-            optimizer.zero_grad()
+            # train_img, train_target = train_img.to(device), train_target.to(device)
+            train_img, train_target_a, train_target_b, lam = mixup_data(train_img, train_target, alpha=1.0, device=device)
 
             train_pred = model(train_img)
             # train_iter_loss = criterion(train_pred, train_target)
-            train_iter_loss = critertion(train_pred, train_target)
+            _, predicted = torch.max(train_pred.data, 1)
+            train_iter_loss = mixup_criterion(criterion, train_pred, train_target_a, train_target_b, lam)
+            train_iter_acc += (lam * predicted.eq(train_target_a.data).cpu().sum().float()
+                               + (1 - lam) * predicted.eq(train_target_b.data).cpu().sum().float())
+            total += train_target.size(0)
+
+            optimizer.zero_grad()
             accelerator.backward(train_iter_loss)
             optimizer.step()
 
             train_epoch_loss += train_iter_loss
 
         train_epoch_loss = train_epoch_loss / len(train_iter)
+        train_acc = train_iter_acc / total
 
-        train_cm = confusion_matrix(model, train_iter, device, args.num_classes)
+        # train_cm = confusion_matrix(model, train_iter, device, args.num_classes)
+        
 
-        train_acc = accuracy(train_cm, args.num_classes)
-        train_f1 = f1_score(train_cm, args.num_classes)
+        # train_acc = accuracy(train_cm, args.num_classes)
+        # train_f1 = f1_score(train_cm, args.num_classes)
+
+        # if epoch >= 70:
+        #     lr_scheduler.step()
 
         # Validation
         with torch.no_grad():
@@ -142,8 +175,7 @@ def run(args, args_dict):
             model.eval()
             for val_img, val_target in val_iter:
                 val_pred = model(val_img)
-                # val_iter_loss = criterion(val_pred, val_target).detach()
-                val_iter_loss = critertion(val_pred, val_target).detach()
+                val_iter_loss = criterion(val_pred, val_target).detach()
 
                 val_epoch_loss += val_iter_loss
         val_epoch_loss = val_epoch_loss / len(val_iter)
@@ -153,8 +185,8 @@ def run(args, args_dict):
         val_acc = accuracy(val_cm, args.num_classes)
         val_f1 = f1_score(val_cm, args.num_classes)
 
-        print('time >> {:.4f}\tepoch >> {:04d}\ttrain_acc >> {:.4f}\ttrain_loss >> {:.4f}\ttrain_f1 >> {:.4f}\tval_acc >> {:.4f}\tval_loss >> {:.4f}\tval_f1 >> {:.4f}'
-              .format(time.time()-start_time, epoch, train_acc, train_epoch_loss, train_f1, val_acc, val_epoch_loss, val_f1))
+        print('time >> {:.4f}\tepoch >> {:04d}\ttrain_acc >> {:.4f}\ttrain_loss >> {:.4f}\tval_acc >> {:.4f}\tval_loss >> {:.4f}\tval_f1 >> {:.4f}'
+              .format(time.time()-start_time, epoch, train_acc, train_epoch_loss, val_acc, val_epoch_loss, val_f1))
         
         if (epoch+1) % args.save_epoch == 0:
             # 모델의 parameter들을 저장
@@ -167,7 +199,7 @@ def run(args, args_dict):
         if args.use_wandb:
             wandb.log({'Train Acc': train_acc,
                        'Train Loss': train_epoch_loss,
-                       'Train F1-Score': train_f1,
+                    #    'Train F1-Score': train_f1,
                        'Val Acc': val_acc,
                        'Val Loss': val_epoch_loss,
                        'Val F1-Score': val_f1})
@@ -181,8 +213,8 @@ if __name__ == '__main__':
     args_dict = {'seed' : 223,
                  'csv_path' : '../input/data/train/train_info4.csv',
                  'save_path' : './checkpoint',
-                 'use_wandb' : False,
-                 'wandb_exp_name' : 'FocalLoss',
+                 'use_wandb' : True,
+                 'wandb_exp_name' : 'Mixup',
                  'wandb_project_name' : 'Transform_Exp',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 18,
@@ -197,7 +229,9 @@ if __name__ == '__main__':
                  'transform_path' : './transform_list.json',
                  'transform_list' : ['resize', 'totensor', 'normalize'],
                  'not_freeze_layer' : [],
-                 'weight_decay': 1e-2}
+                 'weight_decay': 1e-2,
+                 'label_smoothing':0.0,
+                 'ce_weight' : False}
     wandb_data = wandb_info.get_wandb_info()
     args_dict.update(wandb_data)
     from collections import namedtuple

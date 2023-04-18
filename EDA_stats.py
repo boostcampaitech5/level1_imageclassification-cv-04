@@ -537,9 +537,10 @@ if __name__ == '__main__':
         new_df.to_csv('../input/data/train/train_info4.csv', index=False)
 
     if transforms_test:
-
-        img_path = '../input/data/train/images/000001_female_Asian_45/normal.jpg'
+        save_path = './transform_exp'
+        img_path = '../input/data/train/images/004414_female_Asian_20/normal.jpg'
         img = Image.open(img_path)
+        img.save(os.path.join(save_path, 'female_20.png'))
 
         transform_list = {'Crop_334_334' : transforms.CenterCrop((384, 384)),
                           'Crop_256_256' : transforms.CenterCrop((256, 256)),
@@ -591,15 +592,21 @@ if __name__ == '__main__':
 
         for key in transform_list.keys():
             trans_img = transform_list[key](img)
-            trans_img.save(os.path.join(save_path, f'{key}.png'))
+            trans_img.save(os.path.join(save_path, f'{key}_female_20.png'))
 
         transform = transforms.Compose([transforms.ToTensor(),
                                         transforms.Normalize(mean=(0.485, 0.456, 0.406),
                                                              std=(0.229, 0.224, 0.225)),
-                                        transforms.ColorJitter(contrast=(2.0,2.0)),
                                         transforms.ToPILImage()])
         trans_img = transform(img)
-        trans_img.save(os.path.join(save_path, 'Normalize_Contrast.png'))
+        trans_img.save(os.path.join(save_path, 'Normalize_ImageNet_female_20.png'))
+
+        transform = transforms.Compose([transforms.ToTensor(),
+                                        transforms.Normalize(mean=(0.5601, 0.5241, 0.5014),
+                                                             std=(0.2331, 0.2430, 0.2456)),
+                                        transforms.ToPILImage()])
+        trans_img = transform(img)
+        trans_img.save(os.path.join(save_path, 'Normalize_mask_female_20.png'))
         
 
 
@@ -619,5 +626,5 @@ if __name__ == '__main__':
     # with open('./train_cnt.json','w') as f:
     #     json.dump(count_json, f)
 
-
+    
 

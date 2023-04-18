@@ -3,8 +3,7 @@ from model import *
 from metric import *
 from utils import *
 from torch.utils.data import DataLoader, random_split, WeightedRandomSampler
-from torchvision import transforms 
-from torchvision import ops
+from torchvision import transforms
 from torch import optim
 import numpy as np
 import random
@@ -62,13 +61,18 @@ def run(args, args_dict):
     os.makedirs(checkpoint_path, exist_ok=True)
 
     print(f'Transform\t>>\t{args.transform_list}')
-    train_transform, config = get_transform(args)
-    val_transform = transforms.Compose([transforms.Resize((128, 98)),
-                                        transforms.ToTensor(),
+    train_transform = transforms.Compose([
+        transforms.RandomCrop(256, fill=128),
+        transforms.RandAugment(num_ops= 3, magnitude= 9),
+        transforms.ToTensor(),
+        transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
+
+    # train_transform, config = get_transform(args)
+    val_transform = transforms.Compose([transforms.ToTensor(),
                                         transforms.Normalize(mean=(0.485, 0.456, 0.406),
                                                              std=(0.229, 0.224, 0.225))])
-    if args.use_wandb:
-        wandb.config.update(config)                                
+    # if args.use_wandb:
+    #     wandb.config.update(config)                                
 
     train_set = TrainDataset(csv_path = args.csv_path,
                              transform=train_transform,
@@ -81,13 +85,10 @@ def run(args, args_dict):
     print(f'The number of validation images\t>>\t{len(val_set)}')
 
     print('The data loader is ready ...')
-    train_sampler = weighted_sampler(train_set, args.num_classes)
-    
     train_iter = DataLoader(train_set,
                             batch_size=args.batch_size,
-                            drop_last=True,
                             num_workers=multiprocessing.cpu_count() // 2,
-                            sampler = train_sampler)   
+                            shuffle=True)   
     val_iter = DataLoader(val_set,
                           batch_size=args.batch_size,
                           num_workers=multiprocessing.cpu_count() // 2,
@@ -101,9 +102,26 @@ def run(args, args_dict):
     print('The optimizer is ready ...')
     optimizer = optim.Adam(params=model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
 
+    print('The learning rate is ready ...')
+    lr_scheduler = optim.lr_scheduler.StepLR(optimizer=optimizer, step_size =20, gamma=0.1, verbose=True)
+
+    #################### CE weight ####################
+    if args.ce_weight:
+        with open('./train_cnt.json', 'r') as f:
+            train_cnt = f.read()
+        train_cnt = json.loads(train_cnt)
+        total_cnt = sum(list(train_cnt.values()))
+        weight = torch.zeros(args.num_classes)
+        for i in map(str, range(0,18)):
+            weight[int(i)] = total_cnt / train_cnt[i]
+        weight = weight / torch.sum(weight)
+    else:
+        weight = None
+    ##################################################
+    
     print('The loss function is ready ...')
-    # criterion = nn.CrossEntropyLoss()
-    critertion = FocalLoss(device=device)
+    criterion = nn.CrossEntropyLoss(weight=weight, label_smoothing = args.label_smoothing)
+    # criterion = FocalLoss(alpha=weight, gamma=2, device=device)
     
     #Accelerator 적용
     model, optimizer, train_iter, val_iter = accelerator.prepare(
@@ -117,12 +135,11 @@ def run(args, args_dict):
         model.train()
         train_iter_loss=0
         for train_img, train_target in train_iter:
-            train_img, train_target = train_img.to(device), train_target.to(device)
+            # train_img, train_target = train_img.to(device), train_target.to(device)
             optimizer.zero_grad()
 
             train_pred = model(train_img)
-            # train_iter_loss = criterion(train_pred, train_target)
-            train_iter_loss = critertion(train_pred, train_target)
+            train_iter_loss = criterion(train_pred, train_target)
             accelerator.backward(train_iter_loss)
             optimizer.step()
 
@@ -135,6 +152,9 @@ def run(args, args_dict):
         train_acc = accuracy(train_cm, args.num_classes)
         train_f1 = f1_score(train_cm, args.num_classes)
 
+        # if epoch >= 70:
+        #     lr_scheduler.step()
+
         # Validation
         with torch.no_grad():
             val_epoch_loss = 0
@@ -142,8 +162,7 @@ def run(args, args_dict):
             model.eval()
             for val_img, val_target in val_iter:
                 val_pred = model(val_img)
-                # val_iter_loss = criterion(val_pred, val_target).detach()
-                val_iter_loss = critertion(val_pred, val_target).detach()
+                val_iter_loss = criterion(val_pred, val_target).detach()
 
                 val_epoch_loss += val_iter_loss
         val_epoch_loss = val_epoch_loss / len(val_iter)
@@ -181,8 +200,8 @@ if __name__ == '__main__':
     args_dict = {'seed' : 223,
                  'csv_path' : '../input/data/train/train_info4.csv',
                  'save_path' : './checkpoint',
-                 'use_wandb' : False,
-                 'wandb_exp_name' : 'FocalLoss',
+                 'use_wandb' : True,
+                 'wandb_exp_name' : 'strong_augmentation',
                  'wandb_project_name' : 'Transform_Exp',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 18,
@@ -195,9 +214,11 @@ if __name__ == '__main__':
                  'save_epoch' : 10,
                  'load_model':'resnet50',
                  'transform_path' : './transform_list.json',
-                 'transform_list' : ['resize', 'totensor', 'normalize'],
+                 'transform_list' : ['randomcrop', 'randaug', 'totensor', 'normalize'],
                  'not_freeze_layer' : [],
-                 'weight_decay': 1e-2}
+                 'weight_decay': 1e-2,
+                 'label_smoothing':0.0,
+                 'ce_weight' : False}
     wandb_data = wandb_info.get_wandb_info()
     args_dict.update(wandb_data)
     from collections import namedtuple

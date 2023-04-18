@@ -22,7 +22,7 @@ class TrainDataset(Dataset):
 
 
     def __getitem__(self, idx):
-        img = Image.open(self.df.iloc[idx].ImageID)
+        img = Image.open(self.df.iloc[idx].ImageID).convert("RGB")
         str_label = self.df.iloc[idx].ans
         label = int(str_label[0])*6 + int(str_label[1])*3 + int(str_label[2])
 
@@ -30,6 +30,7 @@ class TrainDataset(Dataset):
             img = self.transform(img)
 
         return img, torch.LongTensor([label]).squeeze()
+        # return img, torch.FloatTensor([label]).squeeze()
 
 
 class TestDataset(Dataset):
@@ -47,7 +48,7 @@ class TestDataset(Dataset):
 
     def __getitem__(self, idx):
         img_path = os.path.join(self.eval_path, 'images', self.df.iloc[idx].ImageID)
-        img = Image.open(img_path)
+        img = Image.open(img_path).convert("RGB")
         label = self.df.iloc[idx].ans
 
         if self.transform:

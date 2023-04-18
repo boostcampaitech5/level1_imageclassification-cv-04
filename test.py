@@ -63,7 +63,7 @@ def run(args):
 
 if __name__ == '__main__':
     args_dict = {'eval_path' : '../input/data/eval',
-                 'checkpoint' : './checkpoint/train500val20fix_aug1_bs64_ep200_adamw_lr0.0001_resnet50/epoch(79)_acc(0.908)_loss(0.316)_f1(0.911)_state_dict.pt',
+                 'checkpoint' : './checkpoint/CE_labelsmoothing_0.1_bs64_ep100_adamw_lr0.0001_resnet50/epoch(99)_acc(0.903)_loss(0.808)_f1(0.905)_state_dict.pt',
                  'load_mode' : 'state_dict',
                  'load_model' : 'resnet50',
                  'num_classes' : 18,

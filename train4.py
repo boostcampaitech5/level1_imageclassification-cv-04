@@ -64,8 +64,8 @@ def run(args, args_dict):
     train_transform, config = get_transform(args)
     val_transform = transforms.Compose([transforms.Resize((128, 98)),
                                         transforms.ToTensor(),
-                                        transforms.Normalize(mean=(0.485, 0.456, 0.406),
-                                                             std=(0.229, 0.224, 0.225))])
+                                        transforms.Normalize(mean=(0.5601, 0.5241, 0.5014),
+                                                             std=(0.2331, 0.2430, 0.2456))])
     if args.use_wandb:
         wandb.config.update(config)                                
 
@@ -115,7 +115,8 @@ def run(args, args_dict):
     ##################################################
     
     print('The loss function is ready ...')
-    criterion = nn.CrossEntropyLoss(weight=weight.to(device), label_smoothing = args.label_smoothing)
+    criterion = nn.CrossEntropyLoss(weight=weight, label_smoothing = args.label_smoothing)
+    # criterion = FocalLoss(alpha=weight, gamma=2, device=device)
     
     #Accelerator 적용
     model, optimizer, train_iter, val_iter = accelerator.prepare(
@@ -195,7 +196,7 @@ if __name__ == '__main__':
                  'csv_path' : '../input/data/train/train_info4.csv',
                  'save_path' : './checkpoint',
                  'use_wandb' : True,
-                 'wandb_exp_name' : 'CE_Weighted',
+                 'wandb_exp_name' : 'Normalize_Maskdataset',
                  'wandb_project_name' : 'Transform_Exp',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 18,
@@ -212,7 +213,7 @@ if __name__ == '__main__':
                  'not_freeze_layer' : [],
                  'weight_decay': 1e-2,
                  'label_smoothing':0.0,
-                 'ce_weight' : True}
+                 'ce_weight' : False}
     wandb_data = wandb_info.get_wandb_info()
     args_dict.update(wandb_data)
     from collections import namedtuple
