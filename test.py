@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms 
 from torchsummary import summary
 import multiprocessing
+from tqdm import tqdm
 
 
 def run(args):
@@ -49,12 +50,14 @@ def run(args):
     print("Starting testing ...")
     model.eval()
     result = []
-    for test_img, _ in test_iter:
+    pbar_test = tqdm(test_iter)
+    for _, (test_img, _) in enumerate(pbar_test):
         with torch.no_grad():
             test_img = test_img.to(device)
             test_pred = model(test_img)
             _, max_pred = torch.max(test_pred, 1)
             result.append(max_pred.item())
+    pbar_test.close()
 
     print('Save CSV file')
     df = pd.read_csv(csv_path)
