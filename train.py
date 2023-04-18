@@ -15,6 +15,9 @@ import multiprocessing
 import sklearn
 import sys
 import wandb_info
+from model.model_finetune import fineTune
+from model.loss import FocalLoss
+
 from accelerate import Accelerator
 
 from tqdm import tqdm
@@ -45,7 +48,7 @@ def run(args, args_dict):
 
     if args.use_wandb:
         print('Initialize WandB ...')
-        wandb.init(name = f'{args.wandb_exp_name}_{args.exp_num}_bs{args.batch_size}_ep{args.epochs}_{optimizer_name}_lr{args.learning_rate}_{args.load_model}.{args.user_name}',
+        wandb.init(name = f'{args.wandb_exp_name}_{args.exp_num}_bs{args.batch_size}_ep{args.epochs}_{args.loss}_lr{args.learning_rate}_{args.load_model}.{args.user_name}',
                    project = args.wandb_project_name,
                    entity = args.wandb_entity,
                    config = args_dict)
@@ -58,7 +61,7 @@ def run(args, args_dict):
     print(f'The device is ready\t>>\t{device}')
 
     print('Make save_path')
-    checkpoint_path = os.path.join(args.save_path, f'{args.wandb_exp_name}_bs{args.batch_size}_ep{args.epochs}_{optimizer_name}_lr{args.learning_rate}_{args.load_model}')
+    checkpoint_path = os.path.join(args.save_path, f'{args.wandb_exp_name}{args.exp_num}_bs{args.batch_size}_ep{args.epochs}_{optimizer_name}_lr{args.learning_rate}_{args.load_model}')
     os.makedirs(checkpoint_path, exist_ok=True)
 
     print(f'Transform\t>>\t{args.transform_list}')
@@ -77,32 +80,41 @@ def run(args, args_dict):
 
 
     print('The data loader is ready ...')
-    train_sampler = weighted_sampler(dataset, train_idx, args.num_classes)
-    val_sampler = weighted_sampler(dataset,val_idx, args.num_classes)
-    
+
     train_iter = DataLoader(train_set,
                             batch_size=args.batch_size,
                             drop_last=True,
-                            num_workers=multiprocessing.cpu_count() // 2
-                            ,sampler = train_sampler
+                            num_workers=multiprocessing.cpu_count() // 2,
+                            shuffle=True,
                             )   
     val_iter = DataLoader(val_set,
                           batch_size=args.batch_size,
                           drop_last=True,
                           num_workers=multiprocessing.cpu_count() // 2
-                          ,sampler = val_sampler
                           )
 
     print('The model is ready ...')
     model = Classifier(args).to(device)
+    
     if args.model_summary:
         print(summary(model, (3, 256, 256)))
 
     print('The optimizer is ready ...')
     optimizer = optim.Adam(params=model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
-
+    
+    if args.lr_schduler:
+        lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
+    
     print('The loss function is ready ...')
-    criterion = nn.CrossEntropyLoss()
+    
+    train_cnt = dataset.df['ans'][train_idx].value_counts().sort_index()
+    normedWeights = [1 - (x / sum(train_cnt)) for x in train_cnt]
+    normedWeights = torch.FloatTensor(normedWeights).to(device)
+    
+    if args.loss == "crossentropy":
+        criterion = nn.CrossEntropyLoss(normedWeights)
+    elif args.loss == "focalloss":
+        criterion = FocalLoss(alpha=0.1, device = device)
     
     #Accelerator 적용
     model, optimizer, train_iter, val_iter = accelerator.prepare(
@@ -118,7 +130,7 @@ def run(args, args_dict):
         pbar = tqdm(train_iter)
         for _,(train_img, train_target) in enumerate(pbar):
             pbar.set_description(f"Train. Epoch:{epoch}/{args.epochs} | Loss:{train_iter_loss:4.3f}")
-            train_img, train_target = train_img.to(device), train_target.to(device)
+            # train_img, train_target = train_img.to(device), train_target.to(device)
             optimizer.zero_grad()
 
             train_pred = model(train_img)
@@ -156,6 +168,9 @@ def run(args, args_dict):
         val_acc = accuracy(val_cm, args.num_classes)
         val_f1 = f1_score(val_cm, args.num_classes)
 
+        if args.lr_schduler:
+            lr_scheduler.step()
+        
         print('time >> {:.4f}\tepoch >> {:04d}\ttrain_acc >> {:.4f}\ttrain_loss >> {:.4f}\ttrain_f1 >> {:.4f}\tval_acc >> {:.4f}\tval_loss >> {:.4f}\tval_f1 >> {:.4f}'
               .format(time.time()-start_time, epoch, train_acc, train_epoch_loss, train_f1, val_acc, val_epoch_loss, val_f1))
         
@@ -189,25 +204,28 @@ def run(args, args_dict):
                 # wandb.log({'Confusion Matrix Heatmap': wandb.plots.HeatMap(list(range(0,18)), list(range(0,18)), val_cm, show_text=True)})
 
 
+
 if __name__ == '__main__':
     args_dict = {'seed' : 223,
-                 'csv_path' : '../input/data/train/train_info.csv',
+                 'csv_path' : './input/data/train/train_info.csv',
                  'save_path' : './checkpoint',
                  'use_wandb' : False,
                  'wandb_exp_name' : 'exp',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 18,
-                 'model_summary' : True,
+                 'model_summary' : False,
                  'batch_size' : 64,
                  'learning_rate' : 1e-4,
                  'epochs' : 100,
                  'train_val_split': 0.8,
-                 'save_mode' : 'model',
+                 'save_mode' : 'state_dict',
                  'save_epoch' : 10,
-                 'load_model':'resnet50',
+                 'load_model':'resnet18',
+                 'loss' : "focalloss",
+                 'lr_schduler' : False,
                  'transform_path' : './transform_list.json',
-                 'transform_list' : ['resize', 'randomhorizontalflip', 'randomrotation', 'totensor', 'normalize'],
+                 'transform_list' : ['centercrop',"randomrotation",'totensor', 'normalize'],
                  'not_freeze_layer' : ['layer4'],
                  'weight_decay': 1e-2}
     wandb_data = wandb_info.get_wandb_info()
