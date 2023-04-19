@@ -139,22 +139,18 @@ class F1Loss(nn.Module):
 class CustomLoss(nn.Module):
     def __init__(self,w1:list=[1,1,1], w2:list=[1,1], w3:list=[1,1,1]):
         super().__init__()
-        self.mask_loss = nn.CrossEntropyLoss(weight=torch.Tensor(w1))
-        self.gender_loss = nn.CrossEntropyLoss(weight=torch.Tensor(w2))
-        self.age_loss = nn.CrossEntropyLoss(weight=torch.Tensor(w3))
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.mask_loss = nn.CrossEntropyLoss(weight=torch.Tensor(w1).to(self.device))
+        self.gender_loss = nn.CrossEntropyLoss(weight=torch.Tensor(w2).to(self.device))
+        self.age_loss = nn.CrossEntropyLoss(weight=torch.Tensor(w3).to(self.device))
     def forward(self, pred, label):
-        # gender_label = torch.zeros(len(pred))
-        # age_label = torch.zeros(len(pred))
-        # mask_label = torch.zeros(len(pred))
         label = label.long()
         mask_label = label//6
         gender_label = label%6//3
         age_label = label%3
-        print(pred[:,:3],mask_label,gender_label,age_label)
-        m_loss = self.mask_loss(pred[:,:3],mask_label)
-        print(pred[:,3:5])
-        g_loss = self.gender_loss(pred[:,3:5],gender_label)
-        a_loss = self.age_loss(pred[:,5:],age_label)
+        m_loss = self.mask_loss(pred[:,:3],mask_label.to(self.device))
+        g_loss = self.gender_loss(pred[:,3:5],gender_label.to(self.device))
+        a_loss = self.age_loss(pred[:,5:],age_label.to(self.device))
         return g_loss+a_loss+m_loss
     
 

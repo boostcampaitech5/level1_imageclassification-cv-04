@@ -8,11 +8,11 @@ class Classifier(nn.Module):
     def __init__(self, args):
         super(Classifier, self).__init__()
 
-        self.num_classes = args.num_classes
+        self.num_classes = 8
         self.load_model = args.load_model
         if self.load_model:
             # list_models('resnet*', pretrained=True)
-            self.backbone = create_model(self.load_model, pretrained=True, num_classes=args.num_classes)
+            self.backbone = create_model(self.load_model, pretrained=True, num_classes=self.num_classes)
             
 
     def forward(self, x):

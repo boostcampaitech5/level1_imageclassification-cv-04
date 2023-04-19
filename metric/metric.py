@@ -6,7 +6,9 @@ def confusion_matrix(model, data_iter, device, num_classes):
         cm = torch.zeros((num_classes, num_classes), dtype=torch.long)
         for data, target in data_iter:
             model_pred, y_target = model(data.to(device)), target.to(device)
-            _, y_pred = torch.max(model_pred.data, 1)
+            y_pred = pred_to_label(model_pred)
+            # raise NotImplemented
+           # _, y_pred = torch.max(model_pred.data, 1)
             for y_p, y_t in zip(y_pred, y_target):
                 if y_p == y_t:
                     cm[y_t][y_t] += 1
@@ -15,7 +17,11 @@ def confusion_matrix(model, data_iter, device, num_classes):
 
     return cm
 
-
+def pred_to_label(pred):
+    mask=pred[:,:3].argmax(dim=1)
+    gender=pred[:,3:5].argmax(dim=1)
+    age=pred[:,5:].argmax(dim=1)
+    return age+gender*3+mask*6
 def accuracy(cm, num_classes):
     n_total, n_correct = torch.sum(cm), 0
     for i in range(num_classes):
@@ -68,6 +74,7 @@ if __name__ == '__main__':
     print(precision(cm, num_classes))
     print(recall(cm, num_classes))
     print(f1_score(cm, num_classes))
+
 
 
 
