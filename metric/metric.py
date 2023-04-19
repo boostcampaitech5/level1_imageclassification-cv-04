@@ -17,6 +17,7 @@ def confusion_matrix(model, data_iter, device, num_classes):
 def confusion_matrix2(cm_data, num_classes):
     cm = torch.zeros((num_classes, num_classes), dtype=torch.long)
     for y_pred, y_target in cm_data:
+        y_pred = torch.max(y_pred, 1)[1]
         for y_t, y_p in zip(y_target, y_pred):
             cm[y_t.item()][y_p.item()] += 1
     return cm
