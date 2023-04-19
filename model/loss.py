@@ -135,3 +135,28 @@ class F1Loss(nn.Module):
         f1 = 2 * (precision * recall) / (precision + recall + self.epsilon)
         f1 = f1.clamp(min=self.epsilon, max=1 - self.epsilon)
         return 1 - f1.mean()
+
+class CustomLoss(nn.Module):
+    def __init__(self,w1:list=[1,1,1], w2:list=[1,1], w3:list=[1,1,1]):
+        super().__init__()
+        self.mask_loss = nn.CrossEntropyLoss(weight=torch.Tensor(w1))
+        self.gender_loss = nn.CrossEntropyLoss(weight=torch.Tensor(w2))
+        self.age_loss = nn.CrossEntropyLoss(weight=torch.Tensor(w3))
+    def forward(self, pred, label):
+        # gender_label = torch.zeros(len(pred))
+        # age_label = torch.zeros(len(pred))
+        # mask_label = torch.zeros(len(pred))
+        label = label.long()
+        mask_label = label//6
+        gender_label = label%6//3
+        age_label = label%3
+        print(pred[:,:3],mask_label,gender_label,age_label)
+        m_loss = self.mask_loss(pred[:,:3],mask_label)
+        print(pred[:,3:5])
+        g_loss = self.gender_loss(pred[:,3:5],gender_label)
+        a_loss = self.age_loss(pred[:,5:],age_label)
+        return g_loss+a_loss+m_loss
+    
+
+
+

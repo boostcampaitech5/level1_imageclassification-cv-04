@@ -125,6 +125,8 @@ def run(args, args_dict):
         criterion = LabelSmoothingLoss(classes=args.num_classes, smoothing=args.labelsmoothing)
     elif args.loss == 'f1loss':
         criterion = F1Loss(classes=args.num_classes, epsilon=1e-7)
+    elif args.loss == 'customloss':
+        criterion = CustomLoss()
 
     #Accelerator 적용
     model, optimizer, train_iter, val_iter = accelerator.prepare(model, optimizer, train_iter, val_iter)
@@ -145,7 +147,8 @@ def run(args, args_dict):
             optimizer.step()
 
             train_epoch_loss += train_iter_loss
-
+            print(train_pred[0],train_target[0])
+            raise NotImplemented
         train_loss = (train_epoch_loss / len(train_iter))
 
         train_cm = confusion_matrix(model, train_iter, device, args.num_classes)
@@ -226,7 +229,7 @@ if __name__ == '__main__':
                 #  'save_mode' : 'state_dict',
                  'save_epoch' : 10,
                  'load_model':'vit_base_patch16_224',
-                 'loss' : "crossentropy",
+                 'loss' : "customloss",
                  'lr_scheduler' : 'reduce_lr_on_plateau', # default lr_scheduler = ''
                  'transform_path' : './transform_list.json',
                  'transform_list' : ['centercrop','resize', "randomrotation",'totensor', 'normalize'],
