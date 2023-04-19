@@ -40,6 +40,7 @@ class KFoldDataset(Dataset):
 
     def __init__(self, csv_path, kfold=-1, train=True, transform=None):
         df = pd.read_csv(csv_path)
+        self.csv_path = csv_path
         if train:
             self.df = df[df['fold'] != kfold]
         else:
@@ -70,6 +71,7 @@ class KFoldSplitDataset(Dataset):
             self.df = df[df['fold'] != kfold]
         else:
             self.df = df[df['fold']==kfold]
+        self.train = train
         self.transform = transform
         self.split = split
 
@@ -105,7 +107,12 @@ class KFoldSplitDataset(Dataset):
             img = self.transform(img)
 
         return img, label
-
+    def change_kfold(self,kfold):
+        df = pd.read_csv(self.csv_path)
+        if self.train:
+            self.df = df[df['fold'] != kfold]
+        else:
+            self.df = df[df['fold']==kfold]
 
 if __name__ == '__main__':
     transform = transforms.Compose([transforms.ToTensor()])

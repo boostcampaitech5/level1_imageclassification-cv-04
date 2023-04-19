@@ -133,6 +133,20 @@ def run(args, args_dict):
     
     print("Starting training ...")
     for epoch in range(args.epochs):
+        kfold = epoch%5
+        train_set.change_kfold(kfold)
+        val_set.change_kfold(kfold)
+        train_iter = DataLoader(train_set,
+                            batch_size=args.batch_size,
+                            num_workers=multiprocessing.cpu_count() // 2,
+                            shuffle=True)
+        val_iter = DataLoader(val_set,
+                          batch_size=args.batch_size,
+                          num_workers=multiprocessing.cpu_count() // 2,
+                          shuffle=True)
+        model, optimizer, train_iter, val_iter = accelerator.prepare(model, optimizer, train_iter, val_iter)
+    
+
         start_time = time.time()
         train_epoch_loss = 0
         model.train()
@@ -147,8 +161,8 @@ def run(args, args_dict):
             optimizer.step()
 
             train_epoch_loss += train_iter_loss
-            print(train_pred[0],train_target[0])
-            raise NotImplemented
+            
+        print(train_pred[:3],pred_to_label(train_pred[:3]),train_target[:3])
         train_loss = (train_epoch_loss / len(train_iter))
 
         train_cm = confusion_matrix(model, train_iter, device, args.num_classes)
@@ -174,6 +188,9 @@ def run(args, args_dict):
         val_acc = accuracy(val_cm, args.num_classes)
         val_f1 = f1_score(val_cm, args.num_classes)
 
+        
+
+
         if args.lr_scheduler:
             lr_scheduler.step(val_epoch_loss)
 
@@ -194,11 +211,13 @@ def run(args, args_dict):
                     'Train F1-Score': train_f1,
                     'Val Acc': val_acc,
                     'Val Loss': val_loss,
-                    'Val F1-Score': val_f1})
+                    'Val F1-Score': val_f1,},
+                    step=epoch)
 
-        # if (epoch+1) % args.save_epoch == 0:
-        #     fig = plot_confusion_matrix(val_cm, args.num_classes, normalize=True, save_path=None)
-        #     wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")})
+        if (epoch+1) % args.save_epoch == 0:
+            fig = plot_confusion_matrix(val_cm, args.num_classes, normalize=True, save_path=None)
+            wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")},
+                      step=epoch)
 
         if optimizer.param_groups[0]["lr"] < 1e-7:
             print(f'Early Stopping\t>>\tepoch : {epoch} lr : {optimizer.param_groups[0]["lr"]}')
@@ -216,12 +235,12 @@ if __name__ == '__main__':
                 #  'csv_path' : '../input/data/train/train_info.csv',
                  'csv_path' : '../input/data/train/kfold4.csv',
                  'save_path' : './checkpoint',
-                 'use_wandb' : False,
+                 'use_wandb' : True,
                  'wandb_exp_name' : 'kfold4_0_ViT_multiclass',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
-                 'num_classes' :8,
-                 'model_summary' : True,
+                 'num_classes' :18,
+                 'model_summary' : False,
                  'batch_size' : 64,
                  'learning_rate' : 1e-5,
                  'epochs' : 100,
@@ -237,7 +256,7 @@ if __name__ == '__main__':
                  'weight_decay': 1e-2,
                  'labelsmoothing':0.1,
                  'kfold' : 0,
-                 'split' : 'gender'}
+                 'split' : None}
     wandb_data = wandb_info.get_wandb_info()
     args_dict.update(wandb_data)
     from collections import namedtuple
