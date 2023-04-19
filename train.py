@@ -133,7 +133,7 @@ def run(args, args_dict):
     
     print("Starting training ...")
     for epoch in range(args.epochs):
-        kfold = epoch%5
+        kfold = epoch%15//3
         train_set.change_kfold(kfold)
         val_set.change_kfold(kfold)
         train_iter = DataLoader(train_set,
@@ -153,6 +153,7 @@ def run(args, args_dict):
         train_iter_loss=0
         pbar = tqdm(train_iter)
         for train_img, train_target in iter(pbar):
+            pbar.set_description(f'{epoch}/{args.epochs}')
             optimizer.zero_grad()
 
             train_pred = model(train_img)
@@ -178,6 +179,7 @@ def run(args, args_dict):
             model.eval()
             pbar = tqdm(val_iter)
             for val_img, val_target in iter(pbar):
+                pbar.set_description(f'{epoch}/{args.epochs}')
                 val_pred = model(val_img)
                 val_iter_loss = criterion(val_pred, val_target).detach()
 
@@ -237,7 +239,7 @@ if __name__ == '__main__':
                 #  'csv_path' : '../input/data/train/train_info.csv',
                  'csv_path' : '../input/data/train/kfold4.csv',
                  'save_path' : './checkpoint',
-                 'use_wandb' : False,
+                 'use_wandb' : True,
                  'wandb_exp_name' : 'kfold4_0_ViT_multiclass',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
