@@ -358,17 +358,17 @@ def run(args, args_dict):
                        'Val F1-Score': val_f1,
                        'Val mask F1-Score': val_mask_f1,
                        'Val gender F1-Score': val_gender_f1,
-                       'Val age F1-Score': val_age_f1})
+                       'Val age F1-Score': val_age_f1}, step=epoch)
 
             if (epoch+1) % args.save_epoch == 0:
                 fig = plot_confusion_matrix(val_cm, args.num_classes, normalize=True, save_path=None)
-                wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")})
+                wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")}, step=epoch)
                 fig_mask = plot_confusion_matrix(val_mask_cm, args.num_mask_classes, normalize=True, save_path=None)
-                wandb.log({'Confusion Matrix (mask)': wandb.Image(fig_mask, caption=f"Epoch-{epoch}")})
+                wandb.log({'Confusion Matrix (mask)': wandb.Image(fig_mask, caption=f"Epoch-{epoch}")}, step=epoch)
                 fig_gender = plot_confusion_matrix(val_gender_cm, args.num_gender_classes, normalize=True, save_path=None)
-                wandb.log({'Confusion Matrix (gender)': wandb.Image(fig_gender, caption=f"Epoch-{epoch}")})
+                wandb.log({'Confusion Matrix (gender)': wandb.Image(fig_gender, caption=f"Epoch-{epoch}")}, step=epoch)
                 fig_age = plot_confusion_matrix(val_age_cm, args.num_age_classes, normalize=True, save_path=None)
-                wandb.log({'Confusion Matrix (age)': wandb.Image(fig_age, caption=f"Epoch-{epoch}")})
+                wandb.log({'Confusion Matrix (age)': wandb.Image(fig_age, caption=f"Epoch-{epoch}")}, step=epoch)
                 # wandb.log({"Confusion Matrix Plot" : wandb.plot.confusion_matrix(probs=None,
                 #                                                             preds=pred_list, y_true=target_list,
                 #                                                             class_names=list(map(str,range(0, 18))))})
