@@ -112,11 +112,11 @@ def run(args, args_dict):
 
     if args.model_summary:
         print('model_mask')
-        print(summary(model_mask, (3, 384, 384)))
+        print(summary(model_mask, (3, 224, 224)))
         print('model_gender')
-        print(summary(model_gender, (3, 384, 384)))
+        print(summary(model_gender, (3, 224, 224)))
         print('model_age')
-        print(summary(model_age, (3, 384, 384)))
+        print(summary(model_age, (3, 224, 224)))
 
     print('The optimizer is ready ...')
     optimizer_mask = optim.Adam(params=model_mask.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
@@ -387,13 +387,13 @@ if __name__ == '__main__':
                  'num_gender_classes' : 2,
                  'num_age_classes' : 3,
                  'model_summary' : True,
-                 'batch_size' : 64,
-                 'learning_rate' : 1e-4,
+                 'batch_size' : 16,
+                 'learning_rate' : 5e-6,
                  'epochs' : 100,
                  'train_val_split': 0.8,
                  'save_mode' : 'state_dict', #'model'
                  'save_epoch' : 10,
-                 'load_model': 'resnet18', #'densenet121', #'resnet18',
+                 'load_model': 'vit_small_patch16_224', #'densenet121', #'resnet18',
                  'loss' : "crossentropy",
                  'transform_path' : './utils/transform_list.json',
                  'transform_list' : ['resize', 'randomhorizontalflip', 'randomrotation', 'totensor', 'normalize'],#['resize', 'randomhorizontalflip', 'randomrotation', 'totensor', 'normalize'],
