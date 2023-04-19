@@ -96,7 +96,7 @@ def run(args, args_dict):
                           shuffle=True)
         
     print('The model is ready ...')
-    model = Classifier(args).to(device)
+    model = KFoldClassifier(args.num_classes, args.load_model).to(device)
     
     # if args.model_summary:
     #     print(summary(model, (3, 384, 384)))
@@ -212,10 +212,10 @@ if __name__ == '__main__':
                  'csv_path' : '../input/data/train/kfold4.csv',
                  'save_path' : './checkpoint',
                  'use_wandb' : True,
-                 'wandb_exp_name' : 'kfold4_1_cd_genderdetection_reducelr',
+                 'wandb_exp_name' : 'kfold4_0_age_swin',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
-                 'num_classes' : 2,
+                 'num_classes' : 3,
                  'model_summary' : False,
                  'batch_size' : 64,
                  'learning_rate' : 1e-4,
@@ -223,7 +223,7 @@ if __name__ == '__main__':
                 #  'train_val_split': 0.8,
                 #  'save_mode' : 'state_dict',
                  'save_epoch' : 10,
-                 'load_model':'resnet50',
+                 'load_model':'swin_base_patch4_window7_224_in22k',
                  'loss' : "crossentropy",
                  'lr_scheduler' : 'reduce_lr_on_plateau', # default lr_scheduler = ''
                  'transform_path' : './transform_list.json',
@@ -231,8 +231,8 @@ if __name__ == '__main__':
                 #  'not_freeze_layer' : ['layer4'],
                  'weight_decay': 1e-2,
                  'labelsmoothing':0.1,
-                 'kfold' : 1,
-                 'split' : 'gender'}
+                 'kfold' : 0,
+                 'split' : 'age'}
     wandb_data = wandb_info.get_wandb_info()
     args_dict.update(wandb_data)
     from collections import namedtuple

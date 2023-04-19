@@ -4,15 +4,32 @@ from torchvision import models
 from torchsummary import summary
 from timm import create_model, list_models
 
-class Classifier(nn.Module):
-    def __init__(self, args):
-        super(Classifier, self).__init__()
+# class Classifier(nn.Module):
+#     def __init__(self, args):
+#         super(Classifier, self).__init__()
 
-        self.num_classes = args.num_classes
-        self.load_model = args.load_model
+#         self.num_classes = args.num_classes
+#         self.load_model = args.load_model
+#         if self.load_model:
+#             # list_models('resnet*', pretrained=True)
+#             self.backbone = create_model(self.load_model, pretrained=True, num_classes=args.num_classes)
+            
+
+#     def forward(self, x):
+#         if self.load_model:
+#             x = self.backbone(x)
+#         return x
+    
+
+class KFoldClassifier(nn.Module):
+    def __init__(self, num_classes, load_model):
+        super(KFoldClassifier, self).__init__()
+
+        self.num_classes = num_classes
+        self.load_model = load_model
         if self.load_model:
             # list_models('resnet*', pretrained=True)
-            self.backbone = create_model(self.load_model, pretrained=True, num_classes=args.num_classes)
+            self.backbone = create_model(self.load_model, pretrained=True, num_classes=self.num_classes)
             
 
     def forward(self, x):
@@ -46,7 +63,7 @@ if __name__ == '__main__':
     Args = namedtuple('Args', args_dict.keys())
     args = Args(**args_dict)
 
-    model = Classifier(args)
+    model = KFoldClassifier(args.num_classes, args.load_model)
     for name, param in model.named_parameters():
         print(name, param.requires_grad)
 
@@ -55,4 +72,4 @@ if __name__ == '__main__':
     # output = model(img)
     # print(output.shape)
 
-    # print(list_models('vit*', pretrained=True))
+    print(list_models('swin*', pretrained=True))

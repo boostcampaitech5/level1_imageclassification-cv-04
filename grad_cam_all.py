@@ -160,15 +160,15 @@ def grad_cam(args):
 
 if __name__ == '__main__':
     args_dict = {'csv_path' : '../input/data/train/kfold4.csv',
-                 'checkpoint' : './checkpoint/kfold4_0_cd_genderdetection_reducelr66_bs64_ep100_adamw_lr0.0001_resnet50/epoch(56)_acc(0.944)_loss(0.158)_f1(0.941)_state_dict.pt',
+                 'checkpoint' : './checkpoint/kfold4_2_cd_agedetection_reducelr71_bs64_ep100_adamw_lr0.0001_resnet50/epoch(29)_acc(0.798)_loss(0.536)_f1(0.716)_state_dict.pt',
                  'load_model':'resnet50',
                  'load_mode' : 'state_dict',
-                 'num_classes' : 2,
+                 'num_classes' : 3,
                  'batch_size' : 1,
                  'model_summary' : False,
-                 'save_path' : './grad_cam_gender',
-                 'kfold' : 0,
-                 'split' : 'gender'}
+                 'save_path' : './grad_cam_age2',
+                 'kfold' : 2,
+                 'split' : 'age'}
     
     from collections import namedtuple
     Args = namedtuple('Args', args_dict.keys())
