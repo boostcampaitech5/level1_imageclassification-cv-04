@@ -2,9 +2,12 @@ import timm
 from torchsummary import summary
 from dataloader import *
 from utils import *
+import logging
 
 for model in timm.list_models():
     if 'vit' in model:
+        print(model)
+    if 'swin' in model:
         print(model)
 
 # dataset = ClassificationDataset(csv_path = '../input/data/train/train_info.csv', transform=None)
@@ -44,3 +47,6 @@ for model in timm.list_models():
 # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 # model2 = timm.create_model('vit_base_patch8_224_in21k', pretrained=True, num_classes=3).to(device)
 # print(summary(model2, (3, 224, 224)))
+
+# logging.basicConfig(filename='./utils/example.log', level=logging.DEBUG)
+# logging.info('test')

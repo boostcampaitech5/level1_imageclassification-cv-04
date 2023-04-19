@@ -159,6 +159,8 @@ def run(args, args_dict):
     model_gender, optimizer_gender, train_iter, val_iter = accelerator_gender.prepare(model_gender, optimizer_gender, train_iter, val_iter)
     model_age, optimizer_age, train_iter, val_iter = accelerator_age.prepare(model_age, optimizer_age, train_iter, val_iter)
 
+    best_val_f1 = 0 # for saving the best score along epochs
+
     print("Starting training ...")
     for epoch in range(args.epochs):
         start_time = time.time()
@@ -318,7 +320,7 @@ def run(args, args_dict):
         print('time >> {:.4f}\tepoch >> {:04d}\ttrain_acc >> {:.4f}\ttrain_loss >> {:.4f}\ttrain_f1 >> {:.4f}\tval_acc >> {:.4f}\tval_loss >> {:.4f}\tval_f1 >> {:.4f}'
               .format(time.time()-start_time, epoch, train_acc, train_sum_epoch_loss, train_f1, val_acc, val_sum_epoch_loss, val_f1))
         
-        if (epoch+1) % args.save_epoch == 0:
+        if best_val_f1 <= val_f1:
             if args.save_mode == 'state_dict' or args.save_mode == 'both':
                 # 모델의 parameter들을 저장
                 torch.save({
@@ -329,10 +331,11 @@ def run(args, args_dict):
                     'optimizer_mask_state_dict': optimizer_mask.state_dict(),
                     'optimizer_gender_state_dict': optimizer_gender.state_dict(),
                     'optimizer_age_state_dict': optimizer_age.state_dict(),
-                    }, os.path.join(checkpoint_path, f'epoch({epoch})_acc({val_acc:.3f})_loss({val_sum_epoch_loss:.3f})_f1({val_f1:.3f})_state_dict.pt'))
+                    }, os.path.join(checkpoint_path, f'best_state_dict.pt'))
             if args.save_mode == 'model' or args.save_mode == 'both':
                 # 모델 자체를 저장
-                torch.save(model, os.path.join(checkpoint_path, f'epoch({epoch})_acc({val_acc:.3f})_loss({val_sum_epoch_loss:.3f})_f1({val_f1:.3f})_model.pt'))
+                torch.save(model, os.path.join(checkpoint_path, f'best_model.pt'))
+            logging.info(f'epoch({epoch}), train_acc({train_acc:.3f}), train_loss({train_epoch_loss:.3f}), train_f1({train_f1:.3f}), val_acc({val_acc:.3f}), val_loss({val_epoch_loss:.3f}), val_f1({val_f1:.3f})')
 
         if args.use_wandb:
             wandb.log({'Train Acc': train_acc,
@@ -360,7 +363,7 @@ def run(args, args_dict):
                        'Val gender F1-Score': val_gender_f1,
                        'Val age F1-Score': val_age_f1}, step=epoch)
 
-            if (epoch+1) % args.save_epoch == 0:
+            if best_val_f1 <= val_f1:
                 fig = plot_confusion_matrix(val_cm, args.num_classes, normalize=True, save_path=None)
                 wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")}, step=epoch)
                 fig_mask = plot_confusion_matrix(val_mask_cm, args.num_mask_classes, normalize=True, save_path=None)
@@ -374,9 +377,7 @@ def run(args, args_dict):
                 #                                                             class_names=list(map(str,range(0, 18))))})
                 # # WARNING wandb.plots.* functions are deprecated and will be removed in a future release. Please use wandb.plot.* instead.
                 # wandb.log({'Confusion Matrix Heatmap': wandb.plots.HeatMap(list(range(0,18)), list(range(0,18)), val_cm, show_text=True)})
-
-        end_time = time.time()
-        print('elapsed time:', end_time - start_time)
+        best_val_f1 = val_f1
 
 if __name__ == '__main__':
     args_dict = {'seed' : 223,
@@ -387,7 +388,7 @@ if __name__ == '__main__':
                  'num_gender_classes' : 2,
                  'num_age_classes' : 3,
                  'model_summary' : True,
-                 'batch_size' : 16,
+                 'batch_size' : 64,
                  'learning_rate' : 5e-6,
                  'epochs' : 100,
                  'train_val_split': 0.8,

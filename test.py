@@ -13,18 +13,12 @@ def run(args):
     csv_path = os.path.join(args.eval_path, 'info.csv')
     save_csv_path = os.path.join(args.eval_path, f'eval_info_{args.wandb_exp_name}_{args.exp_num}.csv')
 
-    # device_mask = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    # device_gender = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    # device_age = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-    # print(f'The device_mask is ready\t>>\t{device_mask}')
-    # print(f'The device_gender is ready\t>>\t{device_gender}')
-    # print(f'The device_age is ready\t>>\t{device_age}')
     print(f'The device_age is ready\t>>\t{device}')
 
     # Image size 조절과 tensor로만 만들어주면 됨(normalize까지는 해야 할 듯)
-    transform = transforms.Compose([transforms.Resize((256, 256)),
+    transform = transforms.Compose([transforms.Resize((224, 224)),
                                     #transforms.CenterCrop(384, 384),#(256, 256),
                                     transforms.ToTensor(),
                                     transforms.Normalize(mean=(0.485, 0.456, 0.406),
@@ -41,20 +35,9 @@ def run(args):
                            num_workers=multiprocessing.cpu_count() // 2)
     
     print('The model is ready ...')
-    # model_mask = Classifier2(args.load_model, args.num_mask_classes).to(device_mask)
-    # model_gender = Classifier2(args.load_model, args.num_gender_classes).to(device_gender)
-    # model_age = Classifier2(args.load_model, args.num_age_classes).to(device_age)
     model_mask = Classifier2(args.load_model, args.num_mask_classes).to(device)
     model_gender = Classifier2(args.load_model, args.num_gender_classes).to(device)
     model_age = Classifier2(args.load_model, args.num_age_classes).to(device)
-
-    if args.model_summary:
-        print('model_mask')
-        print(summary(model_mask, (3, 256, 256)))
-        print('model_gender')
-        print(summary(model_gender, (3, 256, 256)))
-        print('model_age')
-        print(summary(model_age, (3, 256, 256)))
 
     if args.load_mode == 'state_dict':
         print('Loading checkpoint ...')
@@ -84,17 +67,16 @@ def run(args):
             result.append(test_pred.item())
     pbar_test.close()
 
-    print('Save CSV file')
     df = pd.read_csv(csv_path)
     df['ans'] = result
     df.to_csv(save_csv_path, index=False)
-
+    print('Save CSV file', save_csv_path)
 
 if __name__ == '__main__':
     args_dict = {'eval_path' : '../input/data/eval',
-                 'checkpoint' : './checkpoint/separate_learning_resize_256_no_crop_separate_plots_45_bs64_ep100_adamw_lr0.0001_resnet18/epoch(99)_acc(0.990)_loss(0.052)_f1(0.986)_state_dict.pt', 
+                 'checkpoint' : './checkpoint/seplearn_ViT_resize_224_no_crop_separate_plots_56_bs16_ep100_adamw_lr5e-06_vit_small_patch16_224/epoch(79)_acc(0.988)_loss(0.040)_f1(0.987)_state_dict.pt', 
                  'load_mode' : 'state_dict', #'model'
-                 'load_model' : 'resnet18', #'resnet18',
+                 'load_model' : 'vit_small_patch16_224', #'resnet18',
                  'num_classes' : 18,
                  'num_mask_classes' : 3,
                  'num_gender_classes' : 2,
