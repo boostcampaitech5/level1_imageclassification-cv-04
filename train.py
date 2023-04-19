@@ -123,7 +123,7 @@ def run(args, args_dict):
     )
 
     best_val_f1 = 0 # saving the best F1 score along epoch
-    logging.basicConfig(filename=checkpoint_path + '/model.log', level=logging.DEBUG)
+    logging.basicConfig(filename=checkpoint_path + '/model.log', level=logging.INFO)
 
     print("Starting training ...")
     for epoch in range(args.epochs):
