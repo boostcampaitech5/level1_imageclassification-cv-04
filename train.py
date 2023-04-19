@@ -106,7 +106,7 @@ def run(args, args_dict):
 
     print('The learning scheduler is ready ...')
     if args.lr_scheduler == 'steplr':
-        lr_scheduler = optim.lr_scheduler.StepLR(optimizer_, step_size=30, gamma=0.1, verbose=True)
+        lr_scheduler = optim.lr_scheduler.StepLR(optimizer_, step_size=35, gamma=0.1, verbose=True)
     elif args.lr_scheduler == 'reduce_lr_on_plateau':
         lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer_, mode='min', patience=5, verbose=True)
 
@@ -133,7 +133,7 @@ def run(args, args_dict):
     
     print("Starting training ...")
     for epoch in range(args.epochs):
-        kfold = epoch%15//3
+        kfold = epoch%25//5
         train_set.change_kfold(kfold)
         val_set.change_kfold(kfold)
         train_iter = DataLoader(train_set,

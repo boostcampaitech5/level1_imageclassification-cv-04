@@ -17,7 +17,8 @@ def run(args):
     print(f'The device is ready\t>>\t{device}')
 
     # Image size 조절과 tensor로만 만들어주면 됨(normalize까지는 해야 할 듯)
-    transform = transforms.Compose([transforms.CenterCrop(384),
+    transform = transforms.Compose([transforms.CenterCrop(300),
+                                    transforms.Resize(224)
                                     transforms.ToTensor(),
                                     transforms.Normalize(mean=(0.485, 0.456, 0.406),
                                                          std=(0.229, 0.224, 0.225))])
@@ -38,7 +39,7 @@ def run(args):
     print('The model is ready ...')
     model = Classifier(args).to(device)
     if args.model_summary:
-        print(summary(model, (3, 384, 384)))
+        print(summary(model, (3, 224, 224)))
     model.load_state_dict(state_dict['model_state_dict'])
 
     print("Starting testing ...")
@@ -48,8 +49,10 @@ def run(args):
         with torch.no_grad():
             test_img = test_img.to(device)
             test_pred = model(test_img)
-            _, max_pred = torch.max(test_pred, 1)
-            result.append(max_pred.item())
+            # _, max_pred = torch.max(test_pred, 1)
+            # result.append(max_pred.item())
+            test_class = pred_to_label(test_pred)
+            result.append(test_class.item())
 
     print('Save CSV file')
     df = pd.read_csv(csv_path)
@@ -59,10 +62,10 @@ def run(args):
 
 if __name__ == '__main__':
     args_dict = {'eval_path' : '../input/data/eval',
-                 'checkpoint' : './checkpoint/kfold4_0_focal_reducelr27_bs64_ep100_adamw_lr0.0001_resnet50/epoch(39)_acc(0.816)_loss(0.318)_f1(0.763)_state_dict.pt',
-                 'load_model':'resnet50',
+                 'checkpoint' : '/opt/ml/level1_imageclassification-cv-04/checkpoint/kfold4_0_ViT_multiclass42_bs64_ep100_adamw_lr1e-05_vit_base_patch16_224/epoch(59)_acc(0.998)_loss(0.008)_f1(0.999)_state_dict.pt',
+                 'load_model':'vit_base_patch16_224',
                  'load_mode' : 'state_dict',
-                 'num_classes' : 18,
+                 'num_classes' : 8,
                  'batch_size' : 1,
                  'model_summary' : True}
     

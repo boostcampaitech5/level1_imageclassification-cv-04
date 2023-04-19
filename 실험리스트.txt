@@ -1,0 +1,10 @@
+exp 33
+transformer 실험
+lr 0.00001
+exp 42
+kfold 수정 후 실험
+exp 44
+kfold 전환속도 느리게
+exp 45
+kfold 5번마다 전환
+lr 35step마다 1/10
