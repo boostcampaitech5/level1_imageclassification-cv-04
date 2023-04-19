@@ -36,6 +36,10 @@ def train_valid_split_by_sklearn(dataset, train_ratio=0.8, seed=223):
                                       ,stratify=dataset.df['ans']
                                       ,random_state=seed
                                       )
+    train_idx=train_idx+np.arange(7).reshape(-1,1)
+    val_idx=val_idx+np.arange(7).reshape(-1,1)
+    train_idx=train_idx.reshape(-1)
+    val_idx=val_idx.reshape(-1)
     train_set = Subset(dataset,train_idx)
     val_set = Subset(dataset,val_idx)
     return train_set,val_set, train_idx, val_idx
