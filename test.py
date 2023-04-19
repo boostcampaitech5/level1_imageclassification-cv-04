@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms 
 from torchsummary import summary
 import multiprocessing
+from tqdm import tqdm
 
 
 def run(args):
@@ -43,7 +44,7 @@ def run(args):
     print("Starting testing ...")
     model.eval()
     result = []
-    for test_img, _ in test_iter:
+    for test_img, _ in tqdm(test_iter):
         with torch.no_grad():
             test_img = test_img.to(device)
             test_pred = model(test_img)
@@ -58,7 +59,7 @@ def run(args):
 
 if __name__ == '__main__':
     args_dict = {'eval_path' : '../input/data/eval',
-                 'checkpoint' : './checkpoint/kfold0_focal_reducelr14_bs64_ep100_adamw_lr0.0001_resnet50/epoch(39)_acc(0.983)_loss(0.029)_f1(0.962)_state_dict.pt',
+                 'checkpoint' : './checkpoint/kfold4_0_focal_reducelr27_bs64_ep100_adamw_lr0.0001_resnet50/epoch(39)_acc(0.816)_loss(0.318)_f1(0.763)_state_dict.pt',
                  'load_model':'resnet50',
                  'load_mode' : 'state_dict',
                  'num_classes' : 18,

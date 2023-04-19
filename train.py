@@ -89,9 +89,9 @@ def run(args, args_dict):
                             num_workers=multiprocessing.cpu_count() // 2,
                             shuffle=True)
     val_iter = DataLoader(val_set,
-                            batch_size=args.batch_size,
-                            num_workers=multiprocessing.cpu_count() // 2,
-                            shuffle=True)
+                          batch_size=args.batch_size,
+                          num_workers=multiprocessing.cpu_count() // 2,
+                          shuffle=True)
         
     print('The model is ready ...')
     model = Classifier(args).to(device)
@@ -114,13 +114,13 @@ def run(args, args_dict):
     normedWeights = torch.FloatTensor(normedWeights).to(device)
     
     if args.loss == "crossentropy":
-        criterion = nn.CrossEntropyLoss(normedWeights)
+        criterion = nn.CrossEntropyLoss()
     elif args.loss == "focalloss":
         # criterion = FocalLoss(alpha=0.1, device = device)
         criterion = FocalLoss()
     elif args.loss == 'labelsmooting':
-        criterion = LabelSmoothingLoss(classes=args.num_classes, smoothing=0.0)
-    elif args.loss == 'F1Loss':
+        criterion = LabelSmoothingLoss(classes=args.num_classes, smoothing=args.labelsmoothing)
+    elif args.loss == 'f1loss':
         criterion = F1Loss(classes=args.num_classes, epsilon=1e-7)
 
     #Accelerator 적용
@@ -209,11 +209,11 @@ if __name__ == '__main__':
                  'csv_path' : '../input/data/train/kfold4.csv',
                  'save_path' : './checkpoint',
                  'use_wandb' : True,
-                 'wandb_exp_name' : 'kfold4_1_focal_reducelr',
+                 'wandb_exp_name' : 'kfold4_0_focal_reducelr',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 18,
-                 'model_summary' : True,
+                 'model_summary' : False,
                  'batch_size' : 64,
                  'learning_rate' : 1e-4,
                  'epochs' : 100,
@@ -221,13 +221,14 @@ if __name__ == '__main__':
                 #  'save_mode' : 'state_dict',
                  'save_epoch' : 10,
                  'load_model':'resnet50',
-                 'loss' : "focalloss",
+                 'loss' : "crossentropy",
                  'lr_scheduler' : 'reduce_lr_on_plateau', # default lr_scheduler = ''
                  'transform_path' : './transform_list.json',
                  'transform_list' : ['centercrop','resize', "randomrotation",'totensor', 'normalize'],
                 #  'not_freeze_layer' : ['layer4'],
                  'weight_decay': 1e-2,
-                 'kfold' : 1}
+                 'labelsmoothing':0.1,
+                 'kfold' : 0}
     wandb_data = wandb_info.get_wandb_info()
     args_dict.update(wandb_data)
     from collections import namedtuple
@@ -236,5 +237,3 @@ if __name__ == '__main__':
 
     # Config parser 하나만 넣어주면 됨(임시방편)
     run(args, args_dict)
-    
-    

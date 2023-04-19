@@ -12,3 +12,5 @@ __pycache__
 wandb_info/
 data.tar.gz
 /transform_exp
+/grad_cam
+/grad_cam2

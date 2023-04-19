@@ -54,3 +54,5 @@ if __name__ == '__main__':
     # img = torch.randn(3, 3, 224, 224)
     # output = model(img)
     # print(output.shape)
+
+    print(list_models('vit*', pretrained=True))
