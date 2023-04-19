@@ -161,7 +161,7 @@ def run(args, args_dict):
     model_age, optimizer_age, train_iter, val_iter = accelerator_age.prepare(model_age, optimizer_age, train_iter, val_iter)
 
     best_val_f1 = 0 # for saving the best score along epochs
-    logging.basicConfig(filename=checkpoint_path + '/model.log', level=logging.DEBUG)
+    logging.basicConfig(filename=checkpoint_path + '/model.log', level=logging.INFO)
 
     print("Starting training ...")
     for epoch in range(args.epochs):
