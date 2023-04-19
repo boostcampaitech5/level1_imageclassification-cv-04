@@ -71,6 +71,7 @@ class KFoldSplitDataset(Dataset):
             self.df = df[df['fold'] != kfold]
         else:
             self.df = df[df['fold']==kfold]
+        self.csv_path = csv_path
         self.train = train
         self.transform = transform
         self.split = split

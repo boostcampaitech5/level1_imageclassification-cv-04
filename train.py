@@ -96,19 +96,19 @@ def run(args, args_dict):
                           shuffle=True)
         
     print('The model is ready ...')
-    model = Classifier(args).to(device)
+    model_ = Classifier(args).to(device)
     
     # if args.model_summary:
     #     print(summary(model, (3, 384, 384)))
 
     print('The optimizer is ready ...')
-    optimizer = optim.Adam(params=model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
+    optimizer_ = optim.Adam(params=model_.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
 
     print('The learning scheduler is ready ...')
     if args.lr_scheduler == 'steplr':
-        lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1, verbose=True)
+        lr_scheduler = optim.lr_scheduler.StepLR(optimizer_, step_size=30, gamma=0.1, verbose=True)
     elif args.lr_scheduler == 'reduce_lr_on_plateau':
-        lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=5, verbose=True)
+        lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer_, mode='min', patience=5, verbose=True)
 
     print(f'The loss function({args.loss}) is ready ...')
     train_cnt = train_set.df['ans'].value_counts().sort_index()
@@ -129,7 +129,7 @@ def run(args, args_dict):
         criterion = CustomLoss()
 
     #Accelerator 적용
-    model, optimizer, train_iter, val_iter = accelerator.prepare(model, optimizer, train_iter, val_iter)
+    model, optimizer, train_iter, val_iter = accelerator.prepare(model_, optimizer_, train_iter, val_iter)
     
     print("Starting training ...")
     for epoch in range(args.epochs):
@@ -142,11 +142,11 @@ def run(args, args_dict):
                             shuffle=True)
         val_iter = DataLoader(val_set,
                           batch_size=args.batch_size,
-                          num_workers=multiprocessing.cpu_count() // 2,
-                          shuffle=True)
-        model, optimizer, train_iter, val_iter = accelerator.prepare(model, optimizer, train_iter, val_iter)
+                          num_workers=multiprocessing.cpu_count() // 2
+                          )
+        model, optimizer, train_iter, val_iter = accelerator.prepare(model_, optimizer_, train_iter, val_iter)
     
-
+        
         start_time = time.time()
         train_epoch_loss = 0
         model.train()
@@ -161,6 +161,7 @@ def run(args, args_dict):
             optimizer.step()
 
             train_epoch_loss += train_iter_loss
+
             
         print(train_pred[:3],pred_to_label(train_pred[:3]),train_target[:3])
         train_loss = (train_epoch_loss / len(train_iter))
@@ -235,7 +236,7 @@ if __name__ == '__main__':
                 #  'csv_path' : '../input/data/train/train_info.csv',
                  'csv_path' : '../input/data/train/kfold4.csv',
                  'save_path' : './checkpoint',
-                 'use_wandb' : True,
+                 'use_wandb' : False,
                  'wandb_exp_name' : 'kfold4_0_ViT_multiclass',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
@@ -249,7 +250,7 @@ if __name__ == '__main__':
                  'save_epoch' : 10,
                  'load_model':'vit_base_patch16_224',
                  'loss' : "customloss",
-                 'lr_scheduler' : 'reduce_lr_on_plateau', # default lr_scheduler = ''
+                 'lr_scheduler' : 'steplr', # default lr_scheduler = ''
                  'transform_path' : './transform_list.json',
                  'transform_list' : ['centercrop','resize', "randomrotation",'totensor', 'normalize'],
                 #  'not_freeze_layer' : ['layer4'],
