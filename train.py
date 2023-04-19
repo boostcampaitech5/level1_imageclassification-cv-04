@@ -212,7 +212,7 @@ if __name__ == '__main__':
                  'csv_path' : '../input/data/train/kfold4.csv',
                  'save_path' : './checkpoint',
                  'use_wandb' : True,
-                 'wandb_exp_name' : 'kfold4_0_cd_genderdetection_reducelr1111',
+                 'wandb_exp_name' : 'kfold4_1_cd_genderdetection_reducelr',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 2,
@@ -231,7 +231,7 @@ if __name__ == '__main__':
                 #  'not_freeze_layer' : ['layer4'],
                  'weight_decay': 1e-2,
                  'labelsmoothing':0.1,
-                 'kfold' : 0,
+                 'kfold' : 1,
                  'split' : 'gender'}
     wandb_data = wandb_info.get_wandb_info()
     args_dict.update(wandb_data)
