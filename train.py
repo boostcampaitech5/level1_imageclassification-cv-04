@@ -127,6 +127,7 @@ def run(args, args_dict):
         train_epoch_loss = 0
         model.train()
         train_iter_loss=0
+        train_cm_data = []
         pbar_train = tqdm(train_iter)
         for _,(train_img, train_target) in enumerate(pbar_train):
             pbar.set_description(f"Train. Epoch:{epoch}/{args.epochs} | Loss:{train_iter_loss:4.3f}")
@@ -134,6 +135,7 @@ def run(args, args_dict):
             optimizer.zero_grad()
 
             train_pred = model(train_img)
+            train_cm_data.append([train_pred, train_target])
             train_iter_loss = criterion(train_pred, train_target)
             # train_iter_loss.backward()
             accelerator.backward(train_iter_loss)
@@ -145,7 +147,8 @@ def run(args, args_dict):
 
         train_epoch_loss = train_epoch_loss / len(train_iter)
 
-        train_cm = confusion_matrix(model, train_iter, device, args.num_classes)
+        # train_cm = confusion_matrix(model, train_iter, device, args.num_classes)
+        train_cm = confusion_matrix2(train_cm_data, args.num_classes)
 
         train_acc = accuracy(train_cm, args.num_classes)
         train_f1 = f1_score(train_cm, args.num_classes)
@@ -155,11 +158,13 @@ def run(args, args_dict):
             val_epoch_loss = 0
             val_iter_loss = 0
             model.eval()
+            val_cm_data = []
             pbar_val = tqdm(val_iter)
             for _,(val_img, val_target) in enumerate(pbar_val):
                 # val_img, val_target = val_img.to(device), val_target.to(device)
                 pbar.set_description(f"Val. Epoch:{epoch}/{args.epochs} | Loss:{val_iter_loss:4.3f}")
                 val_pred = model(val_img)
+                val_cm_data.append([val_pred, val_target])
                 val_iter_loss = criterion(val_pred, val_target).detach()
 
                 val_epoch_loss += val_iter_loss
@@ -168,7 +173,8 @@ def run(args, args_dict):
 
         val_epoch_loss = val_epoch_loss / len(val_iter)
 
-        val_cm = confusion_matrix(model, val_iter, device, args.num_classes)
+        # val_cm = confusion_matrix(model, val_iter, device, args.num_classes)
+        val_cm = confusion_matrix2(val_cm_data, args.num_classes)
 
         val_acc = accuracy(val_cm, args.num_classes)
         val_f1 = f1_score(val_cm, args.num_classes)
