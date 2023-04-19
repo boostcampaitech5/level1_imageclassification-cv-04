@@ -18,6 +18,7 @@ import wandb_info
 from model.model_finetune import fineTune
 from model.loss import FocalLoss
 
+
 from accelerate import Accelerator
 
 from tqdm import tqdm
@@ -48,7 +49,7 @@ def run(args, args_dict):
 
     if args.use_wandb:
         print('Initialize WandB ...')
-        wandb.init(name = f'{args.wandb_exp_name}_{args.exp_num}_{args.loss}_lr{args.learning_rate}_noWS.{args.user_name}',
+        wandb.init(name = f'{args.wandb_exp_name}_{args.exp_num}_{args.loss}_lr{args.learning_rate}_noWeight.{args.user_name}',
                    project = args.wandb_project_name,
                    entity = args.wandb_entity,
                    config = args_dict)
@@ -61,7 +62,7 @@ def run(args, args_dict):
     print(f'The device is ready\t>>\t{device}')
 
     print('Make save_path')
-    checkpoint_path = os.path.join(args.save_path, f'{args.wandb_exp_name}{args.exp_num}_bs{args.batch_size}_ep{args.epochs}_{optimizer_name}_lr{args.learning_rate}_{args.load_model}')
+    checkpoint_path = os.path.join(args.save_path, f'{args.wandb_exp_name}_{args.exp_num}_bs{args.batch_size}_ep{args.epochs}_{optimizer_name}_lr{args.learning_rate}_{args.load_model}')
     os.makedirs(checkpoint_path, exist_ok=True)
 
     print(f'Transform\t>>\t{args.transform_list}')
@@ -110,9 +111,9 @@ def run(args, args_dict):
     train_cnt = dataset.df['ans'][train_idx].value_counts().sort_index()
     normedWeights = [1 - (x / sum(train_cnt)) for x in train_cnt]
     normedWeights = torch.FloatTensor(normedWeights).to(device)
-    
+
     if args.loss == "crossentropy":
-        criterion = nn.CrossEntropyLoss(normedWeights)
+        criterion = nn.CrossEntropyLoss()
     elif args.loss == "focalloss":
         criterion = FocalLoss(weight = normedWeights)
     
@@ -207,10 +208,10 @@ def run(args, args_dict):
 
 if __name__ == '__main__':
     args_dict = {'seed' : 223,
-                 'csv_path' : './input/data/train/train_info.csv',
+                 'csv_path' : '../input/data/train/train_info3.csv',
                  'save_path' : './checkpoint',
                  'use_wandb' : True,
-                 'wandb_exp_name' : 'exp',
+                 'wandb_exp_name' : 'info3',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 18,
@@ -221,11 +222,11 @@ if __name__ == '__main__':
                  'train_val_split': 0.8,
                  'save_mode' : 'state_dict',
                  'save_epoch' : 10,
-                 'load_model':'resnet18',
-                 'loss' : "focalloss",
+                 'load_model':'vit_base_resnet50_224_in21k',
+                 'loss' : "crossentropy",
                  'lr_schduler' : False,
                  'transform_path' : './transform_list.json',
-                 'transform_list' : ['centercrop',"randomrotation",'totensor', 'normalize'],
+                 'transform_list' : ['centercrop','resize','colorjitter',"randomrotation","randomgray",'totensor', 'normalize'],
                  'not_freeze_layer' : ['layer4'],
                  'weight_decay': 1e-2}
     wandb_data = wandb_info.get_wandb_info()

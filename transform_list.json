@@ -1,21 +1,21 @@
 {
 	"resize": {
-		"img_width": 256,
-		"img_height": 256
+		"img_width": 224,
+		"img_height": 224
 	},
 	"totensor": {},
 	"normalize": {
 		"normalize_statistic": "imagenet"
 	},
 	"centercrop": {
-		"img_width": 386,
-		"img_height": 386
+		"img_width": 384,
+		"img_height": 384
 	},
 	"colorjitter": {
-		"brightness": 0,
-		"contrast": 0,
-		"saturation": 0,
-		"hue": 0
+		"brightness": 0.5,
+		"contrast": 0.5,
+		"saturation": 0.5,
+		"hue": 0.5
 	},
 	"randomhorizontalflip": {
 		"flip_prob": 0.5
@@ -27,5 +27,6 @@
 		"kernel_size": 3,
 		"sigma_min": 0.1,
 		"sigma_max": 2.0
-	}
+	},
+	"randomgray" :{}
 }

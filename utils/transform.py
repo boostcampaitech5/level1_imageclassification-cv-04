@@ -1,5 +1,6 @@
 import torchvision
 from torchvision import transforms
+
 import json
 
 def get_transform(args):
@@ -26,7 +27,8 @@ def get_transform(args):
                       'randomhorizontalflip' : transforms.RandomHorizontalFlip(tf_list['randomhorizontalflip']['flip_prob']),
                       'randomrotation' : transforms.RandomRotation(tf_list['randomrotation']['degrees']),
                       'gaussianblur' : transforms.GaussianBlur(tf_list['gaussianblur']['kernel_size'],
-                                                               (tf_list['gaussianblur']['sigma_min'], tf_list['gaussianblur']['sigma_max']))}
+                                                               (tf_list['gaussianblur']['sigma_min'], tf_list['gaussianblur']['sigma_max'])),
+                      'randomgray' : transforms.RandomGrayscale(p=0.1)}
     
     list_ = []
     config = {}

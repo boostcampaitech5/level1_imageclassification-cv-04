@@ -6,17 +6,18 @@ from torch.utils.data import DataLoader
 from torchvision import transforms 
 from torchsummary import summary
 import multiprocessing
-
+import tqdm
 
 def run(args):
     csv_path = os.path.join(args.eval_path, 'info.csv')
-    save_csv_path = os.path.join(args.eval_path, 'eval_info_exp9_1.csv')
+    save_csv_path = os.path.join(args.eval_path, args.eval_name)
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(f'The device is ready\t>>\t{device}')
 
     # Image size 조절과 tensor로만 만들어주면 됨(normalize까지는 해야 할 듯)
     transform = transforms.Compose([transforms.CenterCrop(384),
+                                    transforms.CenterCrop(244),
                                     transforms.ToTensor(),
                                     transforms.Normalize(mean=(0.485, 0.456, 0.406),
                                                          std=(0.229, 0.224, 0.225))])
@@ -49,12 +50,14 @@ def run(args):
     print("Starting testing ...")
     model.eval()
     result = []
-    for test_img, _ in test_iter:
+    pbar_test = tqdm(test_iter)
+    for _, (test_img, _) in enumerate(pbar_test):
         with torch.no_grad():
             test_img = test_img.to(device)
             test_pred = model(test_img)
             _, max_pred = torch.max(test_pred, 1)
             result.append(max_pred.item())
+    pbar_test.close()
 
     print('Save CSV file')
     df = pd.read_csv(csv_path)
@@ -63,8 +66,9 @@ def run(args):
 
 
 if __name__ == '__main__':
-    args_dict = {'eval_path' : './input/data/eval',
-                 'checkpoint' : './checkpoint/exp10_bs64_ep100_adamw_lr0.0001_resnet18/epoch(89)_acc(0.997)_loss(0.019)_f1(0.997)_state_dict.pt',
+    args_dict = {'eval_path' : '../input/data/eval',
+                 'eval_name' : 'eval_info_exp18.csv',
+                 'checkpoint' : './checkpoint/info3_18_bs64_ep100_adamw_lr0.0001_resnet18_info3/epoch(79)_acc(0.961)_loss(0.154)_f1(0.960)_state_dict.pt',
                  'load_model':'resnet18',
                  'load_mode' : 'state_dict',
                  'num_classes' : 18,
