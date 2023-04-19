@@ -31,11 +31,15 @@ def weighted_sampler(dataset, data_idx, num_classes):
     return sampler
 
 def train_valid_split_by_sklearn(dataset, train_ratio=0.8, seed=223):
-    train_idx, val_idx = train_test_split(np.arange(len(dataset))
+    train_idx, val_idx = train_test_split(7*np.arange(len(dataset)//7)
                                       ,train_size=train_ratio
-                                      ,stratify=dataset.df['ans']
+                                      ,stratify=dataset.df['ans'][::7]
                                       ,random_state=seed
                                       )
+    train_idx=train_idx+np.arange(7).reshape(-1,1)
+    val_idx=val_idx+np.arange(7).reshape(-1,1)
+    train_idx=train_idx.reshape(-1)
+    val_idx=val_idx.reshape(-1)
     train_set = Subset(dataset,train_idx)
     val_set = Subset(dataset,val_idx)
     return train_set,val_set, train_idx, val_idx
