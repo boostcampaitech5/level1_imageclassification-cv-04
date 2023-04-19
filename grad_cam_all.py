@@ -159,13 +159,13 @@ def grad_cam(args):
 
 if __name__ == '__main__':
     args_dict = {'csv_path' : '../input/data/train/kfold4.csv',
-                 'checkpoint' : './checkpoint/kfold4_0_ce_reducelr49_bs64_ep100_adamw_lr0.0001_resnet50/epoch(48)_acc(0.817)_loss(0.650)_f1(0.751)_state_dict.pt',
+                 'checkpoint' : './checkpoint/kfold4_0_weightedce(0.5_0.4_0.1)_reducelr52_bs64_ep100_adamw_lr0.0001_resnet50/epoch(29)_acc(0.804)_loss(0.696)_f1(0.695)_state_dict.pt',
                  'load_model':'resnet50',
                  'load_mode' : 'state_dict',
                  'num_classes' : 18,
                  'batch_size' : 1,
                  'model_summary' : False,
-                 'save_path' : './grad_cam3',
+                 'save_path' : './grad_cam5',
                  'kfold' : 0}
     
     from collections import namedtuple

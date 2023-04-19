@@ -96,8 +96,8 @@ def run(args, args_dict):
     print('The model is ready ...')
     model = Classifier(args).to(device)
     
-    if args.model_summary:
-        print(summary(model, (3, 384, 384)))
+    # if args.model_summary:
+    #     print(summary(model, (3, 384, 384)))
 
     print('The optimizer is ready ...')
     optimizer = optim.Adam(params=model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
@@ -111,10 +111,11 @@ def run(args, args_dict):
     print(f'The loss function({args.loss}) is ready ...')
     train_cnt = train_set.df['ans'].value_counts().sort_index()
     normedWeights = [1 - (x / sum(train_cnt)) for x in train_cnt]
-    normedWeights = torch.FloatTensor(normedWeights).to(device)
+    weights = [1.5]*6 + [1.4]*6 + [0.7] *6
+    normedWeights = torch.FloatTensor(weights).to(device)
     
     if args.loss == "crossentropy":
-        criterion = nn.CrossEntropyLoss()
+        criterion = nn.CrossEntropyLoss(normedWeights)
     elif args.loss == "focalloss":
         # criterion = FocalLoss(alpha=0.1, device = device)
         criterion = FocalLoss()
@@ -188,9 +189,9 @@ def run(args, args_dict):
                     'Val Loss': val_loss,
                     'Val F1-Score': val_f1})
 
-        if (epoch+1) % args.save_epoch == 0:
-            fig = plot_confusion_matrix(val_cm, args.num_classes, normalize=True, save_path=None)
-            wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")})
+        # if (epoch+1) % args.save_epoch == 0:
+        #     fig = plot_confusion_matrix(val_cm, args.num_classes, normalize=True, save_path=None)
+        #     wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")})
 
         if optimizer.param_groups[0]["lr"] < 1e-7:
             print(f'Early Stopping\t>>\tepoch : {epoch} lr : {optimizer.param_groups[0]["lr"]}')
@@ -209,7 +210,7 @@ if __name__ == '__main__':
                  'csv_path' : '../input/data/train/kfold4.csv',
                  'save_path' : './checkpoint',
                  'use_wandb' : True,
-                 'wandb_exp_name' : 'kfold4_1_ce_reducelr',
+                 'wandb_exp_name' : 'kfold4_0_weightedce(1.5_1.5_0.7)_reducelr',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 18,
@@ -228,7 +229,7 @@ if __name__ == '__main__':
                 #  'not_freeze_layer' : ['layer4'],
                  'weight_decay': 1e-2,
                  'labelsmoothing':0.1,
-                 'kfold' : 1}
+                 'kfold' : 0}
     wandb_data = wandb_info.get_wandb_info()
     args_dict.update(wandb_data)
     from collections import namedtuple
