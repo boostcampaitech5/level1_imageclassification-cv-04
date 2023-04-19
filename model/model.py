@@ -36,7 +36,7 @@ if __name__ == '__main__':
                 'train_val_split': 0.8,
                 'save_mode' : 'model',
                 'save_epoch' : 10,
-                'load_model':'resnet50',
+                'load_model':'resnet18',
                 'transform_path' : './transform_list.json',
                 'transform_list' : ['resize', 'randomhorizontalflip', 'randomrotation', 'totensor', 'normalize'],
                 'not_freeze_layer' : ['layer4']}
