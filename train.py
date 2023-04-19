@@ -385,7 +385,8 @@ def run(args, args_dict):
                 #                                                             class_names=list(map(str,range(0, 18))))})
                 # # WARNING wandb.plots.* functions are deprecated and will be removed in a future release. Please use wandb.plot.* instead.
                 # wandb.log({'Confusion Matrix Heatmap': wandb.plots.HeatMap(list(range(0,18)), list(range(0,18)), val_cm, show_text=True)})
-        best_val_f1 = val_f1
+        if best_val_f1 <= val_f1:
+            best_val_f1 = val_f1
 
 if __name__ == '__main__':
     args_dict = {'seed' : 223,
@@ -396,7 +397,7 @@ if __name__ == '__main__':
                  'num_gender_classes' : 2,
                  'num_age_classes' : 3,
                  'model_summary' : True,
-                 'batch_size' : 64,
+                 'batch_size' : 32,#64,#16,
                  'learning_rate' : 5e-6,
                  'epochs' : 100,
                  'train_val_split': 0.8,
