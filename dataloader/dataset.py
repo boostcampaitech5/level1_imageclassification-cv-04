@@ -58,7 +58,7 @@ class KFoldDataset(Dataset):
         if self.transform:
             img = self.transform(img)
 
-        return img, torch.LongTensor([label]).squeeze()
+        return img, label
 
 
 class KFoldSplitDataset(Dataset):
@@ -81,7 +81,6 @@ class KFoldSplitDataset(Dataset):
     def __getitem__(self, idx):
         img = Image.open(self.df.iloc[idx].ImageID)
         label = self.df.iloc[idx].ans
-
         if self.split == 'mask':
             if 0 <= label < 6:
                 label = 0
@@ -94,7 +93,7 @@ class KFoldSplitDataset(Dataset):
                 label = 0
             else:
                 label = 1
-        else:
+        elif self.split == 'age':
             if label % 3 == 0:
                 label = 0
             elif label % 3 == 1:
@@ -105,7 +104,7 @@ class KFoldSplitDataset(Dataset):
         if self.transform:
             img = self.transform(img)
 
-        return img, torch.LongTensor([label]).squeeze()
+        return img, label
 
 
 if __name__ == '__main__':
@@ -118,7 +117,7 @@ if __name__ == '__main__':
     data_iter = DataLoader(dataset,
                            batch_size=3,
                            shuffle = True)
-    
+    cnt=0
     for _, y in data_iter:
         print(y)
         break
