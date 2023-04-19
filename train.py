@@ -224,7 +224,8 @@ def run(args, args_dict):
                 #                                                             class_names=list(map(str,range(0, 18))))})
                 # # WARNING wandb.plots.* functions are deprecated and will be removed in a future release. Please use wandb.plot.* instead.
                 # wandb.log({'Confusion Matrix Heatmap': wandb.plots.HeatMap(list(range(0,18)), list(range(0,18)), val_cm, show_text=True)})
-        best_val_f1 = val_f1
+        if best_val_f1 <= val_f1:
+            best_val_f1 = val_f1
 
 
 
