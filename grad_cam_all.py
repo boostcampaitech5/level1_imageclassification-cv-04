@@ -49,10 +49,11 @@ def grad_cam(args):
                                     transforms.Normalize(mean=(0.485, 0.456, 0.406),
                                                          std=(0.229, 0.224, 0.225))])
 
-    dataset = KFoldDataset(csv_path = args.csv_path,
+    dataset = KFoldSplitDataset(csv_path = args.csv_path,
                            kfold = args.kfold,
                            transform=transform,
-                           train=False)    
+                           train=False,
+                           split = args.split)    
      
     print(f'The number of testing images\t>>\t{len(dataset)}')
 
@@ -159,14 +160,15 @@ def grad_cam(args):
 
 if __name__ == '__main__':
     args_dict = {'csv_path' : '../input/data/train/kfold4.csv',
-                 'checkpoint' : './checkpoint/kfold4_0_weightedce(0.5_0.4_0.1)_reducelr52_bs64_ep100_adamw_lr0.0001_resnet50/epoch(29)_acc(0.804)_loss(0.696)_f1(0.695)_state_dict.pt',
+                 'checkpoint' : './checkpoint/kfold4_0_cd_genderdetection_reducelr66_bs64_ep100_adamw_lr0.0001_resnet50/epoch(56)_acc(0.944)_loss(0.158)_f1(0.941)_state_dict.pt',
                  'load_model':'resnet50',
                  'load_mode' : 'state_dict',
-                 'num_classes' : 18,
+                 'num_classes' : 2,
                  'batch_size' : 1,
                  'model_summary' : False,
-                 'save_path' : './grad_cam5',
-                 'kfold' : 0}
+                 'save_path' : './grad_cam_gender',
+                 'kfold' : 0,
+                 'split' : 'gender'}
     
     from collections import namedtuple
     Args = namedtuple('Args', args_dict.keys())

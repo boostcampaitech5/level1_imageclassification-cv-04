@@ -75,14 +75,16 @@ def run(args, args_dict):
                                         transforms.Normalize(mean=(0.485, 0.456, 0.406),
                                                              std=(0.229, 0.224, 0.225))])     
 
-    train_set = KFoldDataset(csv_path = args.csv_path,
+    train_set = KFoldSplitDataset(csv_path = args.csv_path,
                              kfold = args.kfold,
                              transform=train_transform,
-                             train=True)
-    val_set = KFoldDataset(csv_path = args.csv_path,
+                             train=True,
+                             split=args.split)
+    val_set = KFoldSplitDataset(csv_path = args.csv_path,
                            kfold = args.kfold,
                            transform=val_transform,
-                           train=False)           
+                           train=False,
+                           split=args.split)           
     
     train_iter = DataLoader(train_set,
                             batch_size=args.batch_size,
@@ -115,7 +117,7 @@ def run(args, args_dict):
     normedWeights = torch.FloatTensor(weights).to(device)
     
     if args.loss == "crossentropy":
-        criterion = nn.CrossEntropyLoss(normedWeights)
+        criterion = nn.CrossEntropyLoss()
     elif args.loss == "focalloss":
         # criterion = FocalLoss(alpha=0.1, device = device)
         criterion = FocalLoss()
@@ -210,10 +212,10 @@ if __name__ == '__main__':
                  'csv_path' : '../input/data/train/kfold4.csv',
                  'save_path' : './checkpoint',
                  'use_wandb' : True,
-                 'wandb_exp_name' : 'kfold4_0_weightedce(1.5_1.5_0.7)_reducelr',
+                 'wandb_exp_name' : 'kfold4_0_cd_genderdetection_reducelr',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
-                 'num_classes' : 18,
+                 'num_classes' : 2,
                  'model_summary' : False,
                  'batch_size' : 64,
                  'learning_rate' : 1e-4,
@@ -229,7 +231,8 @@ if __name__ == '__main__':
                 #  'not_freeze_layer' : ['layer4'],
                  'weight_decay': 1e-2,
                  'labelsmoothing':0.1,
-                 'kfold' : 0}
+                 'kfold' : 0,
+                 'split' : 'gender'}
     wandb_data = wandb_info.get_wandb_info()
     args_dict.update(wandb_data)
     from collections import namedtuple
