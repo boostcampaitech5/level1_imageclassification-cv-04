@@ -64,7 +64,7 @@ pip install accelerate
 |---|---|---|---|
 |seed|---|223|---|
 |csv_path|train_info.csv 위치|../input/data/train/train_info.csv|---|
-|save_path|parameter 저장 위치|../checkpoint|---|
+|save_path|parameter 저장 위치|./checkpoint|---|
 |use_wandb|---|False|True, False|
 |wandb_exp_name|---|test|---|
 |wandb_project_name|---|Image_classification_mask|---|
