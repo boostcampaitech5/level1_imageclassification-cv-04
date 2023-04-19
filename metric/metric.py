@@ -8,10 +8,7 @@ def confusion_matrix(model, data_iter, device, num_classes):
             model_pred, y_target = model(data.to(device)), target.to(device)
             _, y_pred = torch.max(model_pred.data, 1)
             for y_p, y_t in zip(y_pred, y_target):
-                if y_p == y_t:
-                    cm[y_t][y_t] += 1
-                else:
-                    cm[y_t][y_p] += 1
+                cm[y_t][y_p] += 1
 
     return cm
 
