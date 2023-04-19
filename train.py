@@ -161,7 +161,13 @@ def run(args, args_dict):
     model_age, optimizer_age, train_iter, val_iter = accelerator_age.prepare(model_age, optimizer_age, train_iter, val_iter)
 
     best_val_f1 = 0 # for saving the best score along epochs
-    logging.basicConfig(filename=checkpoint_path + '/model.log', level=logging.INFO)
+    logger = logging.getLogger('train')
+    handler = logging.FileHandler(checkpoint_path + '/model.log')
+    logger.setLevel(logging.INFO)
+    logger.addHandler(handler)
+    logger.info(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
+    for k, v in zip(args._fields, args):
+        logger.info(k + ':' + str(v))
 
     print("Starting training ...")
     for epoch in range(args.epochs):
@@ -337,7 +343,7 @@ def run(args, args_dict):
             if args.save_mode == 'model' or args.save_mode == 'both':
                 # 모델 자체를 저장
                 torch.save(model, os.path.join(checkpoint_path, f'best_model.pt'))
-            logging.info(f'epoch({epoch}), train_acc({train_acc:.3f}), train_loss({train_sum_epoch_loss:.3f}), train_f1({train_f1:.3f}), val_acc({val_acc:.3f}), val_loss({val_sum_epoch_loss:.3f}), val_f1({val_f1:.3f})')
+            logger.info(f'epoch({epoch}), train_acc({train_acc:.3f}), train_loss({train_sum_epoch_loss:.3f}), train_f1({train_f1:.3f}), val_acc({val_acc:.3f}), val_loss({val_sum_epoch_loss:.3f}), val_f1({val_f1:.3f})')
 
         if args.use_wandb:
             wandb.log({'Train Acc': train_acc,
