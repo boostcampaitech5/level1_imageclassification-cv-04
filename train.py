@@ -177,7 +177,7 @@ def run(args, args_dict):
             val_iter_loss = 0
             model.eval()
             pbar = tqdm(val_iter)
-            for val_img, val_target in iter(val_iter):
+            for val_img, val_target in iter(pbar):
                 val_pred = model(val_img)
                 val_iter_loss = criterion(val_pred, val_target).detach()
 
