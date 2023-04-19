@@ -255,7 +255,7 @@ if __name__ == '__main__':
                  'loss' : "customloss",
                  'lr_scheduler' : 'steplr', # default lr_scheduler = ''
                  'transform_path' : './transform_list.json',
-                 'transform_list' : ['centercrop','resize', "randomrotation",'totensor', 'normalize'],
+                 'transform_list' : ['centercrop','resize','randomhorizontalflip', "randomrotation",'totensor', 'normalize'],
                 #  'not_freeze_layer' : ['layer4'],
                  'weight_decay': 1e-2,
                  'labelsmoothing':0.1,
