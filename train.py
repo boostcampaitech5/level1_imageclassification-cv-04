@@ -135,7 +135,8 @@ def run(args, args_dict):
         train_epoch_loss = 0
         model.train()
         train_iter_loss=0
-        for train_img, train_target in train_iter:
+        pbar = tqdm(train_iter)
+        for train_img, train_target in iter(pbar):
             optimizer.zero_grad()
 
             train_pred = model(train_img)
@@ -157,7 +158,8 @@ def run(args, args_dict):
             val_epoch_loss = 0
             val_iter_loss = 0
             model.eval()
-            for val_img, val_target in val_iter:
+            pbar = tqdm(val_iter)
+            for val_img, val_target in iter(val_iter):
                 val_pred = model(val_img)
                 val_iter_loss = criterion(val_pred, val_target).detach()
 
