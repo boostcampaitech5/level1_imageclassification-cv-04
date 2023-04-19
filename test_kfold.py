@@ -44,15 +44,15 @@ def run(args):
         state_dict4 = torch.load(checkpoint[4])
 
         print('The model is ready ...')
-        model0 = KFoldClassifier(num_classes, args.load_model).to(device)
+        model0 = KFoldClassifier(num_classes, args.load_model[i]).to(device)
         model0.load_state_dict(state_dict0['model_state_dict'])
-        model1 = KFoldClassifier(num_classes, args.load_model).to(device)
+        model1 = KFoldClassifier(num_classes, args.load_model[i]).to(device)
         model1.load_state_dict(state_dict1['model_state_dict'])
-        model2 = KFoldClassifier(num_classes, args.load_model).to(device)
+        model2 = KFoldClassifier(num_classes, args.load_model[i]).to(device)
         model2.load_state_dict(state_dict2['model_state_dict'])
-        model3 = KFoldClassifier(num_classes, args.load_model).to(device)
+        model3 = KFoldClassifier(num_classes, args.load_model[i]).to(device)
         model3.load_state_dict(state_dict3['model_state_dict'])
-        model4 = KFoldClassifier(num_classes, args.load_model).to(device)
+        model4 = KFoldClassifier(num_classes, args.load_model[i]).to(device)
         model4.load_state_dict(state_dict4['model_state_dict'])
 
 
@@ -101,7 +101,7 @@ if __name__ == '__main__':
                                      '/opt/ml/level1_imageclassification-cv-04/checkpoint/kfold4_0_cd_agedetection_reducelr65_bs64_ep100_adamw_lr0.0001_resnet50/epoch(19)_acc(0.884)_loss(0.316)_f1(0.853)_state_dict.pt',
                                      '/opt/ml/level1_imageclassification-cv-04/checkpoint/kfold4_0_cd_agedetection_reducelr65_bs64_ep100_adamw_lr0.0001_resnet50/epoch(19)_acc(0.884)_loss(0.316)_f1(0.853)_state_dict.pt',
                                      '/opt/ml/level1_imageclassification-cv-04/checkpoint/kfold4_0_cd_agedetection_reducelr65_bs64_ep100_adamw_lr0.0001_resnet50/epoch(19)_acc(0.884)_loss(0.316)_f1(0.853)_state_dict.pt'],
-                 'load_model':'resnet50',
+                 'load_model':['resnet50', 'resnet50', 'resnet50'],
                  'load_mode' : 'state_dict',
                  'num_mask' : 3,
                  'num_gender' : 2,

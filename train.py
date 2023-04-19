@@ -108,7 +108,7 @@ def run(args, args_dict):
     if args.lr_scheduler == 'steplr':
         lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1, verbose=True)
     elif args.lr_scheduler == 'reduce_lr_on_plateau':
-        lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=5, verbose=True)
+        lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=5, threshold=args.lr_scheduler_threshold, verbose=True)
 
     print(f'The loss function({args.loss}) is ready ...')
     train_cnt = train_set.df['ans'].value_counts().sort_index()
@@ -135,10 +135,12 @@ def run(args, args_dict):
         train_epoch_loss = 0
         model.train()
         train_iter_loss=0
+        train_cm_data = []
         for train_img, train_target in train_iter:
             optimizer.zero_grad()
 
             train_pred = model(train_img)
+            train_cm_data.append([train_pred, train_target])
             train_iter_loss = criterion(train_pred, train_target)
             accelerator.backward(train_iter_loss)
             optimizer.step()
@@ -147,7 +149,7 @@ def run(args, args_dict):
 
         train_loss = (train_epoch_loss / len(train_iter))
 
-        train_cm = confusion_matrix(model, train_iter, device, args.num_classes)
+        train_cm = confusion_matrix2(train_cm_data, args.num_classes)
 
         train_acc = accuracy(train_cm, args.num_classes)
         train_f1 = f1_score(train_cm, args.num_classes)
@@ -156,15 +158,17 @@ def run(args, args_dict):
         with torch.no_grad():
             val_epoch_loss = 0
             val_iter_loss = 0
+            val_cm_data = []
             model.eval()
             for val_img, val_target in val_iter:
                 val_pred = model(val_img)
+                val_cm_data.append([val_pred, val_target])
                 val_iter_loss = criterion(val_pred, val_target).detach()
 
                 val_epoch_loss += val_iter_loss
         val_loss = (val_epoch_loss / len(val_iter))
 
-        val_cm = confusion_matrix(model, val_iter, device, args.num_classes)
+        val_cm = confusion_matrix2(val_cm_data, args.num_classes)
 
         val_acc = accuracy(val_cm, args.num_classes)
         val_f1 = f1_score(val_cm, args.num_classes)
@@ -195,7 +199,7 @@ def run(args, args_dict):
         #     fig = plot_confusion_matrix(val_cm, args.num_classes, normalize=True, save_path=None)
         #     wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")})
 
-        if optimizer.param_groups[0]["lr"] < 1e-7:
+        if optimizer.param_groups[0]["lr"] < 1e-9:
             print(f'Early Stopping\t>>\tepoch : {epoch} lr : {optimizer.param_groups[0]["lr"]}')
             if (epoch+1) % args.save_epoch != 0:
                 torch.save({
@@ -218,7 +222,7 @@ if __name__ == '__main__':
                  'num_classes' : 3,
                  'model_summary' : False,
                  'batch_size' : 64,
-                 'learning_rate' : 1e-4,
+                 'learning_rate' : 1e-6,
                  'epochs' : 100,
                 #  'train_val_split': 0.8,
                 #  'save_mode' : 'state_dict',
@@ -231,6 +235,7 @@ if __name__ == '__main__':
                 #  'not_freeze_layer' : ['layer4'],
                  'weight_decay': 1e-2,
                  'labelsmoothing':0.1,
+                 'lr_scheduler_threshold':0.00001,
                  'kfold' : 0,
                  'split' : 'age'}
     wandb_data = wandb_info.get_wandb_info()
