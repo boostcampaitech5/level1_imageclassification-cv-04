@@ -212,7 +212,7 @@ if __name__ == '__main__':
                  'csv_path' : '../input/data/train/kfold4.csv',
                  'save_path' : './checkpoint',
                  'use_wandb' : True,
-                 'wandb_exp_name' : 'kfold4_0_cd_genderdetection_reducelr',
+                 'wandb_exp_name' : 'kfold4_0_cd_genderdetection_reducelr1111',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 2,
