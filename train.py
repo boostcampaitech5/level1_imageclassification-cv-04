@@ -193,7 +193,8 @@ def run(args, args_dict):
 
 
         if args.lr_scheduler:
-            lr_scheduler.step(val_epoch_loss)
+            # lr_scheduler.step(val_epoch_loss)
+            lr_scheduler.step()
 
         print('time >> {:.4f}\tepoch >> {:04d}\ttrain_acc >> {:.4f}\ttrain_loss >> {:.4f}\ttrain_f1 >> {:.4f}\tval_acc >> {:.4f}\tval_loss >> {:.4f}\tval_f1 >> {:.4f}'
             .format(time.time()-start_time, epoch, train_acc, train_loss, train_f1, val_acc, val_loss, val_f1))
