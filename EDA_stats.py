@@ -12,13 +12,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import multiprocessing as mp
 import pickle
-import sklearn
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
-from sklearn.model_selection import train_test_split
-import torch
-from torchvision import transforms
-import json
 
 
 def get_img_stats(img_dir, img_ids):
@@ -139,10 +134,7 @@ if __name__ == '__main__':
     make_csv = False
     test_make_csv = False
     tSNE = False
-    class_distribution = False
-    make_split_csv = False
-    make_limit_csv = False
-    transforms_test = True
+    class_distribution = True
     save_csv_path = '../input/data/train/train_info.csv'
 
     class cfg:
@@ -437,7 +429,7 @@ if __name__ == '__main__':
 
             exts = get_ext(cfg.img_dir, img_id)
             for class_name in num2class:
-                ans = ''
+                ans = 0
                 for ext in exts:
                     try:
                         img_path = os.path.join(cfg.img_dir, img_id, class_name + ext)
@@ -446,24 +438,32 @@ if __name__ == '__main__':
                     except:
                         continue
                 if class_name == 'incorrect_mask':
-                    ans += '1'
+                    if gen == 'male':
+                        if age < 30: ans = 6
+                        elif age >= 60: ans = 8
+                        else: ans = 7
+                    else:
+                        if age < 30: ans = 9
+                        elif age >= 60: ans = 11
+                        else: ans = 10
                 elif class_name == 'normal':
-                    ans += '2'
+                    if gen == 'male':
+                        if age < 30: ans = 12
+                        elif age >= 60: ans = 14
+                        else: ans = 13
+                    else:
+                        if age < 30: ans = 15
+                        elif age >= 60: ans = 17
+                        else: ans = 16
                 else:
-                    ans += '0'
-                
-                if gen == 'male':
-                    ans += '0'
-                else:
-                    ans += '1'
-
-                if age < 30:
-                    ans += '0'
-                elif age >= 60:
-                    ans += '2'
-                else:
-                    ans += '1'
-
+                    if gen == 'male':
+                        if age < 30: ans = 0
+                        elif age >= 60: ans = 2
+                        else: ans = 1
+                    else:
+                        if age < 30: ans = 3
+                        elif age >= 60: ans = 5
+                        else: ans = 4
                 data.append([img_path, ans])
 
         result_df = pd.DataFrame(data, columns=['ImageID', 'ans'])
@@ -492,132 +492,4 @@ if __name__ == '__main__':
                      fontsize=11, fontweight='semibold'
                 )
         plt.tight_layout()
-        plt.savefig(os.path.join(save_path, 'train_info_ans2.png'))
-
-    if make_split_csv:
-        dtype_dict = {'ImageID':'str', 'ans':'str'}
-        df = pd.read_csv('../input/data/train/train_info.csv', dtype=dtype_dict)
-        class_list = ['000', '001', '002', '010', '011', '012',
-                      '100', '101', '102', '110', '111', '112',
-                      '200', '201', '202', '210', '211', '212']
-        np.random.seed(223)
-        new_df = pd.DataFrame(columns=['ImageID', 'ans', 'type'])
-        for class_num in class_list:
-            class_df = df[df['ans']==class_num]
-            shuffle_df = sklearn.utils.shuffle(class_df, random_state=223)
-            train_df = shuffle_df[20:].reset_index(drop=True)
-            val_df = shuffle_df[:20].reset_index(drop=True)
-            train_df['type'] = 'train'
-            val_df['type'] = 'val'
-            new_df = pd.concat([new_df, train_df, val_df], ignore_index=True)
-
-        new_df = sklearn.utils.shuffle(new_df, random_state=223)
-        
-        new_df.to_csv('../input/data/train/train_info2.csv', index=False)
-
-    if make_limit_csv:
-        dtype_dict = {'ImageID':'str', 'ans':'str'}
-        df = pd.read_csv('../input/data/train/train_info.csv', dtype=dtype_dict)
-        class_list = ['000', '001', '002', '010', '011', '012',
-                      '100', '101', '102', '110', '111', '112',
-                      '200', '201', '202', '210', '211', '212']
-        np.random.seed(223)
-        new_df = pd.DataFrame(columns=['ImageID', 'ans', 'type'])
-        for class_num in class_list:
-            class_df = df[df['ans']==class_num]
-            shuffle_df = sklearn.utils.shuffle(class_df, random_state=223)
-            train_df = shuffle_df[20:520].reset_index(drop=True)
-            val_df = shuffle_df[:20].reset_index(drop=True)
-            train_df['type'] = 'train'
-            val_df['type'] = 'val'
-            new_df = pd.concat([new_df, train_df, val_df], ignore_index=True)
-
-        new_df = sklearn.utils.shuffle(new_df, random_state=223)
-        
-        new_df.to_csv('../input/data/train/train_info4.csv', index=False)
-
-    if transforms_test:
-
-        img_path = '../input/data/train/images/000001_female_Asian_45/normal.jpg'
-        img = Image.open(img_path)
-
-        transform_list = {'Crop_334_334' : transforms.CenterCrop((384, 384)),
-                          'Crop_256_256' : transforms.CenterCrop((256, 256)),
-                          'Rotation_10' : transforms.RandomRotation((10, 10)),
-                          'Rotation_30' : transforms.RandomRotation((30, 30)),
-                          'Horizontal' : transforms.RandomHorizontalFlip(1),
-                          'Brightness_0.2' : transforms.ColorJitter(brightness=(0.2,0.2)),
-                          'Brightness_0.5' : transforms.ColorJitter(brightness=(0.5,0.5)),
-                          'Brightness_0.8' : transforms.ColorJitter(brightness=(0.8,0.8)),
-                          'Brightness_1.0' : transforms.ColorJitter(brightness=(1.0,1.0)),
-                          'Brightness_1.2' : transforms.ColorJitter(brightness=(1.2,1.2)),
-                          'Brightness_1.5' : transforms.ColorJitter(brightness=(1.5,1.5)),
-                          'Brightness_1.8' : transforms.ColorJitter(brightness=(1.8,1.8)),
-                          'Brightness_2.0' : transforms.ColorJitter(brightness=(2.0,2.0)),
-                          'Contrast_0.2' : transforms.ColorJitter(contrast=(0.2,0.2)),
-                          'Contrast_0.5' : transforms.ColorJitter(contrast=(0.5,0.5)),
-                          'Contrast_0.8' : transforms.ColorJitter(contrast=(0.8,0.8)),
-                          'Contrast_1.0' : transforms.ColorJitter(contrast=(1.0,1.0)),
-                          'Contrast_1.2' : transforms.ColorJitter(contrast=(1.2,1.2)),
-                          'Contrast_1.5' : transforms.ColorJitter(contrast=(1.5,1.5)),
-                          'Contrast_1.8' : transforms.ColorJitter(contrast=(1.8,1.8)),
-                          'Contrast_2.0' : transforms.ColorJitter(contrast=(2.0,2.0)),
-                          'Saturation_0.2' : transforms.ColorJitter(saturation=(0.2,0.2)),
-                          'Saturation_0.5' : transforms.ColorJitter(saturation=(0.5,0.5)),
-                          'Saturation_0.8' : transforms.ColorJitter(saturation=(0.8,0.8)),
-                          'Saturation_1.0' : transforms.ColorJitter(saturation=(1.0,1.0)),
-                          'Saturation_1.2' : transforms.ColorJitter(saturation=(1.2,1.2)),
-                          'Saturation_1.5' : transforms.ColorJitter(saturation=(1.5,1.5)),
-                          'Saturation_1.8' : transforms.ColorJitter(saturation=(1.8,1.8)),
-                          'Saturation_2.0' : transforms.ColorJitter(saturation=(2.0,2.0)),
-                          'Hue_minus_0.5' : transforms.ColorJitter(hue=(-0.5,-0.5)),
-                          'Hue_minus_0.3' : transforms.ColorJitter(hue=(-0.3,-0.3)),
-                          'Hue_minus_0.1' : transforms.ColorJitter(hue=(-0.1,-0.1)),
-                          'Hue_0.1' : transforms.ColorJitter(hue=(0.1,0.1)),
-                          'Hue_0.3' : transforms.ColorJitter(hue=(0.3,0.3)),
-                          'Hue_0.5' : transforms.ColorJitter(hue=(0.5,0.5)),
-                          'RandomAffine_degrees' : transforms.RandomAffine(degrees=(30,30),
-                                                                           translate=(0,0),
-                                                                           shear=(0,0,0,0)),
-                          'RandomAffine_translate' : transforms.RandomAffine(degrees=(0,0),
-                                                                             translate=(0.1,0.1),
-                                                                             shear=(0,0,0,0)),
-                          'RandomAffine_shear' : transforms.RandomAffine(degrees=(0,0),
-                                                                         translate=(0,0),
-                                                                         shear=(10,10,10,10))}
-
-        
-        save_path = './transform_exp'
-
-        for key in transform_list.keys():
-            trans_img = transform_list[key](img)
-            trans_img.save(os.path.join(save_path, f'{key}.png'))
-
-        transform = transforms.Compose([transforms.ToTensor(),
-                                        transforms.Normalize(mean=(0.485, 0.456, 0.406),
-                                                             std=(0.229, 0.224, 0.225)),
-                                        transforms.ColorJitter(contrast=(2.0,2.0)),
-                                        transforms.ToPILImage()])
-        trans_img = transform(img)
-        trans_img.save(os.path.join(save_path, 'Normalize_Contrast.png'))
-        
-
-
-    # dtype_dict = {'ImageID':'str', 'ans':'str'}
-    # new_df = pd.read_csv('../input/data/train/train_info4.csv', dtype=dtype_dict)
-    # new_df = new_df[new_df['type']=='train']
-    # class_list = ['000', '001', '002', '010', '011', '012',
-    #               '100', '101', '102', '110', '111', '112',
-    #               '200', '201', '202', '210', '211', '212']
-
-    # class_dict = dict(new_df['ans'].value_counts())
-
-    # count = {}
-    # for key, val in class_dict.items():
-    #     count[str(class_list.index(key))] = int(val)
-    # count_json = json.dumps(count)
-    # with open('./train_cnt.json','w') as f:
-    #     json.dump(count_json, f)
-
-
-
+        plt.savefig(os.path.join(save_path, 'train_info_ans.png'))

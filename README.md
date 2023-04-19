@@ -7,7 +7,7 @@ level1_imageclassification-cv-04 created by GitHub Classroom
 - ImageID
     - train_info.csv는 train 폴더 안에 넣어주시면 됩니다.(train.csv와 함께)
     - 현재 작업 폴더 : ~ ml
-        - ./input/data/train/images/000001_female_Asian_...
+        - ../input/data/train/images/000001_female_Asian_...
 - ans
     - label
 
@@ -63,7 +63,7 @@ pip install accelerate
 |Argument|Description|Default|Possible value|
 |---|---|---|---|
 |seed|---|223|---|
-|csv_path|train_info.csv 위치|./input/data/train/train_info.csv|---|
+|csv_path|train_info.csv 위치|../input/data/train/train_info.csv|---|
 |save_path|parameter 저장 위치|./checkpoint|---|
 |use_wandb|---|False|True, False|
 |wandb_exp_name|---|test|---|
@@ -86,7 +86,7 @@ pip install accelerate
 ### Test
 |Argument|Description|Default|Possible value|
 |---|---|---|---|
-|eval_path|eval folder 위치|./input/data/eval|---|
+|eval_path|eval folder 위치|../input/data/eval|---|
 |checkpoint|저장된 parameter 위치|./checkpoint/epoch(0)_acc(0.366)_loss(3.851)_f1(0.182)_model.pt|---|
 |load_mode|저장된 parameter를 불러오는 방식|model|state_dict, model|
 |num_classes|Class 개수|18|---|
