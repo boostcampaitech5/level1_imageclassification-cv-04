@@ -161,6 +161,7 @@ def run(args, args_dict):
     model_age, optimizer_age, train_iter, val_iter = accelerator_age.prepare(model_age, optimizer_age, train_iter, val_iter)
 
     best_val_f1 = 0 # for saving the best score along epochs
+    logging.basicConfig(filename=checkpoint_path + '/model.log', level=logging.DEBUG)
 
     print("Starting training ...")
     for epoch in range(args.epochs):
@@ -336,7 +337,7 @@ def run(args, args_dict):
             if args.save_mode == 'model' or args.save_mode == 'both':
                 # 모델 자체를 저장
                 torch.save(model, os.path.join(checkpoint_path, f'best_model.pt'))
-            logging.info(f'epoch({epoch}), train_acc({train_acc:.3f}), train_loss({train_epoch_loss:.3f}), train_f1({train_f1:.3f}), val_acc({val_acc:.3f}), val_loss({val_epoch_loss:.3f}), val_f1({val_f1:.3f})')
+            logging.info(f'epoch({epoch}), train_acc({train_acc:.3f}), train_loss({train_sum_epoch_loss:.3f}), train_f1({train_f1:.3f}), val_acc({val_acc:.3f}), val_loss({val_sum_epoch_loss:.3f}), val_f1({val_f1:.3f})')
 
         if args.use_wandb:
             wandb.log({'Train Acc': train_acc,
