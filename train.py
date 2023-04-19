@@ -69,7 +69,7 @@ def run(args, args_dict):
     if args.use_wandb:
         wandb.config.update(config)
 
-    val_transform = transforms.Compose([transforms.CenterCrop((384,384)),
+    val_transform = transforms.Compose([transforms.CenterCrop((300,300)),
                                         transforms.Resize((224,224)),
                                         transforms.ToTensor(),
                                         transforms.Normalize(mean=(0.485, 0.456, 0.406),
@@ -209,7 +209,7 @@ if __name__ == '__main__':
                  'csv_path' : '../input/data/train/kfold4.csv',
                  'save_path' : './checkpoint',
                  'use_wandb' : True,
-                 'wandb_exp_name' : 'kfold4_0_focal_reducelr',
+                 'wandb_exp_name' : 'kfold4_1_ce_reducelr',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' : 18,
@@ -228,7 +228,7 @@ if __name__ == '__main__':
                 #  'not_freeze_layer' : ['layer4'],
                  'weight_decay': 1e-2,
                  'labelsmoothing':0.1,
-                 'kfold' : 0}
+                 'kfold' : 1}
     wandb_data = wandb_info.get_wandb_info()
     args_dict.update(wandb_data)
     from collections import namedtuple
