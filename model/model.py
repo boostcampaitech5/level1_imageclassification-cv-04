@@ -37,7 +37,7 @@ if __name__ == '__main__':
                 'train_val_split': 0.8,
                 'save_mode' : 'model',
                 'save_epoch' : 10,
-                'load_model':'resnet18',
+                'load_model':'resnet50',
                 'transform_path' : './transform_list.json',
                 'transform_list' : ['resize', 'randomhorizontalflip', 'randomrotation', 'totensor', 'normalize'],
                 'not_freeze_layer' : ['layer4']}
@@ -55,4 +55,4 @@ if __name__ == '__main__':
     # output = model(img)
     # print(output.shape)
 
-    print(list_models('vit*', pretrained=True))
+    # print(list_models('vit*', pretrained=True))
