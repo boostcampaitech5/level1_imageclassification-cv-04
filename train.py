@@ -17,6 +17,7 @@ import sys
 import wandb_info
 from model.model_finetune import fineTune
 from model.loss import FocalLoss
+import logging
 
 from accelerate import Accelerator
 
@@ -121,6 +122,9 @@ def run(args, args_dict):
         model, optimizer, train_iter, val_iter
     )
 
+    best_val_f1 = 0 # saving the best F1 score along epoch
+    logging.basicConfig(filename=checkpoint_path + '/model.log', level=logging.DEBUG)
+
     print("Starting training ...")
     for epoch in range(args.epochs):
         start_time = time.time()
@@ -185,17 +189,18 @@ def run(args, args_dict):
         print('time >> {:.4f}\tepoch >> {:04d}\ttrain_acc >> {:.4f}\ttrain_loss >> {:.4f}\ttrain_f1 >> {:.4f}\tval_acc >> {:.4f}\tval_loss >> {:.4f}\tval_f1 >> {:.4f}'
               .format(time.time()-start_time, epoch, train_acc, train_epoch_loss, train_f1, val_acc, val_epoch_loss, val_f1))
         
-        if (epoch+1) % args.save_epoch == 0:
+        if best_val_f1 <= val_f1:
             if args.save_mode == 'state_dict' or args.save_mode == 'both':
                 # 모델의 parameter들을 저장
                 torch.save({
                     'epoch': epoch,
                     'model_state_dict': model.state_dict(),
                     'optimizer_state_dict': optimizer.state_dict(),
-                    }, os.path.join(checkpoint_path, f'epoch({epoch})_acc({val_acc:.3f})_loss({val_epoch_loss:.3f})_f1({val_f1:.3f})_state_dict.pt'))
+                    }, os.path.join(checkpoint_path, f'best_state_dict.pt'))
             if args.save_mode == 'model' or args.save_mode == 'both':
                 # 모델 자체를 저장
-                torch.save(model, os.path.join(checkpoint_path, f'epoch({epoch})_acc({val_acc:.3f})_loss({val_epoch_loss:.3f})_f1({val_f1:.3f})_model.pt'))
+                torch.save(model, os.path.join(checkpoint_path, f'best_model.pt'))
+            logging.info(f'epoch({epoch}), train_acc({train_acc:.3f}), train_loss({train_epoch_loss:.3f}), train_f1({train_f1:.3f}), val_acc({val_acc:.3f}), val_loss({val_epoch_loss:.3f}), val_f1({val_f1:.3f})')
 
         if args.use_wandb:
             wandb.log({'Train Acc': train_acc,
@@ -205,7 +210,7 @@ def run(args, args_dict):
                        'Val Loss': val_epoch_loss,
                        'Val F1-Score': val_f1})
 
-            if (epoch+1) % args.save_epoch == 0:
+            if best_val_f1 <= val_f1:
                 fig = plot_confusion_matrix(val_cm, args.num_classes, normalize=True, save_path=None)
                 wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")})
                 # wandb.log({"Confusion Matrix Plot" : wandb.plot.confusion_matrix(probs=None,
