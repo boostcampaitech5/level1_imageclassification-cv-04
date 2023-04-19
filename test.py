@@ -25,6 +25,7 @@ def run(args):
 
     # Image size 조절과 tensor로만 만들어주면 됨(normalize까지는 해야 할 듯)
     transform = transforms.Compose([transforms.Resize((256, 256)),
+                                    #transforms.CenterCrop(384, 384),#(256, 256),
                                     transforms.ToTensor(),
                                     transforms.Normalize(mean=(0.485, 0.456, 0.406),
                                                          std=(0.229, 0.224, 0.225))])
@@ -91,9 +92,9 @@ def run(args):
 
 if __name__ == '__main__':
     args_dict = {'eval_path' : '../input/data/eval',
-                 'checkpoint' : './checkpoint/separate_learning_bs64_ep100_adamw_lr0.0001_resnet18/epoch(99)_acc(0.944)_loss(0.245)_f1(0.945)_state_dict.pt', #'checkpoint' : './checkpoint/separate_learning_bs64_ep100_adamw_lr0.0001_resnet18/epoch(89)_acc(0.963)_loss(0.186)_f1(0.964)_state_dict.pt',
+                 'checkpoint' : './checkpoint/separate_learning_resize_256_no_crop_separate_plots_45_bs64_ep100_adamw_lr0.0001_resnet18/epoch(99)_acc(0.990)_loss(0.052)_f1(0.986)_state_dict.pt', 
                  'load_mode' : 'state_dict', #'model'
-                 'load_model' : 'resnet18',
+                 'load_model' : 'resnet18', #'resnet18',
                  'num_classes' : 18,
                  'num_mask_classes' : 3,
                  'num_gender_classes' : 2,

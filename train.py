@@ -16,6 +16,7 @@ import sklearn
 import sys
 import wandb_info
 from accelerate import Accelerator
+from model.loss import FocalLoss
 
 from tqdm import tqdm
 
@@ -88,20 +89,20 @@ def run(args, args_dict):
     print(f'The number of validation images\t>>\t{len(val_set)}')
 
     print('The data loader is ready ...')
-    train_sampler = weighted_sampler(dataset, train_idx, args.num_classes)
-    val_sampler = weighted_sampler(dataset,val_idx, args.num_classes)
+    #train_sampler = weighted_sampler(dataset, train_idx, args.num_classes)
+    #val_sampler = weighted_sampler(dataset,val_idx, args.num_classes)
     
     train_iter = DataLoader(train_set,
                             batch_size=args.batch_size,
                             drop_last=True,
-                            num_workers=multiprocessing.cpu_count() // 2
-                            ,sampler = train_sampler
+                            num_workers=multiprocessing.cpu_count() // 2,
+                            shuffle=True#sampler = train_sampler
                             )   
     val_iter = DataLoader(val_set,
                           batch_size=args.batch_size,
                           drop_last=True,
-                          num_workers=multiprocessing.cpu_count() // 2
-                          ,sampler = val_sampler
+                          num_workers=multiprocessing.cpu_count() // 2,
+                          shuffle=True#sampler = val_sampler
                           )
 
     print('The model is ready ...')
@@ -111,11 +112,11 @@ def run(args, args_dict):
 
     if args.model_summary:
         print('model_mask')
-        print(summary(model_mask, (3, 256, 256)))
+        print(summary(model_mask, (3, 384, 384)))
         print('model_gender')
-        print(summary(model_gender, (3, 256, 256)))
+        print(summary(model_gender, (3, 384, 384)))
         print('model_age')
-        print(summary(model_age, (3, 256, 256)))
+        print(summary(model_age, (3, 384, 384)))
 
     print('The optimizer is ready ...')
     optimizer_mask = optim.Adam(params=model_mask.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
@@ -123,7 +124,35 @@ def run(args, args_dict):
     optimizer_age = optim.Adam(params=model_age.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
 
     print('The loss function is ready ...')
-    criterion = nn.CrossEntropyLoss()
+    
+    # train_cnt = dataset.df['ans'][train_idx].value_counts().sort_index()
+    # normedWeights = [1 - (x / sum(train_cnt)) for x in train_cnt]
+    
+    df_mask = dataset.df['ans'][train_idx] // 6
+    df_gender = (dataset.df['ans'][train_idx] // 3) % 2
+    df_age = dataset.df['ans'][train_idx] % 3
+
+    train_mask_cnt = df_mask.value_counts().sort_index()
+    train_gender_cnt = df_gender.value_counts().sort_index()
+    train_age_cnt = df_age.value_counts().sort_index()
+
+    normedWeights_mask = [1 - (x / sum(train_mask_cnt)) for x in train_mask_cnt]
+    normedWeights_gender = [1 - (x / sum(train_gender_cnt)) for x in train_gender_cnt]
+    normedWeights_age = [1 - (x / sum(train_age_cnt)) for x in train_age_cnt]
+
+    normedWeights_mask = torch.FloatTensor(normedWeights_mask).to(device_mask)
+    normedWeights_gender = torch.FloatTensor(normedWeights_gender).to(device_gender)
+    normedWeights_age = torch.FloatTensor(normedWeights_age).to(device_age)
+
+    # criterion = nn.CrossEntropyLoss()
+    if args.loss == "crossentropy":
+        criterion_mask = nn.CrossEntropyLoss(normedWeights_mask)
+        criterion_gender = nn.CrossEntropyLoss(normedWeights_gender)
+        criterion_age = nn.CrossEntropyLoss(normedWeights_age)
+    elif args.loss == "focalloss":
+        criterion_mask = FocalLoss(alpha=0.1, device = device_mask)
+        criterion_gender = FocalLoss(alpha=0.1, device = device_gender)
+        criterion_age = FocalLoss(alpha=0.1, device = device_age)
     
     #Accelerator 적용
     model_mask, optimizer_mask, train_iter, val_iter = accelerator_mask.prepare(model_mask, optimizer_mask, train_iter, val_iter)
@@ -137,7 +166,6 @@ def run(args, args_dict):
         train_mask_epoch_loss = 0
         train_gender_epoch_loss = 0
         train_age_epoch_loss = 0
-
         train_sum_epoch_loss = 0
 
         model_mask.train()
@@ -147,9 +175,11 @@ def run(args, args_dict):
         train_mask_iter_loss=0
         train_gender_iter_loss=0
         train_age_iter_loss=0
-
         train_sum_iter_loss=0
 
+        train_mask_cm_data = []
+        train_gender_cm_data = []
+        train_age_cm_data = []
         train_cm_data = []
 
         pbar_train = tqdm(train_iter)
@@ -171,14 +201,16 @@ def run(args, args_dict):
             train_mask_pred = model_mask(train_img)
             train_gender_pred = model_gender(train_img)
             train_age_pred = model_age(train_img)
-
             train_pred = torch.max(train_mask_pred, 1)[1] * 6 + torch.max(train_gender_pred, 1)[1] * 3 + torch.max(train_age_pred, 1)[1]
+
+            train_mask_cm_data.append([torch.max(train_mask_pred, 1)[1], train_mask_target])
+            train_gender_cm_data.append([torch.max(train_gender_pred, 1)[1], train_gender_target])
+            train_age_cm_data.append([torch.max(train_age_pred, 1)[1], train_age_target])            
             train_cm_data.append([train_pred, train_target])
 
-            train_mask_iter_loss = criterion(train_mask_pred, train_mask_target)
-            train_gender_iter_loss = criterion(train_gender_pred, train_gender_target)
-            train_age_iter_loss = criterion(train_age_pred, train_age_target)
-            
+            train_mask_iter_loss = criterion_mask(train_mask_pred, train_mask_target)
+            train_gender_iter_loss = criterion_gender(train_gender_pred, train_gender_target)
+            train_age_iter_loss = criterion_age(train_age_pred, train_age_target)
             train_sum_iter_loss = train_age_iter_loss + train_gender_iter_loss + train_age_iter_loss # not for calculation but just for report
 
             # train_iter_loss.backward()
@@ -193,15 +225,25 @@ def run(args, args_dict):
             train_mask_epoch_loss += train_mask_iter_loss
             train_gender_epoch_loss += train_gender_iter_loss
             train_age_epoch_loss += train_age_iter_loss
-
             train_sum_epoch_loss += train_sum_iter_loss # not for calculation but just for report
+
+        pbar_train.close()
 
         train_sum_epoch_loss = train_sum_epoch_loss / len(train_iter)
 
-        # train_cm = confusion_matrix(model, train_iter, device, args.num_classes)
+        train_mask_cm = confusion_matrix2(train_mask_cm_data, args.num_mask_classes)
+        train_gender_cm = confusion_matrix2(train_gender_cm_data, args.num_gender_classes)
+        train_age_cm = confusion_matrix2(train_age_cm_data, args.num_age_classes)
         train_cm = confusion_matrix2(train_cm_data, args.num_classes)
 
+        train_mask_acc = accuracy(train_mask_cm, args.num_mask_classes)
+        train_gender_acc = accuracy(train_gender_cm, args.num_gender_classes)
+        train_age_acc = accuracy(train_age_cm, args.num_age_classes)
         train_acc = accuracy(train_cm, args.num_classes)
+
+        train_mask_f1 = f1_score(train_mask_cm, args.num_mask_classes)
+        train_gender_f1 = f1_score(train_gender_cm, args.num_gender_classes)
+        train_age_f1 = f1_score(train_age_cm, args.num_age_classes)
         train_f1 = f1_score(train_cm, args.num_classes)
 
         # Validation
@@ -209,21 +251,22 @@ def run(args, args_dict):
             val_mask_epoch_loss = 0
             val_gender_epoch_loss = 0
             val_age_epoch_loss = 0
-
             val_sum_epoch_loss = 0
 
             val_mask_iter_loss = 0
             val_gender_iter_loss = 0
-            val_age_iter_loss = 0
-            
+            val_age_iter_loss = 0            
             val_sum_iter_loss = 0
 
             model_mask.eval()
             model_gender.eval()
             model_age.eval()
 
+            val_mask_cm_data = []
+            val_gender_cm_data = []
+            val_age_cm_data = []
             val_cm_data = []
-            
+
             pbar_val = tqdm(val_iter)
             for _,(val_img, val_target) in enumerate(pbar_val):
                 # val_img, val_target = val_img.to(device), val_target.to(device)
@@ -236,29 +279,40 @@ def run(args, args_dict):
                 val_mask_pred = model_mask(val_img)
                 val_gender_pred = model_gender(val_img)
                 val_age_pred = model_age(val_img)
-
                 val_pred = torch.max(val_mask_pred, 1)[1] * 6 + torch.max(val_gender_pred, 1)[1] * 3 + torch.max(val_age_pred, 1)[1]
+                
+                val_mask_cm_data.append([torch.max(val_mask_pred, 1)[1], val_mask_target])
+                val_gender_cm_data.append([torch.max(val_gender_pred, 1)[1], val_gender_target])
+                val_age_cm_data.append([torch.max(val_age_pred, 1)[1], val_age_target])
                 val_cm_data.append([val_pred, val_target])
 
-                val_mask_iter_loss = criterion(val_mask_pred, val_mask_target).detach()
-                val_gender_iter_loss = criterion(val_gender_pred, val_gender_target).detach()
-                val_age_iter_loss = criterion(val_age_pred, val_age_target).detach()
-
+                val_mask_iter_loss = criterion_mask(val_mask_pred, val_mask_target).detach()
+                val_gender_iter_loss = criterion_gender(val_gender_pred, val_gender_target).detach()
+                val_age_iter_loss = criterion_age(val_age_pred, val_age_target).detach()
                 val_sum_iter_loss = val_age_iter_loss + val_gender_iter_loss + val_age_iter_loss # not for calculation but just for report
 
                 val_mask_epoch_loss += val_mask_iter_loss
                 val_gender_epoch_loss += val_gender_iter_loss
                 val_age_epoch_loss += val_age_iter_loss
-
                 val_sum_epoch_loss += val_sum_iter_loss # not for calculation but just for report
+
             pbar_val.close()
-        pbar_train.close()
+
         val_sum_epoch_loss = val_sum_epoch_loss / len(val_iter)
 
-        #val_cm = confusion_matrix(model, val_iter, device, args.num_classes)
+        val_mask_cm = confusion_matrix2(val_mask_cm_data, args.num_mask_classes)
+        val_gender_cm = confusion_matrix2(val_gender_cm_data, args.num_gender_classes)
+        val_age_cm = confusion_matrix2(val_age_cm_data, args.num_age_classes)
         val_cm = confusion_matrix2(val_cm_data, args.num_classes)
 
+        val_mask_acc = accuracy(val_mask_cm, args.num_mask_classes)
+        val_gender_acc = accuracy(val_gender_cm, args.num_gender_classes)
+        val_age_acc = accuracy(val_age_cm, args.num_age_classes)        
         val_acc = accuracy(val_cm, args.num_classes)
+        
+        val_mask_f1 = f1_score(val_mask_cm, args.num_mask_classes)
+        val_gender_f1 = f1_score(val_gender_cm, args.num_gender_classes)
+        val_age_f1 = f1_score(val_age_cm, args.num_age_classes)
         val_f1 = f1_score(val_cm, args.num_classes)
 
         print('time >> {:.4f}\tepoch >> {:04d}\ttrain_acc >> {:.4f}\ttrain_loss >> {:.4f}\ttrain_f1 >> {:.4f}\tval_acc >> {:.4f}\tval_loss >> {:.4f}\tval_f1 >> {:.4f}'
@@ -282,15 +336,39 @@ def run(args, args_dict):
 
         if args.use_wandb:
             wandb.log({'Train Acc': train_acc,
+                       'Train mask Acc': train_mask_acc,
+                       'Train gender Acc': train_gender_acc,
+                       'Train age Acc': train_age_acc,
                        'Train Loss': train_sum_epoch_loss,
+                       'Train mask Loss': train_mask_epoch_loss,
+                       'Train gender Loss': train_gender_epoch_loss,
+                       'Train age Loss': train_age_epoch_loss,
                        'Train F1-Score': train_f1,
+                       'Train mask F1-Score': train_mask_f1,
+                       'Train gender F1-Score': train_gender_f1,
+                       'Train age F1-Score': train_age_f1,
                        'Val Acc': val_acc,
+                       'Val mask Acc': val_mask_acc,
+                       'Val gender Acc': val_gender_acc,
+                       'Val age Acc': val_age_acc,
                        'Val Loss': val_sum_epoch_loss,
-                       'Val F1-Score': val_f1})
+                       'Val mask Loss': val_mask_epoch_loss,
+                       'Val gender Loss': val_gender_epoch_loss,
+                       'Val age Loss': val_age_epoch_loss,
+                       'Val F1-Score': val_f1,
+                       'Val mask F1-Score': val_mask_f1,
+                       'Val gender F1-Score': val_gender_f1,
+                       'Val age F1-Score': val_age_f1})
 
             if (epoch+1) % args.save_epoch == 0:
                 fig = plot_confusion_matrix(val_cm, args.num_classes, normalize=True, save_path=None)
                 wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")})
+                fig_mask = plot_confusion_matrix(val_mask_cm, args.num_mask_classes, normalize=True, save_path=None)
+                wandb.log({'Confusion Matrix (mask)': wandb.Image(fig_mask, caption=f"Epoch-{epoch}")})
+                fig_gender = plot_confusion_matrix(val_gender_cm, args.num_gender_classes, normalize=True, save_path=None)
+                wandb.log({'Confusion Matrix (gender)': wandb.Image(fig_gender, caption=f"Epoch-{epoch}")})
+                fig_age = plot_confusion_matrix(val_age_cm, args.num_age_classes, normalize=True, save_path=None)
+                wandb.log({'Confusion Matrix (age)': wandb.Image(fig_age, caption=f"Epoch-{epoch}")})
                 # wandb.log({"Confusion Matrix Plot" : wandb.plot.confusion_matrix(probs=None,
                 #                                                             preds=pred_list, y_true=target_list,
                 #                                                             class_names=list(map(str,range(0, 18))))})
@@ -311,13 +389,14 @@ if __name__ == '__main__':
                  'model_summary' : True,
                  'batch_size' : 64,
                  'learning_rate' : 1e-4,
-                 'epochs' : 200,
+                 'epochs' : 100,
                  'train_val_split': 0.8,
                  'save_mode' : 'state_dict', #'model'
                  'save_epoch' : 10,
                  'load_model': 'resnet18', #'densenet121', #'resnet18',
-                 'transform_path' : './transform_list.json',
-                 'transform_list' : ['resize', 'randomhorizontalflip', 'randomrotation', 'totensor', 'normalize'],
+                 'loss' : "crossentropy",
+                 'transform_path' : './utils/transform_list.json',
+                 'transform_list' : ['resize', 'randomhorizontalflip', 'randomrotation', 'totensor', 'normalize'],#['resize', 'randomhorizontalflip', 'randomrotation', 'totensor', 'normalize'],
                  'not_freeze_layer' : ['layer4'],
                  'weight_decay': 5e-4}
     wandb_data = wandb_info.get_wandb_info()
@@ -328,5 +407,4 @@ if __name__ == '__main__':
 
     # Config parser 하나만 넣어주면 됨(임시방편)
     run(args, args_dict)
-    
     

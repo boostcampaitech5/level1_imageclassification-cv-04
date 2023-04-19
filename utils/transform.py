@@ -58,7 +58,7 @@ class CustomTransform():
 
 
 if __name__ == '__main__':
-    args_dict = {'transform_path' : './transform_list.json',
+    args_dict = {'transform_path' : './utils/transform_list.json',
                  'transform_list' : ['resize',
                                      'totensor',
                                      'normalize',

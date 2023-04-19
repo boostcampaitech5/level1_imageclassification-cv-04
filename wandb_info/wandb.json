@@ -1,1 +1,1 @@
-{"use_wandb": true, "wandb_exp_name": "separate_learning", "wandb_project_name": "Image_classification_mask", "wandb_entity": "connect-cv-04", "exp_num": 18, "user_name": "dh"}
+{"use_wandb": true, "wandb_exp_name": "separate_learning_resize_256_no_crop_separate_plots", "wandb_project_name": "Image_classification_mask", "wandb_entity": "connect-cv-04", "exp_num": 46, "user_name": "dh"}

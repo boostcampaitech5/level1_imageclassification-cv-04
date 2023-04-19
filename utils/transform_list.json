@@ -21,7 +21,7 @@
 		"flip_prob": 0.5
 	},
 	"randomrotation": {
-		"degrees": 30
+		"degrees": 15
 	},
 	"gaussianblur": {
 		"kernel_size": 3,
