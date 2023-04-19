@@ -191,8 +191,6 @@ if __name__ == '__main__':
                  'save_epoch' : 10,
                  'load_model':'resnet50',
                  'transform_path' : './transform_list.json',
-                 'transform_list' : ['resize', 'totensor', 'normalize'],
-                 'not_freeze_layer' : [],
                  'weight_decay': 1e-2}
     wandb_data = wandb_info.get_wandb_info()
     args_dict.update(wandb_data)
