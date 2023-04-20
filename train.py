@@ -139,7 +139,8 @@ def run(args, args_dict):
     
     print("Starting training ...")
     for epoch in range(args.epochs):
-        kfold = epoch%15//5
+        kfold = epoch%20//4
+        print('Fold: ',kfold)
         train_set.change_kfold(kfold)
         val_set.change_kfold(kfold)
         train_iter = DataLoader(train_set,
@@ -208,14 +209,14 @@ def run(args, args_dict):
         print('time >> {:.4f}\tepoch >> {:04d}\ttrain_acc >> {:.4f}\ttrain_loss >> {:.4f}\ttrain_f1 >> {:.4f}\tval_acc >> {:.4f}\tval_loss >> {:.4f}\tval_f1 >> {:.4f}'
             .format(time.time()-start_time, epoch, train_acc, train_loss, train_f1, val_acc, val_loss, val_f1))
         
-        if (epoch+1) % args.save_epoch == 0:
+        if (epoch+1) % args.save_epoch == 0 or epoch+1 == args.epochs or epoch>93:
             # 모델의 parameter들을 저장
             torch.save({
                 'epoch': epoch,
                 'model_state_dict': model.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
                 }, os.path.join(checkpoint_path, f'epoch({epoch})_acc({val_acc:.3f})_loss({val_loss:.3f})_f1({val_f1:.3f})_state_dict.pt'))
-
+        
         if args.use_wandb:
             wandb.log({'Train Acc': train_acc,
                     'Train Loss': train_loss,

@@ -8,3 +8,24 @@ kfold 전환속도 느리게
 exp 45
 kfold 5번마다 전환
 lr 35step마다 1/10
+exp47
+randomhorizontalflip적용
+centercrop384로 바꿈
+exp52
+보이는 성적은 높았음
+exp53
+lr스케줄러 제거
+exp55
+52추가학습
+exp57
+vit-clip-laion 파라메터 사용
+exp58
+lr 1e-6으로 학습
+kfold 4번마다 전환(5?)
+exp59
+3번마다 전환
+exp60
+fold4가 학습에 방해가 많이 되므로 마지막 학습에서 fold3까지 학습하고 종료
+알고리즘 문제발견
+exp61
+4마다 전환, 
