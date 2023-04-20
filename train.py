@@ -126,7 +126,7 @@ def run(args, args_dict):
     print('The optimizer is ready ...')
     optimizer_mask = optim.Adam(params=model_mask.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
     optimizer_gender = optim.Adam(params=model_gender.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
-    optimizer_age = optim.Adam(params=model_age.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
+    optimizer_age = optim.Adam(params=model_age.parameters(), lr=5e-7, weight_decay=args.weight_decay)
 
     print('The loss function is ready ...')
     
