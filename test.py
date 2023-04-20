@@ -11,14 +11,14 @@ from tqdm import tqdm
 
 def run(args):
     csv_path = os.path.join(args.eval_path, 'info.csv')
-    save_csv_path = 'eval_info.csv'
+    save_csv_path = 'eval_info2.csv'
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print(f'The device is ready\t>>\t{device}')
 
     # Image size 조절과 tensor로만 만들어주면 됨(normalize까지는 해야 할 듯)
-    transform = transforms.Compose([transforms.CenterCrop(300),
-                                    transforms.Resize(224)
+    transform = transforms.Compose([transforms.CenterCrop(384),
+                                    transforms.Resize(224),
                                     transforms.ToTensor(),
                                     transforms.Normalize(mean=(0.485, 0.456, 0.406),
                                                          std=(0.229, 0.224, 0.225))])
@@ -62,12 +62,12 @@ def run(args):
 
 if __name__ == '__main__':
     args_dict = {'eval_path' : '../input/data/eval',
-                 'checkpoint' : '/opt/ml/level1_imageclassification-cv-04/checkpoint/kfold4_0_ViT_multiclass42_bs64_ep100_adamw_lr1e-05_vit_base_patch16_224/epoch(59)_acc(0.998)_loss(0.008)_f1(0.999)_state_dict.pt',
+                 'checkpoint' : '/opt/ml/level1_imageclassification-cv-04/checkpoint/kfold4_0_ViT_multiclass46_bs64_ep100_adamw_lr1e-05_vit_base_patch16_224/epoch(99)_acc(0.999)_loss(0.005)_f1(1.000)_state_dict.pt',
                  'load_model':'vit_base_patch16_224',
                  'load_mode' : 'state_dict',
                  'num_classes' : 8,
                  'batch_size' : 1,
-                 'model_summary' : True}
+                 'model_summary' : False}
     
     from collections import namedtuple
     Args = namedtuple('Args', args_dict.keys())

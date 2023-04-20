@@ -128,6 +128,12 @@ def run(args, args_dict):
     elif args.loss == 'customloss':
         criterion = CustomLoss()
 
+
+    #이어서 학습
+    state_dict = torch.load('/opt/ml/level1_imageclassification-cv-04/checkpoint/kfold4_0_ViT_multiclass52_bs64_ep100_adamw_lr1e-05_vit_base_patch16_224/epoch(99)_acc(0.894)_loss(0.395)_f1(0.867)_state_dict.pt')
+    model_.load_state_dict(state_dict['model_state_dict'])
+
+
     #Accelerator 적용
     model, optimizer, train_iter, val_iter = accelerator.prepare(model_, optimizer_, train_iter, val_iter)
     
@@ -215,7 +221,7 @@ def run(args, args_dict):
                     'Train F1-Score': train_f1,
                     'Val Acc': val_acc,
                     'Val Loss': val_loss,
-                    'Val F1-Score': val_f1,},
+                    'Val F1-Score': val_f1},
                     step=epoch)
 
         if (epoch+1) % args.save_epoch == 0:
@@ -240,22 +246,22 @@ if __name__ == '__main__':
                  'csv_path' : '../input/data/train/kfold4.csv',
                  'save_path' : './checkpoint',
                  'use_wandb' : True,
-                 'wandb_exp_name' : 'kfold4_0_ViT_multiclass',
+                 'wandb_exp_name' : 'kfold4_0_ViT_multiclass_more_train52',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' :18,
                  'model_summary' : False,
                  'batch_size' : 64,
-                 'learning_rate' : 1e-5,
+                 'learning_rate' : 1e-6,
                  'epochs' : 100,
                 #  'train_val_split': 0.8,
                 #  'save_mode' : 'state_dict',
                  'save_epoch' : 10,
                  'load_model':'vit_base_patch16_224',
                  'loss' : "customloss",
-                 'lr_scheduler' : 'steplr', # default lr_scheduler = ''
+                 'lr_scheduler' : '', # default lr_scheduler = ''
                  'transform_path' : './transform_list.json',
-                 'transform_list' : ['centercrop','resize','randomhorizontalflip', "randomrotation",'totensor', 'normalize'],
+                 'transform_list' : ['resize','randomhorizontalflip', "randomrotation",'totensor', 'normalize'],
                 #  'not_freeze_layer' : ['layer4'],
                  'weight_decay': 1e-2,
                  'labelsmoothing':0.1,
