@@ -37,7 +37,8 @@ def run(args):
     print('The model is ready ...')
     model_mask = Classifier2(args.load_model, args.num_mask_classes).to(device)
     model_gender = Classifier2(args.load_model, args.num_gender_classes).to(device)
-    model_age = Classifier2(args.load_model, args.num_age_classes).to(device)
+    # model_age = Classifier2(args.load_model, args.num_age_classes).to(device)
+    model_age = AgeClassifier('resnet50', 1).to(device)
 
     if args.load_mode == 'state_dict':
         print('Loading checkpoint ...')
@@ -63,7 +64,7 @@ def run(args):
             test_mask_pred = model_mask(test_img)
             test_gender_pred = model_gender(test_img)
             test_age_pred = model_age(test_img)
-            test_pred = torch.max(test_mask_pred, 1)[1] * 6 + torch.max(test_gender_pred, 1)[1] * 3 + torch.max(test_age_pred, 1)[1]
+            test_pred = torch.max(test_mask_pred, 1)[1] * 6 + torch.max(test_gender_pred, 1)[1] * 3 + (test_age_pred // 30)
             result.append(test_pred.item())
     pbar_test.close()
 
@@ -82,7 +83,7 @@ if __name__ == '__main__':
                  'num_gender_classes' : 2,
                  'num_age_classes' : 3,
                  'batch_size' : 1,
-                 'model_summary' : True}
+                 'model_summary' : False}
     
     wandb_data = wandb_info.get_wandb_info()
     args_dict.update(wandb_data)

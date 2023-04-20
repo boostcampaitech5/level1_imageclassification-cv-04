@@ -39,7 +39,7 @@ class Classifier2(nn.Module):
 
 class AgeClassifier(nn.Module):
     def __init__(self, load_model, num_classes):
-        super(Classifier2, self).__init__()
+        super(AgeClassifier, self).__init__()
 
         self.num_classes = num_classes
         self.load_model = load_model
