@@ -38,13 +38,13 @@ class KFoldDataset(Dataset):
 
     def __init__(self, csv_path, kfold=-1, train=True, transform=None):
         df = pd.read_csv(csv_path)
-        for index, row in df.iterrows():
-            df['age'] = row['ImageID'].split('/')[-2].split('_')[-1]
+        # for index, row in df.iterrows():
+        #     df['age'] = row['ImageID'].split('/')[-2].split('_')[-1]
 
         if train:
             self.df = df[df['fold'] != kfold]
         else:
-            self.df = df[df['fold']==kfold]
+            self.df = df[df['fold'] == kfold]
         self.transform = transform
 
 
@@ -55,7 +55,7 @@ class KFoldDataset(Dataset):
     def __getitem__(self, idx):
         img = Image.open(self.df.iloc[idx].ImageID)
         label = self.df.iloc[idx].ans
-        age = int(self.df.iloc[idx].age)
+        age = int(self.df.iloc[idx].ImageID.split('/')[-2].split('_')[-1])
 
         if self.transform:
             img = self.transform(img)

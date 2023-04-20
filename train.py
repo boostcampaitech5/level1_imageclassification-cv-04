@@ -83,10 +83,10 @@ def run(args, args_dict):
 
     # dataset = ClassificationDataset(csv_path = args.csv_path,
     #                                 transform=transform)
-    train_set = KFoldDataset(csv_path = '../input/data/train/kfold4.csv',
+    train_set = KFoldDataset(csv_path = '/opt/ml/DH3/kfold4.csv',
                                 transform=transform,
                                 kfold=0, train=True)
-    val_set = KFoldDataset(csv_path = '../input/data/train/kfold4.csv',
+    val_set = KFoldDataset(csv_path = '/opt/ml/DH3/kfold4.csv',
                                 transform=transform,
                                 kfold=0, train=False)
 
@@ -206,6 +206,7 @@ def run(args, args_dict):
             train_gender_target = (train_target // 3) % 2   # 'Male': 0, 'Female': 1
             # train_age_target = train_target % 3             # '< 30': 0, '>= 30 and < 60': 1, '>= 60': 2
             train_age_target = torch.tensor([[age + 15 * (age >= 60)] for age in train_age])
+            # print('train_age', train_age)
 
             train_img, train_mask_target = train_img.to(device_mask), train_mask_target.to(device_mask)
             train_img, train_gender_target = train_img.to(device_gender), train_gender_target.to(device_gender)
@@ -238,6 +239,10 @@ def run(args, args_dict):
             # train_age_cm_data.append([torch.max(train_age_pred, 1)[1], train_age_target])
             train_age_cm_data.append([torch.bucketize(train_age_pred, torch.Tensor([30,60]).cuda(), right=True), train_age_target // 30])
             train_cm_data.append([train_pred, train_target])
+
+            # print('torch.bucketize(train_age_pred, torch.Tensor([30,60]).cuda(), right=True)', torch.bucketize(train_age_pred, torch.Tensor([30,60]).cuda(), right=True))
+            # print('train_age_target // 30', train_age_target // 30)
+
 
             # train_mask_iter_loss = criterion_mask(train_mask_pred, train_mask_target)
             # train_gender_iter_loss = criterion_gender(train_gender_pred, train_gender_target)
@@ -330,7 +335,7 @@ def run(args, args_dict):
                 val_mask_iter_loss = criterion(val_mask_pred, val_mask_target).detach()
                 val_gender_iter_loss = criterion(val_gender_pred, val_gender_target).detach()
                 # val_age_iter_loss = criterion(val_age_pred, val_age_target).detach()
-                val_age_iter_loss = criterion_age(val_age_pred.to(device_age), val_age_target.to(device_age)).detach()
+                val_age_iter_loss = criterion_age(val_age_pred.float().cuda(), val_age_target.float().cuda()).detach()
                 val_sum_iter_loss = val_age_iter_loss + val_gender_iter_loss + val_age_iter_loss # not for calculation but just for report
 
                 val_mask_epoch_loss += val_mask_iter_loss

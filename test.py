@@ -64,7 +64,7 @@ def run(args):
             test_mask_pred = model_mask(test_img)
             test_gender_pred = model_gender(test_img)
             test_age_pred = model_age(test_img)
-            test_pred = torch.max(test_mask_pred, 1)[1] * 6 + torch.max(test_gender_pred, 1)[1] * 3 + (test_age_pred // 30)
+            test_pred = torch.max(test_mask_pred, 1)[1] * 6 + torch.max(test_gender_pred, 1)[1] * 3 + torch.bucketize(test_age_pred, torch.Tensor([30,60]).cuda(), right=True).squeeze()
             result.append(test_pred.item())
     pbar_test.close()
 
@@ -75,7 +75,7 @@ def run(args):
 
 if __name__ == '__main__':
     args_dict = {'eval_path' : '../input/data/eval',
-                 'checkpoint' : './checkpoint/seplearn_ViT_resize_224_no_crop_sepplots_kfold_65_bs32_ep100_adamw_lr5e-06_vit_small_patch16_224/best_state_dict copy.pt', 
+                 'checkpoint' : './checkpoint/seplearn_ViT_resize_224_no_crop_sepplots_kfold_ageclassifier_125_bs32_ep100_adamw_lr5e-06_vit_small_patch16_224/best_state_dict.pt', 
                  'load_mode' : 'state_dict', #'model'
                  'load_model' : 'vit_small_patch16_224', #'resnet18',
                  'num_classes' : 18,
