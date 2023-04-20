@@ -1,1 +1,1 @@
-{"use_wandb": true, "wandb_exp_name": "seplearn_ViT_resize_224_no_crop_sepplots_kfold", "wandb_project_name": "Image_classification_mask", "wandb_entity": "connect-cv-04", "exp_num": 68, "user_name": "dh"}
+{"use_wandb": true, "wandb_exp_name": "seplearn_ViT_resize_224_no_crop_sepplots_kfold", "wandb_project_name": "Image_classification_mask", "wandb_entity": "connect-cv-04", "exp_num": 70, "user_name": "dh"}
