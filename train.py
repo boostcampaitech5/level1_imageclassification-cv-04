@@ -88,7 +88,7 @@ def run(args, args_dict):
                                 kfold=0, train=True)
     val_set = KFoldDataset(csv_path = '../input/data/train/kfold4.csv',
                                 transform=transform,
-                                kfold=0, train=True)
+                                kfold=0, train=False)
 
     #n_train_set = int(args.train_val_split*len(dataset))
     # train_set, val_set, train_idx, val_idx = train_valid_split_by_sklearn(dataset,args.train_val_split,args.seed)
