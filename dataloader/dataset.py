@@ -55,12 +55,12 @@ class KFoldDataset(Dataset):
     def __getitem__(self, idx):
         img = Image.open(self.df.iloc[idx].ImageID)
         label = self.df.iloc[idx].ans
-        age = self.df.iloc[idx].age
+        age = int(self.df.iloc[idx].age)
 
         if self.transform:
             img = self.transform(img)
 
-        return img, torch.LongTensor([label]).squeeze(), torch.LongTensor([age]).squeeze()
+        return img, torch.LongTensor([label]).squeeze(), age
 
 
 class KFoldSplitDataset(Dataset):

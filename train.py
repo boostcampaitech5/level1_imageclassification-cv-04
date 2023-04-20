@@ -199,13 +199,13 @@ def run(args, args_dict):
         train_cm_data = []
 
         pbar_train = tqdm(train_iter)
-        for _,(train_img, train_target, train_targetage) in enumerate(pbar_train):
+        for _,(train_img, train_target, train_age) in enumerate(pbar_train):
             pbar_train.set_description(f"Train. Epoch:{epoch}/{args.epochs} | Loss:{train_sum_iter_loss:4.3f}")
             
             train_mask_target = train_target // 6           # 'Wear': 0, 'Incorrect': 1, 'Not Wear': 2
             train_gender_target = (train_target // 3) % 2   # 'Male': 0, 'Female': 1
             # train_age_target = train_target % 3             # '< 30': 0, '>= 30 and < 60': 1, '>= 60': 2
-            train_age_target = train_targetage if train_targetage < 60 else train_targetage + 15
+            train_age_target = torch.tensor([[age + 15 * (age >= 60)] for age in train_age])
 
             train_img, train_mask_target = train_img.to(device_mask), train_mask_target.to(device_mask)
             train_img, train_gender_target = train_img.to(device_gender), train_gender_target.to(device_gender)
@@ -219,12 +219,24 @@ def run(args, args_dict):
             train_gender_pred = model_gender(train_img)
             train_age_pred = model_age(train_img)
             # train_pred = torch.max(train_mask_pred, 1)[1] * 6 + torch.max(train_gender_pred, 1)[1] * 3 + torch.max(train_age_pred, 1)[1]
-            train_pred = torch.max(train_mask_pred, 1)[1] * 6 + torch.max(train_gender_pred, 1)[1] * 3 + (train_age_pred // 30)
+            train_pred = torch.max(train_mask_pred, 1)[1] * 6 + torch.max(train_gender_pred, 1)[1] * 3 + torch.bucketize(train_age_pred, torch.Tensor([30,60]).cuda(), right=True).squeeze()
+
+            # print('train_pred.shape', train_pred.shape)
+            # print('train_target.shape', train_target.shape)
+            # print('train_mask_pred.shape', train_mask_pred.shape)
+            # print('train_mask_target.shape', train_mask_target.shape)
+            # print('torch.max(train_mask_pred, 1)[1].shape', torch.max(train_mask_pred, 1)[1].shape)
+            # print('train_gender_pred.shape', train_gender_pred.shape)
+            # print('train_gender_target.shape', train_gender_target.shape)
+            # print('torch.max(train_gender_pred, 1)[1].shape', torch.max(train_gender_pred, 1)[1].shape)
+            # print('train_age_pred.shape', train_age_pred.shape)
+            # print('train_age_target.shape', train_age_target.shape)
+            # print('torch.bucketize(train_age_pred, torch.Tensor([30,60]).cuda(), right=True).shape', torch.bucketize(train_age_pred, torch.Tensor([30,60]).cuda(), right=True).shape)
 
             train_mask_cm_data.append([torch.max(train_mask_pred, 1)[1], train_mask_target])
             train_gender_cm_data.append([torch.max(train_gender_pred, 1)[1], train_gender_target])
             # train_age_cm_data.append([torch.max(train_age_pred, 1)[1], train_age_target])
-            train_age_cm_data.append([train_age_pred // 30, train_age_target // 30])
+            train_age_cm_data.append([torch.bucketize(train_age_pred, torch.Tensor([30,60]).cuda(), right=True), train_age_target // 30])
             train_cm_data.append([train_pred, train_target])
 
             # train_mask_iter_loss = criterion_mask(train_mask_pred, train_mask_target)
@@ -233,7 +245,7 @@ def run(args, args_dict):
             train_mask_iter_loss = criterion(train_mask_pred, train_mask_target)
             train_gender_iter_loss = criterion(train_gender_pred, train_gender_target)
             # train_age_iter_loss = criterion(train_age_pred, train_age_target)
-            train_age_iter_loss = criterion_age(train_age_pred, train_age_target)
+            train_age_iter_loss = criterion_age(train_age_pred.float(), train_age_target.float())
             train_sum_iter_loss = train_age_iter_loss + train_gender_iter_loss + train_age_iter_loss # not for calculation but just for report
 
             # train_iter_loss.backward()
@@ -291,25 +303,25 @@ def run(args, args_dict):
             val_cm_data = []
 
             pbar_val = tqdm(val_iter)
-            for _,(val_img, val_target, val_targetage) in enumerate(pbar_val):
+            for _,(val_img, val_target, val_age) in enumerate(pbar_val):
                 # val_img, val_target = val_img.to(device), val_target.to(device)
                 pbar_val.set_description(f"Val. Epoch:{epoch}/{args.epochs} | Loss:{val_sum_iter_loss:4.3f}")
 
                 val_mask_target = val_target // 6           # 'Wear': 0, 'Incorrect': 1, 'Not Wear': 2
                 val_gender_target = (val_target // 3) % 2   # 'Male': 0, 'Female': 1
                 # val_age_target = val_target % 3             # '< 30': 0, '>= 30 and < 60': 1, '>= 60': 2
-                val_age_target = val_targetage if val_targetage < 60 else val_targetage + 15
+                val_age_target = torch.tensor([[age + 15 * (age >= 60)] for age in val_age])
 
                 val_mask_pred = model_mask(val_img)
                 val_gender_pred = model_gender(val_img)
                 val_age_pred = model_age(val_img)
                 # val_pred = torch.max(val_mask_pred, 1)[1] * 6 + torch.max(val_gender_pred, 1)[1] * 3 + torch.max(val_age_pred, 1)[1]
-                val_pred = torch.max(val_mask_pred, 1)[1] * 6 + torch.max(val_gender_pred, 1)[1] * 3 + (val_age_pred // 30)
+                val_pred = torch.max(val_mask_pred, 1)[1] * 6 + torch.max(val_gender_pred, 1)[1] * 3 + torch.bucketize(val_age_pred, torch.Tensor([30,60]).cuda(), right=True).squeeze()
                 
                 val_mask_cm_data.append([torch.max(val_mask_pred, 1)[1], val_mask_target])
                 val_gender_cm_data.append([torch.max(val_gender_pred, 1)[1], val_gender_target])
                 # val_age_cm_data.append([torch.max(val_age_pred, 1)[1], val_age_target])
-                val_age_cm_data.append([val_age_pred // 30, val_age_target // 30])
+                val_age_cm_data.append([torch.bucketize(val_age_pred, torch.Tensor([30,60]).cuda(), right=True), val_age_target // 30])
                 val_cm_data.append([val_pred, val_target])
 
                 # val_mask_iter_loss = criterion_mask(val_mask_pred, val_mask_target).detach()
@@ -318,7 +330,7 @@ def run(args, args_dict):
                 val_mask_iter_loss = criterion(val_mask_pred, val_mask_target).detach()
                 val_gender_iter_loss = criterion(val_gender_pred, val_gender_target).detach()
                 # val_age_iter_loss = criterion(val_age_pred, val_age_target).detach()
-                val_age_iter_loss = criterion_age(val_age_pred, val_age_target).detach()
+                val_age_iter_loss = criterion_age(val_age_pred.to(device_age), val_age_target.to(device_age)).detach()
                 val_sum_iter_loss = val_age_iter_loss + val_gender_iter_loss + val_age_iter_loss # not for calculation but just for report
 
                 val_mask_epoch_loss += val_mask_iter_loss
