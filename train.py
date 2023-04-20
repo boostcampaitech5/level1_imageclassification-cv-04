@@ -129,9 +129,9 @@ def run(args, args_dict):
         criterion = CustomLoss()
 
 
-    #이어서 학습
-    state_dict = torch.load('/opt/ml/level1_imageclassification-cv-04/checkpoint/kfold4_0_ViT_multiclass52_bs64_ep100_adamw_lr1e-05_vit_base_patch16_224/epoch(99)_acc(0.894)_loss(0.395)_f1(0.867)_state_dict.pt')
-    model_.load_state_dict(state_dict['model_state_dict'])
+    # #이어서 학습
+    # state_dict = torch.load('/opt/ml/level1_imageclassification-cv-04/checkpoint/kfold4_0_ViT_multiclass52_bs64_ep100_adamw_lr1e-05_vit_base_patch16_224/epoch(99)_acc(0.894)_loss(0.395)_f1(0.867)_state_dict.pt')
+    # model_.load_state_dict(state_dict['model_state_dict'])
 
 
     #Accelerator 적용
@@ -139,7 +139,7 @@ def run(args, args_dict):
     
     print("Starting training ...")
     for epoch in range(args.epochs):
-        kfold = epoch%25//5
+        kfold = epoch%15//5
         train_set.change_kfold(kfold)
         val_set.change_kfold(kfold)
         train_iter = DataLoader(train_set,
@@ -170,7 +170,7 @@ def run(args, args_dict):
             train_epoch_loss += train_iter_loss
 
             
-        print(train_pred[:3],pred_to_label(train_pred[:3]),train_target[:3])
+        
         train_loss = (train_epoch_loss / len(train_iter))
 
         train_cm = confusion_matrix(model, train_iter, device, args.num_classes)
@@ -190,6 +190,7 @@ def run(args, args_dict):
                 val_iter_loss = criterion(val_pred, val_target).detach()
 
                 val_epoch_loss += val_iter_loss
+        print(val_pred[:3],pred_to_label(val_pred[:3]),val_target[:3])
         val_loss = (val_epoch_loss / len(val_iter))
 
         val_cm = confusion_matrix(model, val_iter, device, args.num_classes)
@@ -246,7 +247,7 @@ if __name__ == '__main__':
                  'csv_path' : '../input/data/train/kfold4.csv',
                  'save_path' : './checkpoint',
                  'use_wandb' : True,
-                 'wandb_exp_name' : 'kfold4_0_ViT_multiclass_more_train52',
+                 'wandb_exp_name' : 'kfold4_0_ViTclip_multiclass',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
                  'num_classes' :18,
@@ -257,7 +258,7 @@ if __name__ == '__main__':
                 #  'train_val_split': 0.8,
                 #  'save_mode' : 'state_dict',
                  'save_epoch' : 10,
-                 'load_model':'vit_base_patch16_224',
+                 'load_model':'vit_base_patch32_224_clip_laion2b',
                  'loss' : "customloss",
                  'lr_scheduler' : '', # default lr_scheduler = ''
                  'transform_path' : './transform_list.json',
