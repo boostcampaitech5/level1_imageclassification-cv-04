@@ -83,12 +83,15 @@ def run(args, args_dict):
 
     # dataset = ClassificationDataset(csv_path = args.csv_path,
     #                                 transform=transform)
-    dataset = KFoldDataset(csv_path = '../input/data/train/kfold4.csv',
+    train_set = KFoldDataset(csv_path = '../input/data/train/kfold4.csv',
+                                transform=transform,
+                                kfold=0, train=True)
+    val_set = KFoldDataset(csv_path = '../input/data/train/kfold4.csv',
                                 transform=transform,
                                 kfold=0, train=True)
 
     #n_train_set = int(args.train_val_split*len(dataset))
-    train_set, val_set, train_idx, val_idx = train_valid_split_by_sklearn(dataset,args.train_val_split,args.seed)
+    # train_set, val_set, train_idx, val_idx = train_valid_split_by_sklearn(dataset,args.train_val_split,args.seed)
     print(f'The number of training images\t>>\t{len(train_set)}')
     print(f'The number of validation images\t>>\t{len(val_set)}')
 
@@ -98,13 +101,11 @@ def run(args, args_dict):
     
     train_iter = DataLoader(train_set,
                             batch_size=args.batch_size,
-                            drop_last=True,
                             num_workers=multiprocessing.cpu_count() // 2,
                             shuffle=True#sampler = train_sampler
                             )   
     val_iter = DataLoader(val_set,
                           batch_size=args.batch_size,
-                          drop_last=True,
                           num_workers=multiprocessing.cpu_count() // 2,
                           shuffle=True#sampler = val_sampler
                           )
