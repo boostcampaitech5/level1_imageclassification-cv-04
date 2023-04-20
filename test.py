@@ -74,7 +74,7 @@ def run(args):
 
 if __name__ == '__main__':
     args_dict = {'eval_path' : '../input/data/eval',
-                 'checkpoint' : './checkpoint/seplearn_ViT_resize_224_no_crop_separate_plots_56_bs16_ep100_adamw_lr5e-06_vit_small_patch16_224/epoch(79)_acc(0.988)_loss(0.040)_f1(0.987)_state_dict.pt', 
+                 'checkpoint' : './checkpoint/seplearn_ViT_resize_224_no_crop_sepplots_kfold_65_bs32_ep100_adamw_lr5e-06_vit_small_patch16_224/best_state_dict copy.pt', 
                  'load_mode' : 'state_dict', #'model'
                  'load_model' : 'vit_small_patch16_224', #'resnet18',
                  'num_classes' : 18,

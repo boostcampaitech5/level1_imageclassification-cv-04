@@ -36,4 +36,4 @@ logger.info(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
 # logger.info('%s', args)
 for k, v in zip(args._fields, args):
     # print(k, v)
-    logger.info(k + ':' + str(v))
+    logger.info(k + ' = ' + str(v))

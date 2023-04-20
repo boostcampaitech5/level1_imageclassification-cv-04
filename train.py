@@ -81,8 +81,11 @@ def run(args, args_dict):
     if args.use_wandb:
         wandb.config.update(config)                                
 
-    dataset = ClassificationDataset(csv_path = args.csv_path,
-                                    transform=transform)
+    # dataset = ClassificationDataset(csv_path = args.csv_path,
+    #                                 transform=transform)
+    dataset = KFoldDataset(csv_path = '../input/data/train/kfold4.csv',
+                                transform=transform,
+                                kfold=0, train=True)
 
     #n_train_set = int(args.train_val_split*len(dataset))
     train_set, val_set, train_idx, val_idx = train_valid_split_by_sklearn(dataset,args.train_val_split,args.seed)
@@ -129,31 +132,31 @@ def run(args, args_dict):
     # train_cnt = dataset.df['ans'][train_idx].value_counts().sort_index()
     # normedWeights = [1 - (x / sum(train_cnt)) for x in train_cnt]
     
-    df_mask = dataset.df['ans'][train_idx] // 6
-    df_gender = (dataset.df['ans'][train_idx] // 3) % 2
-    df_age = dataset.df['ans'][train_idx] % 3
+    # df_mask = dataset.df['ans'][train_idx] // 6
+    # df_gender = (dataset.df['ans'][train_idx] // 3) % 2
+    # df_age = dataset.df['ans'][train_idx] % 3
 
-    train_mask_cnt = df_mask.value_counts().sort_index()
-    train_gender_cnt = df_gender.value_counts().sort_index()
-    train_age_cnt = df_age.value_counts().sort_index()
+    # train_mask_cnt = df_mask.value_counts().sort_index()
+    # train_gender_cnt = df_gender.value_counts().sort_index()
+    # train_age_cnt = df_age.value_counts().sort_index()
 
-    normedWeights_mask = [1 - (x / sum(train_mask_cnt)) for x in train_mask_cnt]
-    normedWeights_gender = [1 - (x / sum(train_gender_cnt)) for x in train_gender_cnt]
-    normedWeights_age = [1 - (x / sum(train_age_cnt)) for x in train_age_cnt]
+    # normedWeights_mask = [1 - (x / sum(train_mask_cnt)) for x in train_mask_cnt]
+    # normedWeights_gender = [1 - (x / sum(train_gender_cnt)) for x in train_gender_cnt]
+    # normedWeights_age = [1 - (x / sum(train_age_cnt)) for x in train_age_cnt]
 
-    normedWeights_mask = torch.FloatTensor(normedWeights_mask).to(device_mask)
-    normedWeights_gender = torch.FloatTensor(normedWeights_gender).to(device_gender)
-    normedWeights_age = torch.FloatTensor(normedWeights_age).to(device_age)
+    # normedWeights_mask = torch.FloatTensor(normedWeights_mask).to(device_mask)
+    # normedWeights_gender = torch.FloatTensor(normedWeights_gender).to(device_gender)
+    # normedWeights_age = torch.FloatTensor(normedWeights_age).to(device_age)
 
-    # criterion = nn.CrossEntropyLoss()
-    if args.loss == "crossentropy":
-        criterion_mask = nn.CrossEntropyLoss(normedWeights_mask)
-        criterion_gender = nn.CrossEntropyLoss(normedWeights_gender)
-        criterion_age = nn.CrossEntropyLoss(normedWeights_age)
-    elif args.loss == "focalloss":
-        criterion_mask = FocalLoss(alpha=0.1, device = device_mask)
-        criterion_gender = FocalLoss(alpha=0.1, device = device_gender)
-        criterion_age = FocalLoss(alpha=0.1, device = device_age)
+    criterion = nn.CrossEntropyLoss()
+    # if args.loss == "crossentropy":
+    #     criterion_mask = nn.CrossEntropyLoss(normedWeights_mask)
+    #     criterion_gender = nn.CrossEntropyLoss(normedWeights_gender)
+    #     criterion_age = nn.CrossEntropyLoss(normedWeights_age)
+    # elif args.loss == "focalloss":
+    #     criterion_mask = FocalLoss(alpha=0.1, device = device_mask)
+    #     criterion_gender = FocalLoss(alpha=0.1, device = device_gender)
+    #     criterion_age = FocalLoss(alpha=0.1, device = device_age)
     
     #Accelerator 적용
     model_mask, optimizer_mask, train_iter, val_iter = accelerator_mask.prepare(model_mask, optimizer_mask, train_iter, val_iter)
@@ -167,7 +170,7 @@ def run(args, args_dict):
     logger.addHandler(handler)
     logger.info(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())))
     for k, v in zip(args._fields, args):
-        logger.info(k + ':' + str(v))
+        logger.info(k + ' = ' + str(v))
 
     print("Starting training ...")
     for epoch in range(args.epochs):
@@ -218,9 +221,12 @@ def run(args, args_dict):
             train_age_cm_data.append([torch.max(train_age_pred, 1)[1], train_age_target])            
             train_cm_data.append([train_pred, train_target])
 
-            train_mask_iter_loss = criterion_mask(train_mask_pred, train_mask_target)
-            train_gender_iter_loss = criterion_gender(train_gender_pred, train_gender_target)
-            train_age_iter_loss = criterion_age(train_age_pred, train_age_target)
+            # train_mask_iter_loss = criterion_mask(train_mask_pred, train_mask_target)
+            # train_gender_iter_loss = criterion_gender(train_gender_pred, train_gender_target)
+            # train_age_iter_loss = criterion_age(train_age_pred, train_age_target)
+            train_mask_iter_loss = criterion(train_mask_pred, train_mask_target)
+            train_gender_iter_loss = criterion(train_gender_pred, train_gender_target)
+            train_age_iter_loss = criterion(train_age_pred, train_age_target)
             train_sum_iter_loss = train_age_iter_loss + train_gender_iter_loss + train_age_iter_loss # not for calculation but just for report
 
             # train_iter_loss.backward()
@@ -296,9 +302,12 @@ def run(args, args_dict):
                 val_age_cm_data.append([torch.max(val_age_pred, 1)[1], val_age_target])
                 val_cm_data.append([val_pred, val_target])
 
-                val_mask_iter_loss = criterion_mask(val_mask_pred, val_mask_target).detach()
-                val_gender_iter_loss = criterion_gender(val_gender_pred, val_gender_target).detach()
-                val_age_iter_loss = criterion_age(val_age_pred, val_age_target).detach()
+                # val_mask_iter_loss = criterion_mask(val_mask_pred, val_mask_target).detach()
+                # val_gender_iter_loss = criterion_gender(val_gender_pred, val_gender_target).detach()
+                # val_age_iter_loss = criterion_age(val_age_pred, val_age_target).detach()
+                val_mask_iter_loss = criterion(val_mask_pred, val_mask_target).detach()
+                val_gender_iter_loss = criterion(val_gender_pred, val_gender_target).detach()
+                val_age_iter_loss = criterion(val_age_pred, val_age_target).detach()
                 val_sum_iter_loss = val_age_iter_loss + val_gender_iter_loss + val_age_iter_loss # not for calculation but just for report
 
                 val_mask_epoch_loss += val_mask_iter_loss
