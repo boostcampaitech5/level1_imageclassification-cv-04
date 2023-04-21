@@ -18,10 +18,9 @@ import sys
 import wandb_info
 from model.model_finetune import fineTune
 from model.loss import FocalLoss
-
 from accelerate import Accelerator
-
 from tqdm import tqdm
+from RandAugment import RandAugment
 
 def torch_seed(random_seed):
     torch.manual_seed(random_seed)
@@ -66,6 +65,8 @@ def run(args, args_dict):
 
     print(f'Transform\t>>\t{args.transform_list}')
     train_transform, config = get_transform(args)
+    train_transform.transforms.insert(0, RandAugment(n=5, m=9))
+
     if args.use_wandb:
         wandb.config.update(config)
 
@@ -111,10 +112,17 @@ def run(args, args_dict):
         lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=5, threshold=args.lr_scheduler_threshold, verbose=True)
 
     print(f'The loss function({args.loss}) is ready ...')
-    train_cnt = train_set.df['ans'].value_counts().sort_index()
-    normedWeights = [1 - (x / sum(train_cnt)) for x in train_cnt]
-    weights = [1.5]*6 + [1.4]*6 + [0.7] *6
-    normedWeights = torch.FloatTensor(weights).to(device)
+    # train_cnt = train_set.df['ans'].value_counts().sort_index()
+    # normedWeights = [1 - (x / sum(train_cnt)) for x in train_cnt]
+    # weights = [1.5]*6 + [1.4]*6 + [0.7] *6
+    # normedWeights = torch.FloatTensor(weights).to(device)
+
+    # mask : [3468, 2700, 2700] -> Mask Model에 weight 적용시 사용
+    # gender : [5410, 3458] -> Gender Model에 weight 적용시 사용
+    # age : [3843, 3681, 1344] -> Age Model에 weight 적용시 사용
+
+    # weights = [0.2, 0.3, 0.5]
+    # normedWeights = torch.FloatTensor(weights).to(device)
     
     if args.loss == "crossentropy":
         criterion = nn.CrossEntropyLoss()
@@ -216,10 +224,10 @@ if __name__ == '__main__':
                  'csv_path' : '../input/data/train/kfold4.csv',
                  'save_path' : './checkpoint',
                  'use_wandb' : True,
-                 'wandb_exp_name' : 'kfold4_0_age_swin',
+                 'wandb_exp_name' : 'kfold4_0_gender_swin_randaug59',
                  'wandb_project_name' : 'Image_classification_mask',
                  'wandb_entity' : 'connect-cv-04',
-                 'num_classes' : 3,
+                 'num_classes' : 2,
                  'model_summary' : False,
                  'batch_size' : 64,
                  'learning_rate' : 1e-6,
@@ -231,13 +239,13 @@ if __name__ == '__main__':
                  'loss' : "crossentropy",
                  'lr_scheduler' : 'reduce_lr_on_plateau', # default lr_scheduler = ''
                  'transform_path' : './transform_list.json',
-                 'transform_list' : ['centercrop','resize', "randomrotation",'totensor', 'normalize'],
+                 'transform_list' : ['centercrop', 'resize','totensor', 'normalize'],
                 #  'not_freeze_layer' : ['layer4'],
                  'weight_decay': 1e-2,
                  'labelsmoothing':0.1,
                  'lr_scheduler_threshold':0.00001,
                  'kfold' : 0,
-                 'split' : 'age'}
+                 'split' : 'gender'}
     wandb_data = wandb_info.get_wandb_info()
     args_dict.update(wandb_data)
     from collections import namedtuple
@@ -246,3 +254,15 @@ if __name__ == '__main__':
 
     # Config parser 하나만 넣어주면 됨(임시방편)
     run(args, args_dict)
+
+    # df1 = pd.read_csv('./submission.csv')
+    # df2 = pd.read_csv('./output.csv')
+    # df3 = pd.read_csv('./submission_.csv')
+
+    # ans1 = df1['ans']
+    # ans2 = df2['ans']
+    # ans3 = df3['ans']
+
+    # print((ans1==ans2).value_counts())
+    # print((ans1==ans3).value_counts())
+    # print((ans2==ans3).value_counts())

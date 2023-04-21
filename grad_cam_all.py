@@ -65,7 +65,7 @@ def grad_cam(args):
     state_dict = torch.load(args.checkpoint)
 
     print('The model is ready ...')
-    model = Classifier(args)
+    model = KFoldClassifier(args.num_classes, args.load_model)
     model.load_state_dict(state_dict['model_state_dict'])
 
     model.eval()
@@ -166,8 +166,8 @@ if __name__ == '__main__':
                  'num_classes' : 3,
                  'batch_size' : 1,
                  'model_summary' : False,
-                 'save_path' : './grad_cam_age2',
-                 'kfold' : 2,
+                 'save_path' : './grad_cam_age_swin',
+                 'kfold' : 0,
                  'split' : 'age'}
     
     from collections import namedtuple

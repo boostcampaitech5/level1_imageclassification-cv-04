@@ -65,7 +65,7 @@ if __name__ == '__main__':
 
     model = KFoldClassifier(args.num_classes, args.load_model)
     for name, param in model.named_parameters():
-        print(name, param.requires_grad)
+        print(name)
 
     # print(summary(model.to('cuda:0'), (3, 256, 256)))
     # img = torch.randn(3, 3, 224, 224)
