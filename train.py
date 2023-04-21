@@ -434,7 +434,7 @@ if __name__ == '__main__':
                  'num_gender_classes' : 2,
                  'num_age_classes' : 3,
                  'model_summary' : False,
-                 'batch_size' : 32,#64,#16,
+                 'batch_size' : 16,#32,#64,#16,
                  'learning_rate' : 5e-6,
                  'epochs' : 100,
                  'train_val_split': 0.8,
