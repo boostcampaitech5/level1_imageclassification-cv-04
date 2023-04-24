@@ -1,55 +1,3 @@
-# CV_classification
-Classification Pipeline in Computer Vision (Pytorch)
-
-# Environments
-
-docker image: `nvcr.io/nvidia/pytorch:22.12-py3`
-
-see details of NVIDIA pytorch docker image in [here](https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-22-12.html#rel-22-12).
-
-# Directory
-
-```bash
-CV_classification
-├── datasets
-│   ├── __init__.py
-│   ├── augmentation.py
-│   └── factory.py
-├── models
-│   ├── __init__.py
-│   └── resnet.py
-├── log.py
-├── main.py
-├── train.py
-├── run.sh
-├── requirements.txt
-├── README.md
-└── LICENSE
-```
-
-# Pipeline
-
-0. Set seed
-1. Make directory to save results
-2. Build model
-3. Build dataset with augmentations
-   - Train dataset
-   - Validation dataset (optional)
-   - Test dataset 
-4. Make dataLoader
-5. Define optimizer (model parameters)
-6. Define loss function
-7. Training model
-   - Checkpoint model using evaluation on validation dataset
-   - Log training history using `logging` or `wandb` in save folder
-8. Testing model
-
-
-# Run
-
-`run.sh`
-
-```bash
 dataname=$1
 num_classes=$2
 opt_list='SGD Adam'
@@ -107,11 +55,3 @@ do
         done
     done
 done
-```
-
-
-**example**
-
-```bash
-bash run.sh CIFAR10 10
-```
