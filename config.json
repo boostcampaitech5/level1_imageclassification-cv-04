@@ -1,0 +1,31 @@
+{
+    "use_wandb": true,
+    "entity": "connect-cv-04",
+    "project_name": "Image_classification_mask",
+    "exp_name": "TBD",
+    "exp_num": 0,
+    "user_name": "kdh",
+    
+    "seed": 223,
+    "model_summary": false,
+
+    "batch_size": 32,
+    "data_path": "../input/data/train/train_info.csv",
+    "eval_path": "../input/data/eval",
+    "preprocessing": ["resize","randomhorizontalflip","randomrotation","totensor","normalize"],
+    "train_valid_ratio": 0.8,
+
+    "predefined_model": "vit_small_patch16_224",
+    "num_classes": 18,
+    "num_sub_classes": [3,2,3],
+    
+    "loss": "crossentropy",
+    "lr_scheduler": "StepLR",
+    "learning_rate": 5e-6,
+    "weight_decay": 5e-4,
+    "epoch": 100,
+
+    "pickle_path": "./checkpoint",
+    "pickle_mode": "state_dict"
+    
+}

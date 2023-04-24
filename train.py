@@ -1,3 +1,5 @@
+
+#for model train
 from dataloader import *
 from model import *
 from metric import *
@@ -5,24 +7,33 @@ from utils import *
 from torch.utils.data import DataLoader, random_split, WeightedRandomSampler
 from torchvision import transforms 
 from torch import optim
+import multiprocessing
+from accelerate import Accelerator
+
+#array utils
 import numpy as np
+
+#other utils
 import random
 import os
 import wandb
-from torchsummary import summary
 import time
-import multiprocessing
-import sklearn
-import sys
+from tqdm import tqdm
+import argparse
+
+#user made utils
+from utils.config import load_config
+
+#for train log
+from torchsummary import summary
 import wandb_info
-from model.model_finetune import fineTune
-from model.loss import FocalLoss
 import logging
 
-from accelerate import Accelerator
+from model.model_finetune import fineTune
+from model.loss import FocalLoss
 
-from tqdm import tqdm
 
+#추후 util로 옮길 함수
 def torch_seed(random_seed):
     torch.manual_seed(random_seed)
     torch.cuda.manual_seed(random_seed)
@@ -42,11 +53,13 @@ def run(args, args_dict):
         mixed_precision             = 'fp16'
     )
     
+    #지울부분(해당 부분은 유저가 작성해야하므로)
     if args.weight_decay > 0:
         optimizer_name = 'adamw'
     else:
         optimizer_name = 'adam'
 
+    #wandb호출을 함수로 만들어서 한줄로 줄이기
     if args.use_wandb:
         print('Initialize WandB ...')
         wandb.init(name = f'{args.wandb_exp_name}_{args.exp_num}_bs{args.batch_size}_ep{args.epochs}_{args.loss}_lr{args.learning_rate}_{args.load_model}.{args.user_name}',
@@ -54,6 +67,7 @@ def run(args, args_dict):
                    entity = args.wandb_entity,
                    config = args_dict)
         
+    #이부분도 torch_seed로 넣고 따로 뺴기
     print(f'Seed\t>>\t{args.seed}')
     torch_seed(args.seed)
 
@@ -61,7 +75,9 @@ def run(args, args_dict):
     device = accelerator.device
     print(f'The device is ready\t>>\t{device}')
 
+
     print('Make save_path')
+    #이부분 함수로 작성해서 util로
     checkpoint_path = os.path.join(args.save_path, f'{args.wandb_exp_name}{args.exp_num}_bs{args.batch_size}_ep{args.epochs}_{optimizer_name}_lr{args.learning_rate}_{args.load_model}')
     os.makedirs(checkpoint_path, exist_ok=True)
 
@@ -140,7 +156,7 @@ def run(args, args_dict):
         train_cm_data = []
         pbar_train = tqdm(train_iter)
         for _,(train_img, train_target) in enumerate(pbar_train):
-            pbar.set_description(f"Train. Epoch:{epoch}/{args.epochs} | Loss:{train_iter_loss:4.3f}")
+            pbar_train.set_description(f"Train. Epoch:{epoch}/{args.epochs} | Loss:{train_iter_loss:4.3f}")
             # train_img, train_target = train_img.to(device), train_target.to(device)
             optimizer.zero_grad()
 
@@ -172,7 +188,7 @@ def run(args, args_dict):
             pbar_val = tqdm(val_iter)
             for _,(val_img, val_target) in enumerate(pbar_val):
                 # val_img, val_target = val_img.to(device), val_target.to(device)
-                pbar.set_description(f"Val. Epoch:{epoch}/{args.epochs} | Loss:{val_iter_loss:4.3f}")
+                pbar_val.set_description(f"Val. Epoch:{epoch}/{args.epochs} | Loss:{val_iter_loss:4.3f}")
                 val_pred = model(val_img)
                 val_cm_data.append([val_pred, val_target])
                 val_iter_loss = criterion(val_pred, val_target).detach()
@@ -230,35 +246,19 @@ def run(args, args_dict):
 
 
 if __name__ == '__main__':
-    args_dict = {'seed' : 223,
-                 'csv_path' : '../input/data/train/train_info.csv',
-                 'save_path' : './checkpoint',
-                 'use_wandb' : False,
-                 'wandb_exp_name' : 'exp',
-                 'wandb_project_name' : 'Image_classification_mask',
-                 'wandb_entity' : 'connect-cv-04',
-                 'num_classes' : 18,
-                 'model_summary' : False,
-                 'batch_size' : 64,
-                 'learning_rate' : 1e-4,
-                 'epochs' : 100,
-                 'train_val_split': 0.8,
-                 'save_mode' : 'state_dict',
-                 'save_epoch' : 10,
-                 'load_model':'resnet18',
-                 'loss' : "focalloss",
-                 'lr_schduler' : False,
-                 'transform_path' : './transform_list.json',
-                 'transform_list' : ['centercrop',"randomrotation",'totensor', 'normalize'],
-                 'not_freeze_layer' : ['layer4'],
-                 'weight_decay': 1e-2}
-    wandb_data = wandb_info.get_wandb_info()
-    args_dict.update(wandb_data)
-    from collections import namedtuple
-    Args = namedtuple('Args', args_dict.keys())
-    args = Args(**args_dict)
 
-    # Config parser 하나만 넣어주면 됨(임시방편)
+    parser = argparse.ArgumentParser(description="for model training")
+    parser.add_argument('-c', '--config', type=str,default='./config.json', help='config file path for training. [default=\'./config.json\']')
+
+    args = parser.parse_args()
+    
+    config = load_config(args.config)
+
+    from collections import namedtuple
+    Args = namedtuple('Args', config.keys())
+    config = Args(**config)
+
+
     run(args, args_dict)
     
     
