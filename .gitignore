@@ -13,3 +13,4 @@ wandb_info/
 data.tar.gz
 /transform_exp
 /grad_cam*
+/wandb_info

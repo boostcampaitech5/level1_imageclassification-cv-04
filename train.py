@@ -253,16 +253,47 @@ if __name__ == '__main__':
     args = Args(**args_dict)
 
     # Config parser 하나만 넣어주면 됨(임시방편)
-    run(args, args_dict)
+    # run(args, args_dict)
 
-    # df1 = pd.read_csv('./submission.csv')
-    # df2 = pd.read_csv('./output.csv')
-    # df3 = pd.read_csv('./submission_.csv')
+    df = pd.read_csv('../input/data/train/kfold4.csv')
+    df = df[df['fold']==0]
 
-    # ans1 = df1['ans']
-    # ans2 = df2['ans']
-    # ans3 = df3['ans']
+    def mask(label):
+        if 0 <= label < 6:
+            label = 0
+        elif 6 <= label < 12:
+            label = 1
+        else:
+            label = 2
+        return label
+    def gender(label):
+        if label%6 < 3:
+            label = 0
+        else:
+            label = 1
+        return label
+    def age(label):
+        if label % 3 == 0:
+            label = 0
+        elif label % 3 == 1:
+            label = 1
+        else:
+            label = 2
+        return label
+    df = df['ans'].apply(age)
+    df_ans = df.value_counts().sort_index()
 
-    # print((ans1==ans2).value_counts())
-    # print((ans1==ans3).value_counts())
-    # print((ans2==ans3).value_counts())
+    x = ['<30', '>=30 and <60' , '>=60']
+    # x = ['Male', 'Female']
+    # x = ['Wear', 'Incorrect', 'Not Wear']
+    y = df_ans.values
+    colors = ['#87CEFA'] * 3
+    plt.bar(x, y, color=colors)
+    for idx, val in enumerate(y):
+        plt.text(x=idx, y=val, s=val,
+                    va='bottom', ha='center',
+                    fontsize=11, fontweight='semibold'
+            )
+    plt.title('Validation Dataset - Age')
+    plt.tight_layout()
+    plt.savefig('./kfold4_age_val.png')
