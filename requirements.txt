@@ -1,0 +1,3 @@
+wandb
+timm
+git+https://github.com/ildoonet/pytorch-randaugment
