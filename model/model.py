@@ -9,7 +9,7 @@ class Classifier(nn.Module):
         super(Classifier, self).__init__()
 
         self.num_classes = args.num_classes
-        self.load_model = args.load_model
+        self.load_model = args.backbone
         if self.load_model:
             # list_models('resnet*', pretrained=True)
             self.backbone = create_model(self.load_model, pretrained=True, num_classes=args.num_classes)

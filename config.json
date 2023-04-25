@@ -1,5 +1,5 @@
 {
-    "use_wandb": true,
+    "use_wandb": false,
     "entity": "connect-cv-04",
     "project_name": "Image_classification_mask",
     "exp_name": "TBD",

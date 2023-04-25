@@ -2,11 +2,17 @@ import os
 import torch
 import numpy as np
 import random
+import json
+
+def load_config(config_path):
+    with open(config_path,'r') as f:
+        config_data = json.load(f)
+    return config_data
 
 def chechpoint_init(args):
     print('Make save_path')
-    checkpoint_path = os.path.join(args.save_path, f'{args.wandb_exp_name}{args.exp_num}\
-                                   _bs{args.batch_size}_ep{args.epochs}_{args.opt_name}_lr{args.learning_rate}_{args.load_model}')
+    checkpoint_path = os.path.join(args.savedir, f'{args.exp_name}{args.exp_num}\
+                                   _bs{args.batch_size}_ep{args.epochs}_{args.opt_name}_lr{args.learning_rate}_{args.backbone}')
     os.makedirs(checkpoint_path, exist_ok=True)
     return checkpoint_path
 

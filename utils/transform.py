@@ -3,8 +3,8 @@ from torchvision import transforms
 import json
 
 def get_transform(args):
-    print(f'Transform\t>>\t{args.transform_list}')
-    with open(args.transform_path, 'r') as f:
+    print(f'Transform\t>>\t{args.aug_list}')
+    with open('./transform_list.json', 'r') as f:
         transform_json = f.read()
     tf_list = json.loads(transform_json)
     
@@ -15,7 +15,7 @@ def get_transform(args):
 
     transform_list = []
     config = {}
-    for key in args.transform_list:
+    for key in args.aug_list:
         transform_list.append(getattr(transforms,transform_dict[key])(**tf_list[key]))
         config[key] = tf_list[key]
     

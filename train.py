@@ -24,8 +24,8 @@ from tqdm import tqdm
 import argparse
 
 #user made utils
-from utils.config import load_config
-from utils import plot, sampler, transform, config, util_tool
+from utils.transform import get_transform
+from utils import plot, sampler, util_tool
 
 #for train log
 from torchsummary import summary
@@ -34,7 +34,7 @@ from logger import wandb_util
 
 
 def run(args, config):
-    
+    print(args,config)
     accelerator = Accelerator(
         gradient_accumulation_steps = args.grad_accum_param,
         mixed_precision = args.mixed_precision
@@ -56,49 +56,48 @@ def run(args, config):
     checkpoint_path = util_tool.chechpoint_init(args)
 
     #transform for preprocessing input data
-    transform, config = transform.get_transform(args)
+    transform, transform_config = get_transform(args)
 
     if args.use_wandb:
-        wandb.config.update(config)                                
+        wandb.config.update(transform_config)                                
 
-    dataset = ClassificationDataset(csv_path = args.csv_path,
-                                    transform=transform)
+    #여기부터는 dataset.py 수정되어야 함------------------------------------------
+    # dataset = ClassificationDataset(csv_path = args.csv_path,
+    #                                 transform=transform)
 
 
 
     #(수정point)추후 factory로 함수화할 것
-    n_train_set = int(args.train_val_split*len(dataset))
-    train_set, val_set, train_idx, val_idx = sampler.train_valid_split_by_sklearn(dataset,args.train_val_split,args.seed)
-    print(f'The number of training images\t>>\t{len(train_set)}')
-    print(f'The number of validation images\t>>\t{len(val_set)}')
+    #(dataset이 구현되어야 진행가능)
+   # train_set, val_set, train_idx, val_idx = sampler.train_valid_split_by_sklearn(dataset,args.train_val_split,args.seed)
+    # print(f'The number of training images\t>>\t{len(train_set)}')
+    # print(f'The number of validation images\t>>\t{len(val_set)}')
     #여기까지
 
     #(수정point)추후 factory로 자동화 할 것
     print('The data loader is ready ...')
-    train_iter = DataLoader(train_set,
-                            batch_size=args.batch_size,
-                            drop_last=True,
-                            num_workers=multiprocessing.cpu_count() // 2,
-                            shuffle=True,
-                            )   
-    val_iter = DataLoader(val_set,
-                          batch_size=args.batch_size,
-                          drop_last=True,
-                          num_workers=multiprocessing.cpu_count() // 2
-                          )
-    #
-
+    # train_iter = DataLoader(train_set,
+    #                         batch_size=args.batch_size,
+    #                         drop_last=True,
+    #                         num_workers=multiprocessing.cpu_count() // 2,
+    #                         shuffle=True,
+    #                         )   
+    # val_iter = DataLoader(val_set,
+    #                       batch_size=args.batch_size,
+    #                       drop_last=True,
+    #                       num_workers=multiprocessing.cpu_count() // 2
+    #                       )
+    # #------------------------------------------------------------------------------
 
     print('The model is ready ...')
     model = Classifier(args).to(device)
-
 
     #(수정point)
     print('The optimizer is ready ...')
     optimizer = optim.Adam(params=model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
     
     #(수정point)
-    if args.lr_schduler:
+    if args.lr_scheduler:
         lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
     
     print('The loss function is ready ...')
@@ -232,14 +231,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="for model training")
     parser.add_argument('-c', '--config', type=str,default='./config.json', help='config file path for training. [default=\'./config.json\']')
 
-    args = parser.parse_args()
+    parsed_args = parser.parse_args()
     
-    config = load_config(args.config)
+    config = util_tool.load_config(parsed_args.config)
 
     from collections import namedtuple
     Args = namedtuple('Args', config.keys())
-    config = Args(**config)
-
+    args = Args(**config)
 
     run(args, config)
     
