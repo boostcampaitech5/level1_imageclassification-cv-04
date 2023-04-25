@@ -1,5 +1,6 @@
 import os
 from torch.utils.data import DataLoader
+import multiprocessing
 
 
 def create_dataset(datadir: str, dataname: str, aug_name: str = 'default'):
@@ -25,5 +26,5 @@ def create_dataloader(dataset, batch_size: int = 4, shuffle: bool = False):
         dataset     = dataset,
         batch_size  = batch_size,
         shuffle     = shuffle,
-        num_workers = 2
+        num_workers = multiprocessing.cpu_count() // 2
     )
