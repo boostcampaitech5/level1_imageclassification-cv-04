@@ -24,6 +24,15 @@ class AverageMeter:
         self.sum += val * n
         self.count += n
         self.avg = self.sum / self.count
+class cmMetter:
+    def __init__(self):
+        self.reset()
+    def reset(self):
+        self.pred = []
+        self.label = []
+    def update(self,pred,label):
+        self.pred.append(pred.cpu().detach().numpy())
+        self.label.append(label.cpu().detach().numpy())
 
 
 def train(model, dataloader, criterion, optimizer, log_interval: int, device: str) -> dict:   
@@ -31,7 +40,7 @@ def train(model, dataloader, criterion, optimizer, log_interval: int, device: st
     data_time_m = AverageMeter()
     acc_m = AverageMeter()
     losses_m = AverageMeter()
-    
+    cm_m = cmMetter()
     end = time.time()
     
     model.train()
@@ -43,6 +52,8 @@ def train(model, dataloader, criterion, optimizer, log_interval: int, device: st
 
         # predict
         outputs = model(inputs)
+        cm_m.update(outputs, targets)
+
         loss = criterion(outputs, targets)    
         loss.backward()
 
