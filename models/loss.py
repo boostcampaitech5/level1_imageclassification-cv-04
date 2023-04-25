@@ -65,7 +65,7 @@ def mseloss():
     return criterion
 
 def f1loss(classes=3, epsilon=1e-7):
-    criterion = nn.F1Loss(classes=classes, epsilon=epsilon)
+    criterion = F1Loss(classes=classes, epsilon=epsilon)
     return criterion
 
 def focalloss(gamma=2,alpha=0.25,device='cpu'):
