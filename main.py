@@ -49,18 +49,18 @@ def run(args):
     _logger.info('Device: {}'.format(accelerator.device))
 
     # build Model
-    model = timm.create_model(args.predefined_model, pretrained=True, num_classes=args.num_classes) # 이전처럼 함수로 호출할 것인지 또는 timm으로 main에서 직접 부를지
+    model = create_model(args.backbone, pretrained=True, num_classes=args.num_classes) # create_model 작성 필요
     _logger.info('# of params: {}'.format(np.sum([p.numel() for p in model.parameters()])))
 
     # load dataset
-    trainset, testset = create_dataset(datadir=args.datadir, dataname=args.dataname, aug_name=args.aug_name) # create_dataset 변경 필요
+    trainset, testset = create_dataset(datadir=args.datadir, dataname=args.dataname, aug_list=args.aug_list) # create_dataset 변경 필요
     
     # load dataloader
     trainloader = create_dataloader(dataset=trainset, batch_size=args.batch_size, shuffle=True)
     testloader = create_dataloader(dataset=testset, batch_size=args.batch_size, shuffle=False)
 
     # set criterion
-    criterion = __import__('Folder Name').__dict__[args.loss](args.loss_param) # Loss 선택할 수 있도록 작성 필요
+    criterion = __import__('Folder Name').__dict__[args.loss](**args.loss_param) # Loss 선택할 수 있도록 작성 필요
 
     # set optimizer
     optimizer = __import__('torch.optim', fromlist='optim').__dict__[args.opt_name](model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
