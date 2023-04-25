@@ -231,11 +231,11 @@ def run(args, config):
                        'Train F1-Score': train_f1,
                        'Val Acc': val_acc,
                        'Val Loss': val_epoch_loss,
-                       'Val F1-Score': val_f1})
+                       'Val F1-Score': val_f1}, step=epoch)
 
             if best_val_f1 <= val_f1:
                 fig = plot.plot_confusion_matrix(val_cm, args.num_classes, normalize=True, save_path=None)
-                wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")})
+                wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")},step=epoch)
                 
         if best_val_f1 <= val_f1:
             best_val_f1 = val_f1
