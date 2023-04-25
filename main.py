@@ -9,9 +9,11 @@ import timm
 import logging
 
 from train import fit
-from models import *
+# from models import * # timm을 main.py에서 바로 사용하면 삭제
 from datasets import create_dataset, create_dataloader
 from log import setup_default_logging
+
+from accelerate import Accelerator
 
 _logger = logging.getLogger('train')
 
@@ -33,36 +35,57 @@ def run(args):
     savedir = os.path.join(args.savedir, args.exp_name)
     os.makedirs(savedir, exist_ok=True)
 
+    # set logger
     setup_default_logging(log_path=os.path.join(savedir,'log.txt'))
+
+    # set seed
     torch_seed(args.seed)
 
-    device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-    _logger.info('Device: {}'.format(device))
+    # set accelerator
+    accelerator = Accelerator(
+        gradient_accumulation_steps = args.grad_accum_steps,
+        mixed_precision             = args.mixed_precision
+    )
+    _logger.info('Device: {}'.format(accelerator.device))
 
     # build Model
-    model = ResNet18(num_classes=args.num_classes)
-    model.to(device)
+    model = timm.create_model(args.predefined_model, pretrained=True, num_classes=args.num_classes) # 이전처럼 함수로 호출할 것인지 또는 timm으로 main에서 직접 부를지
     _logger.info('# of params: {}'.format(np.sum([p.numel() for p in model.parameters()])))
 
     # load dataset
-    trainset, testset = create_dataset(datadir=args.datadir, dataname=args.dataname, aug_name=args.aug_name)
+    trainset, testset = create_dataset(datadir=args.datadir, dataname=args.dataname, aug_name=args.aug_name) # create_dataset 변경 필요
     
     # load dataloader
     trainloader = create_dataloader(dataset=trainset, batch_size=args.batch_size, shuffle=True)
-    testloader = create_dataloader(dataset=testset, batch_size=256, shuffle=False)
+    testloader = create_dataloader(dataset=testset, batch_size=args.batch_size, shuffle=False)
 
-    # set training
-    criterion = torch.nn.CrossEntropyLoss()
-    optimizer = __import__('torch.optim', fromlist='optim').__dict__[args.opt_name](model.parameters(), lr=args.lr)
+    # set criterion
+    criterion = __import__('Folder Name').__dict__[args.loss](args.loss_param) # Loss 선택할 수 있도록 작성 필요
+
+    # set optimizer
+    optimizer = __import__('torch.optim', fromlist='optim').__dict__[args.opt_name](model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
     # scheduler
-    if args.use_scheduler:
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
+    if args.lr_scheduler:
+        lr_scheduler = __import__('torch.optim.lr_scheduler', fromlist='lr_scheduler').__dict__[args.lr_scheduler](optimizer, **args.lr_sheduler_param)
     else:
-        scheduler = None
+        lr_scheduler = None
+
+    # prepraring accelerator
+    model, optimizer, trainloader, testloader, lr_scheduler = accelerator.prepare(
+        model, optimizer, trainloader, testloader, lr_scheduler
+    )
+
+    # load checkpoints
+    if args.ckpdir:
+        accelerator.load_state(args.ckpdir)
 
     # initialize wandb
-    wandb.init(name=args.exp_name, project='DSBA-study', config=args)
+    if args.use_wandb:
+        wandb.init(name     = f'{args.exp_name}_{args.exp_num}.{args.user_name}', 
+                   project  = args.project_name, 
+                   entity   = args.entity,
+                   config   = args)
 
     # fitting model
     fit(model        = model, 
@@ -70,11 +93,12 @@ def run(args):
         testloader   = testloader, 
         criterion    = criterion, 
         optimizer    = optimizer, 
-        scheduler    = scheduler,
+        lr_scheduler = lr_scheduler,
+        accelerator  = accelerator,
         epochs       = args.epochs, 
         savedir      = savedir,
         log_interval = args.log_interval,
-        device       = device)
+        use_wandb    = args.use_wandb)
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description="Classification for Computer Vision")
