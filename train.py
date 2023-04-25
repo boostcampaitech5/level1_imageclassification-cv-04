@@ -48,7 +48,7 @@ def predToClass(pred):
     #pred가 단일 클래스 추측이 아닐경우
     return pred
 
-def train(model, dataloader, criterion, optimizer, log_interval: int, device: str, args) -> dict:   
+def train(model, dataloader, criterion, optimizer, device: str, args) -> dict:   
     batch_time_m = AverageMeter()
     data_time_m = AverageMeter()
     acc_m = AverageMeter()
@@ -81,7 +81,7 @@ def train(model, dataloader, criterion, optimizer, log_interval: int, device: st
         
         batch_time_m.update(time.time() - end)
     
-        if idx % log_interval == 0 and idx != 0: 
+        if idx % args.log_interval == 0 and idx != 0: 
             _logger.info('TRAIN [{:>4d}/{}] Loss: {loss.val:>6.4f} ({loss.avg:>6.4f}) '
                         'Acc: {acc.avg:.3%} '
                         'LR: {lr:.3e} '
@@ -100,7 +100,7 @@ def train(model, dataloader, criterion, optimizer, log_interval: int, device: st
         confusionmatrix = toConfusionMatrix(cm_m.pred, cm_m.label,args.num_classes)
     return OrderedDict([('acc',acc_m.avg), ('loss',losses_m.avg), ('cm',confusionmatrix)])
         
-def test(model, dataloader, criterion, log_interval: int, device: str) -> dict:
+def test(model, dataloader, criterion, device: str, args) -> dict:
     correct = 0
     total = 0
     total_loss = 0
@@ -123,7 +123,7 @@ def test(model, dataloader, criterion, log_interval: int, device: str) -> dict:
             correct += targets.eq(preds).sum().item()
             total += targets.size(0)
             
-            if idx % log_interval == 0 and idx != 0: 
+            if idx % args.log_interval == 0 and idx != 0: 
                 _logger.info('TEST [%d/%d]: Loss: %.3f | Acc: %.3f%% [%d/%d]' % 
                             (idx+1, len(dataloader), total_loss/(idx+1), 100.*correct/total, correct, total))
         confusionmatrix = toConfusionMatrix(cm_m.pred,cm_m.label)
@@ -131,21 +131,22 @@ def test(model, dataloader, criterion, log_interval: int, device: str) -> dict:
                 
 def fit(
     model, trainloader, testloader, criterion, optimizer, scheduler, 
-    epochs: int, savedir: str, log_interval: int, device: str, args
+    savedir: str, device: str, args
 ) -> None:
 
     best_acc = 0
     step = 0
-    for epoch in range(epochs):
-        _logger.info(f'\nEpoch: {epoch+1}/{epochs}')
-        train_metrics = train(model, trainloader, criterion, optimizer, log_interval, device,args)
-        eval_metrics = test(model, testloader, criterion, log_interval, device)
+    for epoch in range(args.epochs):
+        _logger.info(f'\nEpoch: {epoch+1}/{args.epochs}')
+        train_metrics = train(model, trainloader, criterion, optimizer, args.log_interval, device,args)
+        eval_metrics = test(model, testloader, criterion, args.log_interval, device)
 
         # wandb
         metrics = OrderedDict(lr=optimizer.param_groups[0]['lr'])
         metrics.update([('train_' + k, v) for k, v in train_metrics.items()])
         metrics.update([('eval_' + k, v) for k, v in eval_metrics.items()])
-        wandb.log(metrics, step=step)
+        if args.use_wandb:
+            wandb.log(metrics, step=step)
 
         step += 1
 
@@ -168,10 +169,40 @@ def fit(
 
             #save confusion_matrix
             if args.use_cm:
-                fig = 1
-                wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")},step=epoch)
+                fig = plot_confusion_matrix(eval_metrics['cm'],args.num_classes)
+                if args.user_wandb:
+                    wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")},step=epoch)
 
     _logger.info('Best Metric: {0:.3%} (epoch {1:})'.format(state['best_acc'], state['best_epoch']))
+
+#임시로 여기 작성
+import matplotlib as plt
+import seaborn as sns
+def plot_confusion_matrix(cm, num_classes, normalize=False, save_path=None):
+
+    plt.clf()
+    if normalize:
+        n_total = torch.sum(cm, 1).view(num_classes, 1)
+        np_cm = cm / n_total
+        np_cm = np_cm.numpy()
+        ax = sns.heatmap(np_cm, annot=True, cmap='Blues', linewidth=.5,
+                        fmt=".2f", annot_kws = {'size' : 6})
+    else:
+        np_cm = cm.numpy()
+        ax = sns.heatmap(np_cm, annot=True, cmap='Blues', linewidth=.5,
+                        fmt="d", annot_kws = {'size' : 6})
+
+    ax.set_xlabel('Predicted Values')
+    ax.set_ylabel('Actual Values')
+    ax.xaxis.set_ticklabels([i for i in range(num_classes)])
+    ax.xaxis.tick_top()
+    ax.yaxis.set_ticklabels([i for i in range(num_classes)])
+    plt.tight_layout()
+    if save_path:
+        plt.savefig(save_path)
+    
+    return ax
+
 
 
 if __name__ == '__main__':
@@ -207,3 +238,5 @@ if __name__ == '__main__':
     print(cm_m.label)
     confusion_matrix = toConfusionMatrix(cm_m.pred, cm_m.label,5)
     print(confusion_matrix)
+
+
