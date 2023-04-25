@@ -49,7 +49,7 @@ def run(args):
     _logger.info('Device: {}'.format(accelerator.device))
 
     # build Model
-    model = create_model(args.backbone, pretrained=True, num_classes=args.num_classes) # create_model 작성 필요
+    model = __import__('Folder Name').__dict__[args.backbone](**args.backbone_param)
     _logger.info('# of params: {}'.format(np.sum([p.numel() for p in model.parameters()])))
 
     # load dataset
