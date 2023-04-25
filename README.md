@@ -134,10 +134,11 @@ bash run.sh CIFAR10 10
 |seed|Random seed|223|---|
 |batch_size|Batch size|32|---|
 |datadir|input 경로|'../input|---|
-|aug_list|Transform 목록|['resize','randomrotation', 'totensor', 'normalize']|---|
-|backbone|timm models|“vit_small_patch16_224”|---|
+|transform|Transform 목록|['resize','randomrotation', 'totensor', 'normalize']|---|
+|model_name|Model_names|“CustomModel”|---|
+|model_param|Model_names|{pretrained : True, backbone : "resnet18"}|---|
 |num_classes|Class 개수|18|---|
-|opt_name|Optimizer|"AdamW"|"Adam","AdamW"|
+|opt_name|Optimizer|"Adam"|"Adam"|
 |loss|loss 종류|"crossentropy"|"crossentropy","focalloss","f1loss","bceloss","mseloss"|
 |loss_param|loss parm|"미정"|---|
 |epochs|epoch|100|---|
