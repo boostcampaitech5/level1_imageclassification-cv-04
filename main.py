@@ -49,7 +49,7 @@ def run(args):
     _logger.info('Device: {}'.format(accelerator.device))
 
     # build Model
-    model = __import__('Folder Name').__dict__[args.backbone](**args.backbone_param)
+    model = __import__('models.backbone', fromlist='backbone').__dict__[args.model_name](args.num_classes, **args.model_param)
     _logger.info('# of params: {}'.format(np.sum([p.numel() for p in model.parameters()])))
 
     # load dataset
@@ -60,7 +60,7 @@ def run(args):
     testloader = create_dataloader(dataset=testset, batch_size=args.batch_size, shuffle=False)
 
     # set criterion
-    criterion = __import__('Folder Name').__dict__[args.loss](**args.loss_param) # Loss 선택할 수 있도록 작성 필요
+    criterion = __import__('models.loss', fromlist='loss').__dict__[args.loss](**args.loss_param) # Loss 선택할 수 있도록 작성 필요
 
     # set optimizer
     optimizer = __import__('torch.optim', fromlist='optim').__dict__[args.opt_name](model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
