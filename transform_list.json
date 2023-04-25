@@ -1,15 +1,14 @@
 {
 	"resize": {
-		"img_width": 98,
-		"img_height": 128
+		"size": [224,224]
 	},
 	"totensor": {},
 	"normalize": {
-		"normalize_statistic": "imagenet"
+		"mean" : [0.485, 0.456, 0.406],
+        "std" : [0.229, 0.224, 0.225]
 	},
 	"centercrop": {
-		"img_width": 384,
-		"img_height": 384
+		"size":[224,224]
 	},
 	"colorjitter": {
 		"brightness": 0,
@@ -18,15 +17,14 @@
 		"hue": 0
 	},
 	"randomhorizontalflip": {
-		"flip_prob": 0.5
+		"p": 0.5
 	},
 	"randomrotation": {
 		"degrees": 20
 	},
 	"gaussianblur": {
 		"kernel_size": 3,
-		"sigma_min": 0.1,
-		"sigma_max": 2.0
+		"sigma": [0.1,2.0]
 	},
 	"randomaffine": {
 		"degrees":30,
