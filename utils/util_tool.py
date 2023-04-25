@@ -1,5 +1,7 @@
 import os 
-
+import torch
+import numpy as np
+import random
 
 def chechpoint_init(args):
     print('Make save_path')
@@ -31,3 +33,15 @@ class metric_tracker():
         self.loss = 0
         self.acc = 0
         self.cnt = 0
+
+def torch_seed(random_seed):
+    torch.manual_seed(random_seed)
+    torch.cuda.manual_seed(random_seed)
+    torch.cuda.manual_seed_all(random_seed) # if use multi-GPU 
+    # CUDA randomness
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    
+    np.random.seed(random_seed)
+    random.seed(random_seed)
+    os.environ['PYTHONHASHSEED'] = str(random_seed)

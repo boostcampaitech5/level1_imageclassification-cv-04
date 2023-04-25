@@ -3,12 +3,14 @@
 from dataloader import *
 from model import *
 from metric import *
-
 from torch.utils.data import DataLoader, random_split, WeightedRandomSampler
 from torchvision import transforms 
 from torch import optim
 import multiprocessing
 from accelerate import Accelerator
+#model loss 
+from model.model_finetune import fineTune
+from model.loss import FocalLoss
 
 #array utils
 import numpy as np
@@ -30,22 +32,6 @@ from torchsummary import summary
 import logging
 from logger import wandb_util
 
-from model.model_finetune import fineTune
-from model.loss import FocalLoss
-
-
-#추후 util로 옮길 함수
-def torch_seed(random_seed):
-    torch.manual_seed(random_seed)
-    torch.cuda.manual_seed(random_seed)
-    torch.cuda.manual_seed_all(random_seed) # if use multi-GPU 
-    # CUDA randomness
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    
-    np.random.seed(random_seed)
-    random.seed(random_seed)
-    os.environ['PYTHONHASHSEED'] = str(random_seed)
 
 def run(args, config):
     
@@ -54,15 +40,13 @@ def run(args, config):
         mixed_precision = args.mixed_precision
     )
     
-    optimizer_name = args.opt_name
-
     #wandb initialize
     if args.use_wandb:
         wandb_util.wandb_init(args,config)
         
     #seed initialize
     print(f'Seed\t>>\t{args.seed}')
-    torch_seed(args.seed)
+    util_tool.torch_seed(args.seed)
 
     # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     device = accelerator.device
@@ -200,7 +184,6 @@ def run(args, config):
 
         # val_cm = confusion_matrix(model, val_iter, device, args.num_classes)
         val_cm = confusion_matrix2(val_tracker.get_cm_data(), args.num_classes)
-
         val_acc = accuracy(val_cm, args.num_classes)
         val_f1 = f1_score(val_cm, args.num_classes)
 
@@ -210,6 +193,8 @@ def run(args, config):
         print('time >> {:.4f}\tepoch >> {:04d}\ttrain_acc >> {:.4f}\ttrain_loss >> {:.4f}\ttrain_f1 >> {:.4f}\tval_acc >> {:.4f}\tval_loss >> {:.4f}\tval_f1 >> {:.4f}'
               .format(time.time()-start_time, epoch, train_acc, train_epoch_loss, train_f1, val_acc, val_epoch_loss, val_f1))
         
+
+        #checkpoint 저장 알고리즘 클래스로 구현하기
         if best_val_f1 <= val_f1:
             if args.save_mode == 'state_dict' or args.save_mode == 'both':
                 # 모델의 parameter들을 저장
