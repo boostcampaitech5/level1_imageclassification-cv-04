@@ -3,9 +3,6 @@ Classification Pipeline in Computer Vision (Pytorch)
 
 # Environments
 
-docker image: `nvcr.io/nvidia/pytorch:22.12-py3`
-
-see details of NVIDIA pytorch docker image in [here](https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel-22-12.html#rel-22-12).
 
 # Directory
 
@@ -17,7 +14,8 @@ CV_classification
 │   └── factory.py
 ├── models
 │   ├── __init__.py
-│   └── resnet.py
+│   ├── resnet.py
+│   └── loss.py
 ├── log.py
 ├── main.py
 ├── train.py
@@ -43,6 +41,8 @@ CV_classification
    - Checkpoint model using evaluation on validation dataset
    - Log training history using `logging` or `wandb` in save folder
 8. Testing model
+
+
 
 
 # Run
@@ -115,3 +115,42 @@ done
 ```bash
 bash run.sh CIFAR10 10
 ```
+
+# Config Parameters
+### Wandb 관련 설정
+|Argument|Description|Default|Possible value|
+|---|---|---|---|
+|use_wandb|Wandb 사용 여부|True|True,False|
+|entity|Wandb 엔티티 명|"connect-cv-04"|---|
+|project_name|Wandb 프로젝트 명|"Image_classification_mask"|---|
+|exp_name|실험명|"exp"|---|
+|exp_num|실험 번호|0|---|
+|user_name|실험자|"NAME"|"KDH","KJY","HJH","KDK"|
+|use_cm|Confusion metrix 사용 여부|True|True,False|
+
+### 실험 관련 설정
+|Argument|Description|Default|Possible value|
+|---|---|---|---|
+|seed|Random seed|223|---|
+|batch_size|Batch size|32|---|
+|datadir|input 경로|'../input|---|
+|aug_list|Transform 목록|['resize','randomrotation', 'totensor', 'normalize']|---|
+|backbone|timm models|“vit_small_patch16_224”|---|
+|num_classes|Class 개수|18|---|
+|opt_name|Optimizer|"AdamW"|"Adam","AdamW"|
+|loss|loss 종류|"crossentropy"|"crossentropy","focalloss","f1loss","bceloss","mseloss"|
+|loss_param|loss parm|"미정"|---|
+|epochs|epoch|100|---|
+|lr|learning rate|5e-6|---|
+|lr_sheduler|"Learning rate scheduler|"StepLR"|"StepLR","ReduceLROnPlateau"|
+|lr_sheduler_param|Lr scheduler parameter|"미정"|---|
+|weight_decay|Weight Decay|5e-4|---|
+|grad_accum_steps|---|1|---|
+|mixed_precision|---|"fp16"|---|
+
+### 모델 저장 관련 설정
+|Argument|Description|Default|Possible value|
+|---|---|---|---|
+|savedir|모델 저장 위치|"./checkpoint"|---|
+|ckpdir|모델 저장 위치|"미정"|---|
+|patience|Early Stopping|100|---|
