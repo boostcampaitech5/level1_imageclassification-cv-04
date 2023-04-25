@@ -5,6 +5,8 @@ import os
 import json
 import torch
 from collections import OrderedDict
+import numpy as np
+from sklearn.metrics import confusion_matrix
 
 _logger = logging.getLogger('train')
 
@@ -28,12 +30,16 @@ class cmMetter:
     def __init__(self):
         self.reset()
     def reset(self):
-        self.pred = []
-        self.label = []
+        self.pred = np.array([])
+        self.label = np.array([])
     def update(self,pred,label):
-        self.pred.append(pred.cpu().detach().numpy())
-        self.label.append(label.cpu().detach().numpy())
+        self.pred = np.concatenate((self.pred,pred.cpu().detach().numpy()),dim=0)
+        self.label = np.concatenate((self.label,label.cpu().detach().numpy()),dim=0)
 
+def toConfusionMatrix(y_pred, y_label,num_classes):
+    cm = confusion_matrix(y_label,y_pred,np.arange(num_classes))
+    #cm[y_pred][y_gt]
+    return cm
 
 def train(model, dataloader, criterion, optimizer, log_interval: int, device: str) -> dict:   
     batch_time_m = AverageMeter()
@@ -84,8 +90,8 @@ def train(model, dataloader, criterion, optimizer, log_interval: int, device: st
                         data_time  = data_time_m))
    
         end = time.time()
-    
-    return OrderedDict([('acc',acc_m.avg), ('loss',losses_m.avg)])
+        confusion_matrix = toConfusionMatrix(cm_m.pred, cm_m.label)
+    return OrderedDict([('acc',acc_m.avg), ('loss',losses_m.avg), ('cm',confusion_matrix)])
         
 def test(model, dataloader, criterion, log_interval: int, device: str) -> dict:
     correct = 0
