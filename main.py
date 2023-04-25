@@ -6,6 +6,7 @@ import wandb
 import torch
 import argparse
 import logging
+import json
 
 from train import fit
 from datasets import create_dataset, create_dataloader
@@ -94,32 +95,13 @@ def run(args):
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description="Classification for Computer Vision")
-    # exp setting
-    parser.add_argument('--exp-name',type=str,help='experiment name')
-    parser.add_argument('--datadir',type=str,default='/data',help='data directory')
-    parser.add_argument('--savedir',type=str,default='./saved_model',help='saved model directory')
 
-    # datasets
-    parser.add_argument('--dataname',type=str,default='CIFAR100',choices=['CIFAR10','CIFAR100'],help='target dataname')
-    parser.add_argument('--num-classes',type=int,default=100,help='target classes')
+    with open('config.json') as f:
+        config = json.load(f)
 
-    # optimizer
-    parser.add_argument('--opt-name',type=str,choices=['SGD','Adam'],help='optimizer name')
-    parser.add_argument('--lr',type=float,default=0.1,help='learning_rate')
-
-    # scheduler
-    parser.add_argument('--use_scheduler',action='store_true',help='use sheduler')
-
-    # augmentation
-    parser.add_argument('--aug-name',type=str,choices=['default','weak','strong'],help='augmentation type')
-
-    # train
-    parser.add_argument('--epochs',type=int,default=50,help='the number of epochs')
-    parser.add_argument('--batch-size',type=int,default=128,help='batch size')
-    parser.add_argument('--log-interval',type=int,default=10,help='log interval')
-
-    # seed
-    parser.add_argument('--seed',type=int,default=223,help='223 is my birthday')
+    for key in config:
+        parser_key = key.replace('_', '-')
+        parser.add_argument(f'--{parser_key}', default=config[key], type=type(config[key]))
 
     args = parser.parse_args()
 

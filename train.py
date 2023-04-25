@@ -7,7 +7,6 @@ import torch
 from collections import OrderedDict
 import numpy as np
 from sklearn.metrics import confusion_matrix
-
 _logger = logging.getLogger('train')
 
 class AverageMeter:
@@ -30,18 +29,26 @@ class cmMetter:
     def __init__(self):
         self.reset()
     def reset(self):
-        self.pred = np.array([])
-        self.label = np.array([])
+        self.pred = None
+        self.label = None
     def update(self,pred,label):
-        self.pred = np.concatenate((self.pred,pred.cpu().detach().numpy()),dim=0)
-        self.label = np.concatenate((self.label,label.cpu().detach().numpy()),dim=0)
+        if type(self.pred) != np.ndarray:
+            self.pred = pred.cpu().detach().numpy().reshape(-1)
+            self.label = label
+        else:
+            self.pred = np.concatenate((self.pred,pred.cpu().detach().numpy().reshape(-1)))
+            self.label = np.concatenate((self.label, label.cpu().detach().numpy()))
 
-def toConfusionMatrix(y_pred, y_label,num_classes):
-    cm = confusion_matrix(y_label,y_pred,np.arange(num_classes))
+def toConfusionMatrix(y_pred, y_label, num_classes:int) -> np.ndarray:
+    
+    cm = confusion_matrix(y_label,y_pred, labels = np.arange(num_classes).tolist())
     #cm[y_pred][y_gt]
     return cm
+def predToClass(pred):
+    #pred가 단일 클래스 추측이 아닐경우
+    return pred
 
-def train(model, dataloader, criterion, optimizer, log_interval: int, device: str) -> dict:   
+def train(model, dataloader, criterion, optimizer, log_interval: int, device: str, args) -> dict:   
     batch_time_m = AverageMeter()
     data_time_m = AverageMeter()
     acc_m = AverageMeter()
@@ -58,7 +65,6 @@ def train(model, dataloader, criterion, optimizer, log_interval: int, device: st
 
         # predict
         outputs = model(inputs)
-        cm_m.update(outputs, targets)
 
         loss = criterion(outputs, targets)    
         loss.backward()
@@ -70,6 +76,7 @@ def train(model, dataloader, criterion, optimizer, log_interval: int, device: st
 
         # accuracy
         preds = outputs.argmax(dim=1) 
+        cm_m.update(preds, targets)
         acc_m.update(targets.eq(preds).sum().item()/targets.size(0), n=targets.size(0))
         
         batch_time_m.update(time.time() - end)
@@ -90,14 +97,14 @@ def train(model, dataloader, criterion, optimizer, log_interval: int, device: st
                         data_time  = data_time_m))
    
         end = time.time()
-        confusion_matrix = toConfusionMatrix(cm_m.pred, cm_m.label)
-    return OrderedDict([('acc',acc_m.avg), ('loss',losses_m.avg), ('cm',confusion_matrix)])
+        confusionmatrix = toConfusionMatrix(cm_m.pred, cm_m.label,args.num_classes)
+    return OrderedDict([('acc',acc_m.avg), ('loss',losses_m.avg), ('cm',confusionmatrix)])
         
 def test(model, dataloader, criterion, log_interval: int, device: str) -> dict:
     correct = 0
     total = 0
     total_loss = 0
-    
+    cm_m = cmMetter()
     model.eval()
     with torch.no_grad():
         for idx, (inputs, targets) in enumerate(dataloader):
@@ -112,25 +119,26 @@ def test(model, dataloader, criterion, log_interval: int, device: str) -> dict:
             # total loss and acc
             total_loss += loss.item()
             preds = outputs.argmax(dim=1)
+            cm_m.update(preds,targets)
             correct += targets.eq(preds).sum().item()
             total += targets.size(0)
             
             if idx % log_interval == 0 and idx != 0: 
                 _logger.info('TEST [%d/%d]: Loss: %.3f | Acc: %.3f%% [%d/%d]' % 
                             (idx+1, len(dataloader), total_loss/(idx+1), 100.*correct/total, correct, total))
-                
-    return OrderedDict([('acc',correct/total), ('loss',total_loss/len(dataloader))])
+        confusionmatrix = toConfusionMatrix(cm_m.pred,cm_m.label)
+    return OrderedDict([('acc',correct/total), ('loss',total_loss/len(dataloader)),('cm',confusionmatrix)])
                 
 def fit(
     model, trainloader, testloader, criterion, optimizer, scheduler, 
-    epochs: int, savedir: str, log_interval: int, device: str
+    epochs: int, savedir: str, log_interval: int, device: str, args
 ) -> None:
 
     best_acc = 0
     step = 0
     for epoch in range(epochs):
         _logger.info(f'\nEpoch: {epoch+1}/{epochs}')
-        train_metrics = train(model, trainloader, criterion, optimizer, log_interval, device)
+        train_metrics = train(model, trainloader, criterion, optimizer, log_interval, device,args)
         eval_metrics = test(model, testloader, criterion, log_interval, device)
 
         # wandb
@@ -158,4 +166,44 @@ def fit(
 
             best_acc = eval_metrics['acc']
 
+            #save confusion_matrix
+            if args.use_cm:
+                fig = 1
+                wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")},step=epoch)
+
     _logger.info('Best Metric: {0:.3%} (epoch {1:})'.format(state['best_acc'], state['best_epoch']))
+
+
+if __name__ == '__main__':
+    batch_time_m = AverageMeter()
+    data_time_m = AverageMeter()
+    acc_m = AverageMeter()
+    losses_m = AverageMeter()
+    cm_m = cmMetter()
+    end = time.time()
+    class testClass():
+        def __init__(self):
+            super().__init__()
+        def __len__(self):
+            return 3
+        def __getitem__(self,idx):
+            pred = torch.Tensor([[1],[2],[3]])
+            label=torch.Tensor([1,2,4])
+            return pred,label
+    testset = testClass()
+    for idx, (inputs, targets) in enumerate(testset):
+
+        data_time_m.update(time.time() - end)
+        # predict
+        preds = targets
+        # accuracy
+        cm_m.update(inputs, targets)
+        acc_m.update(targets.eq(preds).sum().item()/targets.size(0), n=targets.size(0))
+        batch_time_m.update(time.time() - end) 
+        end = time.time()
+        if idx==2:
+            break
+    print(cm_m.pred)
+    print(cm_m.label)
+    confusion_matrix = toConfusionMatrix(cm_m.pred, cm_m.label,5)
+    print(confusion_matrix)
