@@ -3,6 +3,7 @@ from torchvision import transforms
 import json
 
 def get_transform(args):
+    print(f'Transform\t>>\t{args.transform_list}')
     with open(args.transform_path, 'r') as f:
         transform_json = f.read()
     tf_list = json.loads(transform_json)

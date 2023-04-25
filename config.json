@@ -5,27 +5,32 @@
     "exp_name": "TBD",
     "exp_num": 0,
     "user_name": "kdh",
+    "use_cm": false,
     
     "seed": 223,
-    "model_summary": false,
 
     "batch_size": 32,
-    "data_path": "../input/data/train/train_info.csv",
-    "eval_path": "../input/data/eval",
-    "preprocessing": ["resize","randomhorizontalflip","randomrotation","totensor","normalize"],
-    "train_valid_ratio": 0.8,
+    "datadir": "../input",
+    "aug_list": ["resize","randomhorizontalflip","randomrotation","totensor","normalize"],
 
-    "predefined_model": "vit_small_patch16_224",
+    "backbone": "vit_small_patch16_224",
+    "backbone_param": {},
     "num_classes": 18,
-    "num_sub_classes": [3,2,3],
     
+    "opt_name": "AdamW",
     "loss": "crossentropy",
-    "lr_scheduler": "StepLR",
+    "loss_param": {},
+    
+    "epochs": 100,
     "learning_rate": 5e-6,
+    "lr_scheduler": "StepLR",
+    "lr_scheduler_param": {},
     "weight_decay": 5e-4,
-    "epoch": 100,
+    "grad_accum_param": 1,
+    "mixed_precision": "fp16",
 
-    "pickle_path": "./checkpoint",
-    "pickle_mode": "state_dict"
+    "patience": 10,
+    "ckpdir": "",
+    "savedir": "./checkpoint"
     
 }
