@@ -1,4 +1,5 @@
 import timm
+import torch
 from torchsummary import summary
 from dataloader import *
 from utils import *
@@ -11,6 +12,8 @@ for model in timm.list_models():
         print(model)
     # if 'bit' in model:
     #     print(model)
+    if 'dense' in model:
+        print(model)
 
 # dataset = ClassificationDataset(csv_path = '../input/data/train/train_info.csv', transform=None)
 # train_set, val_set, train_idx, val_idx = train_valid_split_by_sklearn(dataset, 0.8, 223)
@@ -49,3 +52,7 @@ for model in timm.list_models():
 # device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 # model2 = timm.create_model('vit_base_patch8_224_in21k', pretrained=True, num_classes=3).to(device)
 # print(summary(model2, (3, 224, 224)))
+
+model = timm.create_model('densenet121')#, num_classes=10)
+x = torch.randn(1, 3, 224, 224)
+print(model(x).shape)
