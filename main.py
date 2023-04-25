@@ -5,11 +5,9 @@ import wandb
 
 import torch
 import argparse
-import timm
 import logging
 
 from train import fit
-# from models import * # timm을 main.py에서 바로 사용하면 삭제
 from datasets import create_dataset, create_dataloader
 from log import setup_default_logging
 
@@ -53,14 +51,14 @@ def run(args):
     _logger.info('# of params: {}'.format(np.sum([p.numel() for p in model.parameters()])))
 
     # load dataset
-    trainset, testset = create_dataset(datadir=args.datadir, dataname=args.dataname, aug_list=args.aug_list) # create_dataset 변경 필요
+    trainset, testset = create_dataset(datadir=args.datadir, dataname=args.dataname, transform=args.transform) # create_dataset 변경 필요
     
     # load dataloader
     trainloader = create_dataloader(dataset=trainset, batch_size=args.batch_size, shuffle=True)
     testloader = create_dataloader(dataset=testset, batch_size=args.batch_size, shuffle=False)
 
     # set criterion
-    criterion = __import__('models.loss', fromlist='loss').__dict__[args.loss](**args.loss_param) # Loss 선택할 수 있도록 작성 필요
+    criterion = __import__('models.loss', fromlist='loss').__dict__[args.loss](**args.loss_param)
 
     # set optimizer
     optimizer = __import__('torch.optim', fromlist='optim').__dict__[args.opt_name](model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
@@ -75,10 +73,6 @@ def run(args):
     model, optimizer, trainloader, testloader, lr_scheduler = accelerator.prepare(
         model, optimizer, trainloader, testloader, lr_scheduler
     )
-
-    # load checkpoints
-    if args.ckpdir:
-        accelerator.load_state(args.ckpdir)
 
     # initialize wandb
     if args.use_wandb:
@@ -95,10 +89,8 @@ def run(args):
         optimizer    = optimizer, 
         lr_scheduler = lr_scheduler,
         accelerator  = accelerator,
-        epochs       = args.epochs, 
         savedir      = savedir,
-        log_interval = args.log_interval,
-        use_wandb    = args.use_wandb)
+        args         = args)
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description="Classification for Computer Vision")
