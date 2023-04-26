@@ -47,7 +47,7 @@ def outputToPred(outputs):
     #output -> 단일 클래스 pred로 변환
     return outputs.argmax(dim=1)
 
-def train(model, dataloader, criterion, optimizer, device: str, args) -> dict:   
+def train(model, dataloader, criterion, optimizer,log_interval, args) -> dict:   
     batch_time_m = AverageMeter()
     data_time_m = AverageMeter()
     acc_m = AverageMeter()
@@ -60,7 +60,7 @@ def train(model, dataloader, criterion, optimizer, device: str, args) -> dict:
     for idx, (inputs, targets) in enumerate(dataloader):
         data_time_m.update(time.time() - end)
         
-        inputs, targets = inputs.to(device), targets.to(device)
+        inputs, targets = inputs, targets
 
         # predict
         outputs = model(inputs)
@@ -80,7 +80,7 @@ def train(model, dataloader, criterion, optimizer, device: str, args) -> dict:
         
         batch_time_m.update(time.time() - end)
     
-        if idx % args.log_interval == 0 and idx != 0: 
+        if idx % log_interval == 0 and idx != 0: 
             _logger.info('TRAIN [{:>4d}/{}] Loss: {loss.val:>6.4f} ({loss.avg:>6.4f}) '
                         'Acc: {acc.avg:.3%} '
                         'LR: {lr:.3e} '
@@ -99,7 +99,7 @@ def train(model, dataloader, criterion, optimizer, device: str, args) -> dict:
         confusionmatrix = toConfusionMatrix(cm_m.pred, cm_m.label,args.num_classes)
     return OrderedDict([('acc',acc_m.avg), ('loss',losses_m.avg), ('cm',confusionmatrix)])
         
-def test(model, dataloader, criterion, device: str, args) -> dict:
+def test(model, dataloader, criterion,log_interval, args) -> dict:
     correct = 0
     total = 0
     total_loss = 0
@@ -107,7 +107,7 @@ def test(model, dataloader, criterion, device: str, args) -> dict:
     model.eval()
     with torch.no_grad():
         for idx, (inputs, targets) in enumerate(dataloader):
-            inputs, targets = inputs.to(device), targets.to(device)
+            inputs, targets = inputs, targets
             
             # predict
             outputs = model(inputs)
@@ -122,7 +122,7 @@ def test(model, dataloader, criterion, device: str, args) -> dict:
             correct += targets.eq(preds).sum().item()
             total += targets.size(0)
             
-            if idx % args.log_interval == 0 and idx != 0: 
+            if idx % log_interval == 0 and idx != 0: 
                 _logger.info('TEST [%d/%d]: Loss: %.3f | Acc: %.3f%% [%d/%d]' % 
                             (idx+1, len(dataloader), total_loss/(idx+1), 100.*correct/total, correct, total))
         confusionmatrix = toConfusionMatrix(cm_m.pred,cm_m.label)
@@ -130,15 +130,16 @@ def test(model, dataloader, criterion, device: str, args) -> dict:
                 
 def fit(
     model, trainloader, valloader, criterion, optimizer, lr_scheduler, accelerator,
-    savedir: str, device: str, args
+    savedir: str, args
 ) -> None:
 
     best_acc = 0
     step = 0
+    log_interval = 5
     for epoch in range(args.epochs):
         _logger.info(f'\nEpoch: {epoch+1}/{args.epochs}')
-        train_metrics = train(model, trainloader, criterion, optimizer, args.log_interval, device,args)
-        eval_metrics = test(model, valloader, criterion, args.log_interval, device,args)
+        train_metrics = train(model, trainloader, criterion, optimizer, log_interval, args)
+        eval_metrics = test(model, valloader, criterion, log_interval,args)
 
         # wandb
         # cm은 매번 저장되지 않도록 metric -> metric[:-1]로 수정
