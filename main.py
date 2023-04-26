@@ -54,11 +54,11 @@ def run(args):
 
     # load dataset
     trainset = CustomDataset(args = args, train = True)
-    testset = CustomDataset(args = args, train = False)
+    valset = CustomDataset(args = args, train = False)
     
     # load dataloader
     trainloader = create_dataloader(dataset=trainset, batch_size=args.batch_size, shuffle=True)
-    testloader = create_dataloader(dataset=testset, batch_size=args.batch_size, shuffle=False)
+    valloader = create_dataloader(dataset=valset, batch_size=args.batch_size, shuffle=False)
 
     # set criterion
     criterion = __import__('models.loss', fromlist='loss').__dict__[args.loss](**args.loss_param)
@@ -73,8 +73,8 @@ def run(args):
         lr_scheduler = None
 
     # prepraring accelerator
-    model, optimizer, trainloader, testloader, lr_scheduler = accelerator.prepare(
-        model, optimizer, trainloader, testloader, lr_scheduler
+    model, optimizer, trainloader, valloader, lr_scheduler = accelerator.prepare(
+        model, optimizer, trainloader, valloader, lr_scheduler
     )
 
     # initialize wandb
@@ -87,7 +87,7 @@ def run(args):
     # fitting model
     fit(model        = model, 
         trainloader  = trainloader, 
-        testloader   = testloader, 
+        valloader    = valloader, 
         criterion    = criterion, 
         optimizer    = optimizer, 
         lr_scheduler = lr_scheduler,
