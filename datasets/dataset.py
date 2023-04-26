@@ -1,6 +1,6 @@
 import os
 import torch
-from transform import get_transform
+from .transform import get_transform
 from torchvision import transforms 
 from torch.utils.data import DataLoader, Dataset
 import pandas as pd

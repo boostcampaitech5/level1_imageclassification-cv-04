@@ -129,7 +129,7 @@ def test(model, dataloader, criterion, device: str, args) -> dict:
     return OrderedDict([('acc',correct/total), ('loss',total_loss/len(dataloader)),('cm',confusionmatrix)])
                 
 def fit(
-    model, trainloader, testloader, criterion, optimizer, scheduler, 
+    model, trainloader, valloader, criterion, optimizer, lr_scheduler, accelerator,
     savedir: str, device: str, args
 ) -> None:
 
@@ -138,7 +138,7 @@ def fit(
     for epoch in range(args.epochs):
         _logger.info(f'\nEpoch: {epoch+1}/{args.epochs}')
         train_metrics = train(model, trainloader, criterion, optimizer, args.log_interval, device,args)
-        eval_metrics = test(model, testloader, criterion, args.log_interval, device,args)
+        eval_metrics = test(model, valloader, criterion, args.log_interval, device,args)
 
         # wandb
         # cm은 매번 저장되지 않도록 metric -> metric[:-1]로 수정
@@ -151,8 +151,8 @@ def fit(
         step += 1
 
         # step scheduler
-        if scheduler:
-            scheduler.step()
+        if lr_scheduler:
+            lr_scheduler.step()
 
         # checkpoint
         if best_acc < eval_metrics['acc']:

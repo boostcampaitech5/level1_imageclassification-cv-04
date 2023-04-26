@@ -23,13 +23,13 @@
     "loss": "crossentropy",
     "loss_param":
     {
-        "TBD": "TBD"
+        
     },
     "lr": 5e-6,
     "lr_scheduler":"ReduceLROnPlateau",
     "lr_scheduler_param":
     {
-        "TBD": "TBD"
+       
     },
     "weight_decay": 5e-4,
     "epochs": 100,

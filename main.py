@@ -61,14 +61,14 @@ def run(args):
     valloader = create_dataloader(dataset=valset, batch_size=args.batch_size, shuffle=False)
 
     # set criterion
-    criterion = __import__('models.loss', fromlist='loss').__dict__[args.loss](**args.loss_param)
+    criterion = __import__('losses.loss', fromlist='loss').__dict__[args.loss](**args.loss_param)
 
     # set optimizer
     optimizer = __import__('torch.optim', fromlist='optim').__dict__[args.opt_name](model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
     # scheduler
     if args.lr_scheduler:
-        lr_scheduler = __import__('torch.optim.lr_scheduler', fromlist='lr_scheduler').__dict__[args.lr_scheduler](optimizer, **args.lr_sheduler_param)
+        lr_scheduler = __import__('torch.optim.lr_scheduler', fromlist='lr_scheduler').__dict__[args.lr_scheduler](optimizer, **args.lr_scheduler_param)
     else:
         lr_scheduler = None
 
