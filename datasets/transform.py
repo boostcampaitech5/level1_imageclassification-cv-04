@@ -41,32 +41,3 @@ def get_transform(transform_list:list):
     transform = transforms.Compose(list_)
 
     return transform, config
-    
-
-class CustomTransform():
-    def __init__(self):
-        super(CustomTransform, self).__init__()
-        pass
-
-
-    def __call__(self, tensor):
-        pass
-
-
-    def __repr__(self):
-        pass
-
-
-if __name__ == '__main__':
-    args_dict = {'transform_path' : './transform_list.json',
-                 'transform_list' : ['resize', 'totensor', 'normalize', 'centercrop',
-                                     'colorjitter', 'randomhorizontalflip', 'randomrotation', 
-                                     'gaussianblur', 'randomaffine']}
-    
-    from collections import namedtuple
-    Args = namedtuple('Args', args_dict.keys())
-    args = Args(**args_dict)
-
-    transform, config = get_transform(args)
-    print(transform)
-    print(config)
