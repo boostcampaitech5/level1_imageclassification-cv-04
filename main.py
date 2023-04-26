@@ -10,6 +10,7 @@ import json
 
 from train import fit
 from datasets import create_dataset, create_dataloader
+from datasets.dataset import CustomDataset
 from log import setup_default_logging
 
 from accelerate import Accelerator
@@ -52,7 +53,8 @@ def run(args):
     _logger.info('# of params: {}'.format(np.sum([p.numel() for p in model.parameters()])))
 
     # load dataset
-    trainset, testset = create_dataset(datadir=args.datadir, dataname=args.dataname, transform=args.transform) # create_dataset 변경 필요
+    trainset = CustomDataset(args = args, train = True)
+    testset = CustomDataset(args = args, train = False)
     
     # load dataloader
     trainloader = create_dataloader(dataset=trainset, batch_size=args.batch_size, shuffle=True)
