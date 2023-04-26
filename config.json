@@ -3,7 +3,7 @@
     "use_cm": true,
     "entity":"connect-cv-04",
     "project_name": "Image_classification_mask",
-    "exp_name": "my_test",
+    "exp_name": "my_exp",
     "exp_num": 0,
     "user_name": "my_name",
     "datadir": "../input",
