@@ -6,7 +6,7 @@ import json
 import torch
 from collections import OrderedDict
 import numpy as np
-from sklearn.metrics import confusion_matrix
+from utils.train_util import plot_confusion_matrix,toConfusionMatrix
 _logger = logging.getLogger('train')
 
 class AverageMeter:
@@ -33,6 +33,8 @@ class cmMetter:
         self.pred = None
         self.label = None
     def update(self,pred,label):
+        if self.pred.shape(-1) != 0:
+            raise TypeError('Model\'s pred shape is not match with data label')
         if type(self.pred) != np.ndarray:
             self.pred = pred.cpu().detach().numpy().reshape(-1)
             self.label = label
@@ -40,11 +42,7 @@ class cmMetter:
             self.pred = np.concatenate((self.pred,pred.cpu().detach().numpy().reshape(-1)))
             self.label = np.concatenate((self.label, label.cpu().detach().numpy()))
 
-def toConfusionMatrix(y_pred, y_label, num_classes:int) -> np.ndarray:
-    
-    cm = confusion_matrix(y_label,y_pred, labels = np.arange(num_classes).tolist())
-    #cm[y_pred][y_gt]
-    return cm
+
 def outputToPred(outputs):
     #output -> 단일 클래스 pred로 변환
     return outputs.argmax(dim=1)
@@ -176,33 +174,7 @@ def fit(
                 
     _logger.info('Best Metric: {0:.3%} (epoch {1:})'.format(state['best_acc'], state['best_epoch']))
 
-#임시로 여기 작성
-import matplotlib as plt
-import seaborn as sns
-def plot_confusion_matrix(cm, num_classes, normalize=False, save_path=None):
 
-    plt.clf()
-    if normalize:
-        n_total = torch.sum(cm, 1).view(num_classes, 1)
-        np_cm = cm / n_total
-        np_cm = np_cm.numpy()
-        ax = sns.heatmap(np_cm, annot=True, cmap='Blues', linewidth=.5,
-                        fmt=".2f", annot_kws = {'size' : 6})
-    else:
-        np_cm = cm.numpy()
-        ax = sns.heatmap(np_cm, annot=True, cmap='Blues', linewidth=.5,
-                        fmt="d", annot_kws = {'size' : 6})
-
-    ax.set_xlabel('Predicted Values')
-    ax.set_ylabel('Actual Values')
-    ax.xaxis.set_ticklabels([i for i in range(num_classes)])
-    ax.xaxis.tick_top()
-    ax.yaxis.set_ticklabels([i for i in range(num_classes)])
-    plt.tight_layout()
-    if save_path:
-        plt.savefig(save_path)
-    
-    return ax
 
 
 #test후 삭제
