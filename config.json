@@ -1,9 +1,9 @@
 {
-    "use_wandb": true,
-    "use_cm": true,
+    "use_wandb": false,
+    "use_cm": false,
     "entity":"connect-cv-04",
     "project_name": "Image_classification_mask",
-    "exp_name": "my_exp",
+    "exp_name": "my_test",
     "exp_num": 0,
     "user_name": "my_name",
     "datadir": "../input",
