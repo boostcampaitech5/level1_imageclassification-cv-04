@@ -26,6 +26,7 @@ class AverageMeter:
         self.count += n
         self.avg = self.sum / self.count
 class cmMetter:
+    #1epoch까지의 결과 저장
     def __init__(self):
         self.reset()
     def reset(self):
@@ -44,9 +45,9 @@ def toConfusionMatrix(y_pred, y_label, num_classes:int) -> np.ndarray:
     cm = confusion_matrix(y_label,y_pred, labels = np.arange(num_classes).tolist())
     #cm[y_pred][y_gt]
     return cm
-def predToClass(pred):
-    #pred가 단일 클래스 추측이 아닐경우
-    return pred
+def outputToPred(outputs):
+    #output -> 단일 클래스 pred로 변환
+    return outputs.argmax(dim=1)
 
 def train(model, dataloader, criterion, optimizer, device: str, args) -> dict:   
     batch_time_m = AverageMeter()
@@ -75,7 +76,7 @@ def train(model, dataloader, criterion, optimizer, device: str, args) -> dict:
         losses_m.update(loss.item())
 
         # accuracy
-        preds = outputs.argmax(dim=1) 
+        preds = outputToPred(outputs)
         cm_m.update(preds, targets)
         acc_m.update(targets.eq(preds).sum().item()/targets.size(0), n=targets.size(0))
         
@@ -118,7 +119,7 @@ def test(model, dataloader, criterion, device: str, args) -> dict:
             
             # total loss and acc
             total_loss += loss.item()
-            preds = outputs.argmax(dim=1)
+            preds = outputToPred(outputs)
             cm_m.update(preds,targets)
             correct += targets.eq(preds).sum().item()
             total += targets.size(0)
@@ -139,14 +140,15 @@ def fit(
     for epoch in range(args.epochs):
         _logger.info(f'\nEpoch: {epoch+1}/{args.epochs}')
         train_metrics = train(model, trainloader, criterion, optimizer, args.log_interval, device,args)
-        eval_metrics = test(model, testloader, criterion, args.log_interval, device)
+        eval_metrics = test(model, testloader, criterion, args.log_interval, device,args)
 
         # wandb
+        # cm은 매번 저장되지 않도록 metric -> metric[:-1]로 수정
         metrics = OrderedDict(lr=optimizer.param_groups[0]['lr'])
-        metrics.update([('train_' + k, v) for k, v in train_metrics.items()])
-        metrics.update([('eval_' + k, v) for k, v in eval_metrics.items()])
+        metrics.update([('train_' + k, v) for k, v in train_metrics[:-1].items()])
+        metrics.update([('eval_' + k, v) for k, v in eval_metrics[:-1].items()])
         if args.use_wandb:
-            wandb.log(metrics, step=step)
+            wandb.log(metrics, step=epoch)
 
         step += 1
 
@@ -166,13 +168,12 @@ def fit(
             _logger.info('Best Accuracy {0:.3%} to {1:.3%}'.format(best_acc, eval_metrics['acc']))
 
             best_acc = eval_metrics['acc']
-
             #save confusion_matrix
             if args.use_cm:
                 fig = plot_confusion_matrix(eval_metrics['cm'],args.num_classes)
-                if args.user_wandb:
+                if args.use_wandb:
                     wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")},step=epoch)
-
+                
     _logger.info('Best Metric: {0:.3%} (epoch {1:})'.format(state['best_acc'], state['best_epoch']))
 
 #임시로 여기 작성
@@ -204,7 +205,7 @@ def plot_confusion_matrix(cm, num_classes, normalize=False, save_path=None):
     return ax
 
 
-
+#test후 삭제
 if __name__ == '__main__':
     batch_time_m = AverageMeter()
     data_time_m = AverageMeter()
