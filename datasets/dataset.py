@@ -101,5 +101,5 @@ if __name__ == '__main__':
     
     images, labels = next(iter(data_iter))
     
-    print(images,labels)
+    print(images.shape)
     print(len(data_iter))

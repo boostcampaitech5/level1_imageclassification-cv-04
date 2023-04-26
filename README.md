@@ -121,37 +121,34 @@ bash run.sh CIFAR10 10
 |Argument|Description|Default|Possible value|
 |---|---|---|---|
 |use_wandb|Wandb 사용 여부|True|True,False|
+|use_cm|Confusion metrix 사용 여부|True|True,False|
 |entity|Wandb 엔티티 명|"connect-cv-04"|---|
 |project_name|Wandb 프로젝트 명|"Image_classification_mask"|---|
 |exp_name|실험명|"exp"|---|
 |exp_num|실험 번호|0|---|
-|user_name|실험자|"NAME"|"KDH","KJY","HJH","KDK"|
-|use_cm|Confusion metrix 사용 여부|True|True,False|
+|user_name|실험자|"my_name"|"KDH","KJY","HJH","KDK"|
 
 ### 실험 관련 설정
 |Argument|Description|Default|Possible value|
 |---|---|---|---|
-|seed|Random seed|223|---|
-|batch_size|Batch size|32|---|
 |datadir|input 경로|'../input|---|
+|train_file|train csv 이름|"train.csv"|---|
+|valid_file|valid csv 이름|"valid.csv"|---|
 |transform|Transform 목록|['resize','randomrotation', 'totensor', 'normalize']|---|
+|seed|Random seed|223|---|
 |model_name|Model_names|“CustomModel”|---|
 |model_param|Model_names|{pretrained : True, backbone : "resnet18"}|---|
 |num_classes|Class 개수|18|---|
+|batch_size|Batch size|32|---|
 |opt_name|Optimizer|"Adam"|"Adam"|
 |loss|loss 종류|"crossentropy"|"crossentropy","focalloss","f1loss","bceloss","mseloss"|
 |loss_param|loss parm|"미정"|---|
-|epochs|epoch|100|---|
 |lr|learning rate|5e-6|---|
 |lr_sheduler|"Learning rate scheduler|"StepLR"|"StepLR","ReduceLROnPlateau"|
 |lr_sheduler_param|Lr scheduler parameter|"미정"|---|
 |weight_decay|Weight Decay|5e-4|---|
+|epochs|epoch|100|---|
+|savedir|모델 저장 위치|"./checkpoint"|---|
 |grad_accum_steps|---|1|---|
 |mixed_precision|---|"fp16"|---|
-
-### 모델 저장 관련 설정
-|Argument|Description|Default|Possible value|
-|---|---|---|---|
-|savedir|모델 저장 위치|"./checkpoint"|---|
-|ckpdir|모델 저장 위치|"미정"|---|
 |patience|Early Stopping|100|---|
