@@ -103,7 +103,7 @@ def train(model,accelerator, dataloader, criterion, optimizer,log_interval, args
                                                                                   data_time  = data_time_m))
    
         end = time.time()
-        confusionmatrix = toConfusionMatrix(cm_m.pred, cm_m.label,args.num_classes)
+    confusionmatrix = toConfusionMatrix(cm_m.pred, cm_m.label,args.num_classes)
 
     return OrderedDict([('acc',acc_m.avg), ('loss',losses_m.avg), ('cm',confusionmatrix)])
     
