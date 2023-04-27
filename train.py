@@ -99,12 +99,12 @@ def train(model, dataloader, criterion, optimizer,log_interval, args) -> dict:
         confusionmatrix = toConfusionMatrix(cm_m.pred, cm_m.label,args.num_classes)
     return OrderedDict([('acc',acc_m.avg), ('loss',losses_m.avg), ('cm',confusionmatrix)])
         
-def test(model, dataloader, criterion,log_interval, args) -> dict:
+def val(model, dataloader, criterion,log_interval, args) -> dict:
     correct = 0
     total = 0
     total_loss = 0
     cm_m = cmMetter()
-    model.eval()
+    model.val()
     with torch.no_grad():
         for idx, (inputs, targets) in enumerate(dataloader):
             inputs, targets = inputs, targets
@@ -123,7 +123,7 @@ def test(model, dataloader, criterion,log_interval, args) -> dict:
             total += targets.size(0)
             
             if idx % log_interval == 0 and idx != 0: 
-                _logger.info('TEST [%d/%d]: Loss: %.3f | Acc: %.3f%% [%d/%d]' % 
+                _logger.info('VAL [%d/%d]: Loss: %.3f | Acc: %.3f%% [%d/%d]' % 
                             (idx+1, len(dataloader), total_loss/(idx+1), 100.*correct/total, correct, total))
         confusionmatrix = toConfusionMatrix(cm_m.pred,cm_m.label)
     return OrderedDict([('acc',correct/total), ('loss',total_loss/len(dataloader)),('cm',confusionmatrix)])
@@ -139,13 +139,13 @@ def fit(
     for epoch in range(args.epochs):
         _logger.info(f'\nEpoch: {epoch+1}/{args.epochs}')
         train_metrics = train(model, trainloader, criterion, optimizer, log_interval, args)
-        eval_metrics = test(model, valloader, criterion, log_interval,args)
+        val_metrics = val(model, valloader, criterion, log_interval,args)
 
         # wandb
         # cm은 매번 저장되지 않도록 metric -> metric[:-1]로 수정
         metrics = OrderedDict(lr=optimizer.param_groups[0]['lr'])
         metrics.update([('train_' + k, v) for k, v in train_metrics[:-1].items()])
-        metrics.update([('eval_' + k, v) for k, v in eval_metrics[:-1].items()])
+        metrics.update([('val_' + k, v) for k, v in val_metrics[:-1].items()])
         if args.use_wandb:
             wandb.log(metrics, step=epoch)
 
@@ -156,61 +156,23 @@ def fit(
             lr_scheduler.step()
 
         # checkpoint
-        if best_acc < eval_metrics['acc']:
+        if best_acc < val_metrics['acc']:
             # save results
-            state = {'best_epoch':epoch, 'best_acc':eval_metrics['acc']}
+            state = {'best_epoch':epoch, 'best_acc':val_metrics['acc']}
             json.dump(state, open(os.path.join(savedir, f'best_results.json'),'w'), indent=4)
 
             # save model
             torch.save(model.state_dict(), os.path.join(savedir, f'best_model.pt'))
             
-            _logger.info('Best Accuracy {0:.3%} to {1:.3%}'.format(best_acc, eval_metrics['acc']))
+            _logger.info('Best Accuracy {0:.3%} to {1:.3%}'.format(best_acc, val_metrics['acc']))
 
-            best_acc = eval_metrics['acc']
+            best_acc = val_metrics['acc']
             #save confusion_matrix
             if args.use_cm:
-                fig = plot_confusion_matrix(eval_metrics['cm'],args.num_classes)
+                fig = plot_confusion_matrix(val_metrics['cm'],args.num_classes)
                 if args.use_wandb:
                     wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")},step=epoch)
                 
     _logger.info('Best Metric: {0:.3%} (epoch {1:})'.format(state['best_acc'], state['best_epoch']))
-
-
-
-
-#test후 삭제
-if __name__ == '__main__':
-    batch_time_m = AverageMeter()
-    data_time_m = AverageMeter()
-    acc_m = AverageMeter()
-    losses_m = AverageMeter()
-    cm_m = cmMetter()
-    end = time.time()
-    class testClass():
-        def __init__(self):
-            super().__init__()
-        def __len__(self):
-            return 3
-        def __getitem__(self,idx):
-            pred = torch.Tensor([[1],[2],[3]])
-            label=torch.Tensor([1,2,4])
-            return pred,label
-    testset = testClass()
-    for idx, (inputs, targets) in enumerate(testset):
-
-        data_time_m.update(time.time() - end)
-        # predict
-        preds = targets
-        # accuracy
-        cm_m.update(inputs, targets)
-        acc_m.update(targets.eq(preds).sum().item()/targets.size(0), n=targets.size(0))
-        batch_time_m.update(time.time() - end) 
-        end = time.time()
-        if idx==2:
-            break
-    print(cm_m.pred)
-    print(cm_m.label)
-    confusion_matrix = toConfusionMatrix(cm_m.pred, cm_m.label,5)
-    print(confusion_matrix)
 
 
