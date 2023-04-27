@@ -1,7 +1,6 @@
 import os
 import torch
 from .transform import get_transform
-from torchvision import transforms 
 from torch.utils.data import DataLoader, Dataset
 import pandas as pd
 import multiprocessing
@@ -51,6 +50,7 @@ class CustomDataset(Dataset):
                 img = transform(img)
     
         return img, torch.LongTensor([label]).squeeze()
+
 
 def create_dataloader(dataset, batch_size: int = 4, shuffle: bool = False):
 

@@ -7,7 +7,6 @@ import numpy as np
 
 
 def plot_confusion_matrix(cm, num_classes, normalize=False, save_path=None):
-
     plt.clf()
     if normalize:
         n_total = torch.sum(cm, 1).view(num_classes, 1)
@@ -31,8 +30,9 @@ def plot_confusion_matrix(cm, num_classes, normalize=False, save_path=None):
     
     return ax
 
+
 def toConfusionMatrix(y_pred, y_label, num_classes:int) -> np.ndarray:
-    
-    cm = confusion_matrix(y_label,y_pred, labels = np.arange(num_classes).tolist())
     #cm[y_pred][y_gt]
+    cm = confusion_matrix(y_label, y_pred, labels = np.arange(num_classes).tolist())
+
     return cm

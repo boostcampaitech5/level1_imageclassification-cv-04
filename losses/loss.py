@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class FocalLoss(nn.Module):
     def __init__(self, gamma=2, alpha=0.25, size_average=True, device='cpu'):
         super(FocalLoss, self).__init__()
@@ -28,6 +29,7 @@ class FocalLoss(nn.Module):
 
         return 
     
+    
 class F1Loss(nn.Module):
     def __init__(self, classes=3, epsilon=1e-7):
         super().__init__()
@@ -52,21 +54,26 @@ class F1Loss(nn.Module):
         f1 = f1.clamp(min=self.epsilon, max=1 - self.epsilon)
         return 1 - f1.mean()
     
+
 def crossentropy():
     criterion = nn.CrossEntropyLoss()
     return criterion
+
 
 def bceloss():
     criterion = nn.BCELoss()
     return criterion
 
+
 def mseloss():
     criterion = nn.MSELoss()
     return criterion
 
+
 def f1loss(classes=3, epsilon=1e-7):
     criterion = F1Loss(classes=classes, epsilon=epsilon)
     return criterion
+
 
 def focalloss(gamma=2,alpha=0.25,device='cpu'):
     criterion = FocalLoss(gamma=gamma, alpha=alpha, device=device)

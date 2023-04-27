@@ -7,12 +7,15 @@ import torch
 from collections import OrderedDict
 import numpy as np
 from utils.util import plot_confusion_matrix,toConfusionMatrix
+
 _logger = logging.getLogger('train')
+
 
 class AverageMeter:
     """Computes and stores the average and current value"""
     def __init__(self):
         self.reset()
+
 
     def reset(self):
         self.val = 0
@@ -20,18 +23,25 @@ class AverageMeter:
         self.sum = 0
         self.count = 0
 
+
     def update(self, val, n=1):
         self.val = val
         self.sum += val * n
         self.count += n
         self.avg = self.sum / self.count
+
+
 class cmMetter:
     #1epoch까지의 결과 저장
     def __init__(self):
         self.reset()
+
+
     def reset(self):
         self.pred = None
         self.label = None
+
+
     def update(self,pred,label):
         if self.pred.shape(-1) != 0:
             raise TypeError('Model\'s pred shape is not match with data label')
@@ -46,6 +56,7 @@ class cmMetter:
 def outputToPred(outputs):
     #output -> 단일 클래스 pred로 변환
     return outputs.argmax(dim=1)
+
 
 def train(model, dataloader, criterion, optimizer,log_interval, args) -> dict:   
     batch_time_m = AverageMeter()
@@ -65,6 +76,7 @@ def train(model, dataloader, criterion, optimizer,log_interval, args) -> dict:
         # predict
         outputs = model(inputs)
 
+        # get loss & loss backward
         loss = criterion(outputs, targets)    
         loss.backward()
 
@@ -82,23 +94,24 @@ def train(model, dataloader, criterion, optimizer,log_interval, args) -> dict:
     
         if idx % log_interval == 0 and idx != 0: 
             _logger.info('TRAIN [{:>4d}/{}] Loss: {loss.val:>6.4f} ({loss.avg:>6.4f}) '
-                        'Acc: {acc.avg:.3%} '
-                        'LR: {lr:.3e} '
-                        'Time: {batch_time.val:.3f}s, {rate:>7.2f}/s ({batch_time.avg:.3f}s, {rate_avg:>7.2f}/s) '
-                        'Data: {data_time.val:.3f} ({data_time.avg:.3f})'.format(
-                        idx+1, len(dataloader), 
-                        loss       = losses_m, 
-                        acc        = acc_m, 
-                        lr         = optimizer.param_groups[0]['lr'],
-                        batch_time = batch_time_m,
-                        rate       = inputs.size(0) / batch_time_m.val,
-                        rate_avg   = inputs.size(0) / batch_time_m.avg,
-                        data_time  = data_time_m))
+                         'Acc: {acc.avg:.3%} '
+                         'LR: {lr:.3e} '
+                         'Time: {batch_time.val:.3f}s, {rate:>7.2f}/s ({batch_time.avg:.3f}s, {rate_avg:>7.2f}/s) '
+                         'Data: {data_time.val:.3f} ({data_time.avg:.3f})'.format(idx+1, len(dataloader), 
+                                                                                  loss       = losses_m, 
+                                                                                  acc        = acc_m, 
+                                                                                  lr         = optimizer.param_groups[0]['lr'],
+                                                                                  batch_time = batch_time_m,
+                                                                                  rate       = inputs.size(0) / batch_time_m.val,
+                                                                                  rate_avg   = inputs.size(0) / batch_time_m.avg,
+                                                                                  data_time  = data_time_m))
    
         end = time.time()
         confusionmatrix = toConfusionMatrix(cm_m.pred, cm_m.label,args.num_classes)
+
     return OrderedDict([('acc',acc_m.avg), ('loss',losses_m.avg), ('cm',confusionmatrix)])
-        
+    
+
 def val(model, dataloader, criterion,log_interval, args) -> dict:
     correct = 0
     total = 0
@@ -112,7 +125,7 @@ def val(model, dataloader, criterion,log_interval, args) -> dict:
             # predict
             outputs = model(inputs)
             
-            # loss 
+            # get loss 
             loss = criterion(outputs, targets)
             
             # total loss and acc
@@ -126,8 +139,10 @@ def val(model, dataloader, criterion,log_interval, args) -> dict:
                 _logger.info('VAL [%d/%d]: Loss: %.3f | Acc: %.3f%% [%d/%d]' % 
                             (idx+1, len(dataloader), total_loss/(idx+1), 100.*correct/total, correct, total))
         confusionmatrix = toConfusionMatrix(cm_m.pred,cm_m.label)
+
     return OrderedDict([('acc',correct/total), ('loss',total_loss/len(dataloader)),('cm',confusionmatrix)])
-                
+
+
 def fit(
     model, trainloader, valloader, criterion, optimizer, lr_scheduler, accelerator,
     savedir: str, args

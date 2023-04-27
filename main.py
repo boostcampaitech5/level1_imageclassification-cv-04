@@ -17,6 +17,7 @@ from accelerate import Accelerator
 
 _logger = logging.getLogger('train')
 
+
 def torch_seed(random_seed):
     torch.manual_seed(random_seed)
     torch.cuda.manual_seed(random_seed)
@@ -94,6 +95,7 @@ def run(args):
         accelerator  = accelerator,
         savedir      = savedir,
         args         = args)
+
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description="Classification for Computer Vision")

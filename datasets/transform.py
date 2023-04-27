@@ -1,6 +1,6 @@
-import torchvision
 from torchvision import transforms
 import json
+
 
 #transform_list.json 으로부터 읽어와 필요한 transform 만 Compose 에 추가    
 def get_transform(transform_list:list):
