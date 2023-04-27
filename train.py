@@ -56,7 +56,7 @@ def outputToPred(outputs):
     return outputs.argmax(dim=1)
 
 
-def train(model, dataloader, criterion, optimizer,log_interval, args) -> dict:   
+def train(model,accelerator, dataloader, criterion, optimizer,log_interval, args) -> dict:   
     batch_time_m = AverageMeter()
     data_time_m = AverageMeter()
     acc_m = AverageMeter()
@@ -75,7 +75,7 @@ def train(model, dataloader, criterion, optimizer,log_interval, args) -> dict:
         outputs = model(inputs)
         # get loss & loss backward
         loss = criterion(outputs, targets)    
-        loss.backward()
+        accelerator.backward(loss)
         # loss update
         optimizer.step()
         optimizer.zero_grad()
@@ -149,7 +149,7 @@ def fit(
     log_interval = 5
     for epoch in range(args.epochs):
         _logger.info(f'\nEpoch: {epoch+1}/{args.epochs}')
-        train_metrics = train(model, trainloader, criterion, optimizer, log_interval, args)
+        train_metrics = train(model,accelerator, trainloader, criterion, optimizer, log_interval, args)
         val_metrics = val(model, valloader, criterion, log_interval,args)
 
         # wandb
