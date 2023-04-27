@@ -6,7 +6,7 @@ import json
 import torch
 from collections import OrderedDict
 import numpy as np
-from utils.train_util import plot_confusion_matrix,toConfusionMatrix
+from utils.util import plot_confusion_matrix,toConfusionMatrix
 _logger = logging.getLogger('train')
 
 class AverageMeter:
