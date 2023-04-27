@@ -79,27 +79,3 @@ def create_dataloader(dataset, batch_size: int = 4, shuffle: bool = False):
         num_workers = multiprocessing.cpu_count() // 2
     )
     
-if __name__ == '__main__':
-    import json
-    import argparse
-    
-    parser = argparse.ArgumentParser(description="Classification for Computer Vision")
-    with open('config.json') as f:
-        config = json.load(f)
-
-    for key in config:
-        parser_key = key.replace('_', '-')
-        parser.add_argument(f'--{parser_key}', default=config[key], type=type(config[key]))
-
-    args = parser.parse_args()
-    
-
-    dataset = CustomDataset(args =args,train=True)
-    data_iter = DataLoader(dataset,
-                           batch_size=1,
-                           shuffle = True)
-    
-    images, labels = next(iter(data_iter))
-    
-    print(images.shape)
-    print(len(data_iter))
