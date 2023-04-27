@@ -67,42 +67,43 @@ def train(model,accelerator, dataloader, criterion, optimizer,log_interval, args
     model.train()
     optimizer.zero_grad()
     for idx, (inputs, targets) in enumerate(dataloader):
-        data_time_m.update(time.time() - end)
-        
-        inputs, targets = inputs, targets
+        with accelerator.accumulate(model):
+            data_time_m.update(time.time() - end)
+            
+            inputs, targets = inputs, targets
 
-        # predict
-        outputs = model(inputs)
-        # get loss & loss backward
-        loss = criterion(outputs, targets)    
-        accelerator.backward(loss)
-        # loss update
-        optimizer.step()
-        optimizer.zero_grad()
-        losses_m.update(loss.item())
+            # predict
+            outputs = model(inputs)
+            # get loss & loss backward
+            loss = criterion(outputs, targets)    
+            accelerator.backward(loss)
+            # loss update
+            optimizer.step()
+            optimizer.zero_grad()
+            losses_m.update(loss.item())
 
-        # accuracy
-        preds = outputToPred(outputs)
-        cm_m.update(preds, targets)
-        acc_m.update(targets.eq(preds).sum().item()/targets.size(0), n=targets.size(0))
+            # accuracy
+            preds = outputToPred(outputs)
+            cm_m.update(preds, targets)
+            acc_m.update(targets.eq(preds).sum().item()/targets.size(0), n=targets.size(0))
+            
+            batch_time_m.update(time.time() - end)
         
-        batch_time_m.update(time.time() - end)
+            if idx % log_interval == 0 and idx != 0: 
+                _logger.info('TRAIN [{:>4d}/{}] Loss: {loss.val:>6.4f} ({loss.avg:>6.4f}) '
+                            'Acc: {acc.avg:.3%} '
+                            'LR: {lr:.3e} '
+                            'Time: {batch_time.val:.3f}s, {rate:>7.2f}/s ({batch_time.avg:.3f}s, {rate_avg:>7.2f}/s) '
+                            'Data: {data_time.val:.3f} ({data_time.avg:.3f})'.format(idx+1, len(dataloader), 
+                                                                                    loss       = losses_m, 
+                                                                                    acc        = acc_m, 
+                                                                                    lr         = optimizer.param_groups[0]['lr'],
+                                                                                    batch_time = batch_time_m,
+                                                                                    rate       = inputs.size(0) / batch_time_m.val,
+                                                                                    rate_avg   = inputs.size(0) / batch_time_m.avg,
+                                                                                    data_time  = data_time_m))
     
-        if idx % log_interval == 0 and idx != 0: 
-            _logger.info('TRAIN [{:>4d}/{}] Loss: {loss.val:>6.4f} ({loss.avg:>6.4f}) '
-                         'Acc: {acc.avg:.3%} '
-                         'LR: {lr:.3e} '
-                         'Time: {batch_time.val:.3f}s, {rate:>7.2f}/s ({batch_time.avg:.3f}s, {rate_avg:>7.2f}/s) '
-                         'Data: {data_time.val:.3f} ({data_time.avg:.3f})'.format(idx+1, len(dataloader), 
-                                                                                  loss       = losses_m, 
-                                                                                  acc        = acc_m, 
-                                                                                  lr         = optimizer.param_groups[0]['lr'],
-                                                                                  batch_time = batch_time_m,
-                                                                                  rate       = inputs.size(0) / batch_time_m.val,
-                                                                                  rate_avg   = inputs.size(0) / batch_time_m.avg,
-                                                                                  data_time  = data_time_m))
-   
-        end = time.time()
+            end = time.time()
 
     confusionmatrix = toConfusionMatrix(cm_m.pred, cm_m.label,args.num_classes)
 
