@@ -152,3 +152,23 @@ bash run.sh CIFAR10 10
 |grad_accum_steps|---|1|---|
 |mixed_precision|---|"fp16"|---|
 |patience|Early Stopping|100|---|
+
+
+# Contributors ✨
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tr>
+    <td align="center"><a href="https://github.com/eogml88"><img src="https://avatars.githubusercontent.com/u/6427695?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Sung Yun Byeon</b></sub></a><br /><a href="#projectManagement-zzsza" title="Project Management">📆</a> <a href="#maintenance-zzsza" title="Maintenance">🚧</a> <a href="https://github.com/zzsza/Boostcamp-AI-Tech-Product-Serving/commits?author=zzsza" title="Code">💻</a> <a href="https://github.com/zzsza/Boostcamp-AI-Tech-Product-Serving/commits?author=zzsza" title="Documentation">📖</a></td>
+    <td align="center"><a href="https://github.com/zionia4758"><img src="https://avatars.githubusercontent.com/u/18324313?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Jungwon Seo</b></sub></a><br /><a href="https://github.com/zzsza/Boostcamp-AI-Tech-Product-Serving/commits?author=thejungwon" title="Code">💻</a> <a href="#content-thejungwon" title="Content">🖋</a> <a href="https://github.com/zzsza/Boostcamp-AI-Tech-Product-Serving/commits?author=thejungwon" title="Documentation">📖</a> <a href="#example-thejungwon" title="Examples">💡</a></td>
+    <td align="center"><a href="https://github.com/jjjuuuun"><img src="https://avatars.githubusercontent.com/u/86290308?v=4?s=100" width="100px;" alt=""/><br /><sub><b>humphrey</b></sub></a><br /><a href="https://github.com/zzsza/Boostcamp-AI-Tech-Product-Serving/commits?author=ahnsv" title="Code">💻</a> <a href="#content-ahnsv" title="Content">🖋</a> <a href="https://github.com/zzsza/Boostcamp-AI-Tech-Product-Serving/commits?author=ahnsv" title="Documentation">📖</a> <a href="#example-ahnsv" title="Examples">💡</a></td>
+    <td align="center"><a href="https://github.com/jh58power"><img src="https://avatars.githubusercontent.com/u/48081459?v=4?s=100" width="100px;" alt=""/><br /><sub><b>heumsi</b></sub></a><br /><a href="https://github.com/zzsza/Boostcamp-AI-Tech-Product-Serving/commits?author=heumsi" title="Code">💻</a> <a href="#content-heumsi" title="Content">🖋</a> <a href="https://github.com/zzsza/Boostcamp-AI-Tech-Product-Serving/commits?author=heumsi" title="Documentation">📖</a> <a href="#example-heumsi" title="Examples">💡</a></td>
+  </tr>
+</table>
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
