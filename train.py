@@ -43,11 +43,9 @@ class cmMetter:
 
 
     def update(self,pred,label):
-        if self.pred.shape(-1) != 0:
-            raise TypeError('Model\'s pred shape is not match with data label')
         if type(self.pred) != np.ndarray:
             self.pred = pred.cpu().detach().numpy().reshape(-1)
-            self.label = label
+            self.label = label.cpu().detach().numpy()
         else:
             self.pred = np.concatenate((self.pred,pred.cpu().detach().numpy().reshape(-1)))
             self.label = np.concatenate((self.label, label.cpu().detach().numpy()))
@@ -75,13 +73,11 @@ def train(model, dataloader, criterion, optimizer,log_interval, args) -> dict:
 
         # predict
         outputs = model(inputs)
-
         # get loss & loss backward
         loss = criterion(outputs, targets)    
         loss.backward()
-
         # loss update
-        optimizer.step()
+        #optimizer.step()
         optimizer.zero_grad()
         losses_m.update(loss.item())
 
@@ -108,7 +104,7 @@ def train(model, dataloader, criterion, optimizer,log_interval, args) -> dict:
    
         end = time.time()
         confusionmatrix = toConfusionMatrix(cm_m.pred, cm_m.label,args.num_classes)
-
+        break
     return OrderedDict([('acc',acc_m.avg), ('loss',losses_m.avg), ('cm',confusionmatrix)])
     
 
@@ -117,7 +113,7 @@ def val(model, dataloader, criterion,log_interval, args) -> dict:
     total = 0
     total_loss = 0
     cm_m = cmMetter()
-    model.val()
+    model.eval()
     with torch.no_grad():
         for idx, (inputs, targets) in enumerate(dataloader):
             inputs, targets = inputs, targets
