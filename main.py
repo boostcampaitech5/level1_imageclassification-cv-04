@@ -9,7 +9,7 @@ import logging
 import json
 
 from train import fit
-from datasets import create_dataset, create_dataloader
+from datasets import create_dataloader
 from datasets.dataset import CustomDataset
 from log import setup_default_logging
 

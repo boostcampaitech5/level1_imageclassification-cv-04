@@ -1,5 +1,5 @@
 """
-backbone.py is a file that you use when you load a pre-trained model and use it as it is, or change it.
+model.py is a file that you use when you load a pre-trained model and use it as it is, or change it.
 """
 
 import torch.nn as nn
