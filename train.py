@@ -103,6 +103,7 @@ def train(model,accelerator, dataloader, criterion, optimizer,log_interval, args
                                                                                   data_time  = data_time_m))
    
         end = time.time()
+
     confusionmatrix = toConfusionMatrix(cm_m.pred, cm_m.label,args.num_classes)
 
     return OrderedDict([('acc',acc_m.avg), ('loss',losses_m.avg), ('cm',confusionmatrix)])
@@ -134,7 +135,8 @@ def val(model, dataloader, criterion,log_interval, args) -> dict:
             if idx % log_interval == 0 and idx != 0: 
                 _logger.info('VAL [%d/%d]: Loss: %.3f | Acc: %.3f%% [%d/%d]' % 
                             (idx+1, len(dataloader), total_loss/(idx+1), 100.*correct/total, correct, total))
-        confusionmatrix = toConfusionMatrix(cm_m.pred,cm_m.label)
+
+        confusionmatrix = toConfusionMatrix(cm_m.pred,cm_m.label,args.num_classes)
 
     return OrderedDict([('acc',correct/total), ('loss',total_loss/len(dataloader)),('cm',confusionmatrix)])
 
@@ -153,10 +155,10 @@ def fit(
         val_metrics = val(model, valloader, criterion, log_interval,args)
 
         # wandb
-        # cm은 매번 저장되지 않도록 metric -> metric[:-1]로 수정
+
         metrics = OrderedDict(lr=optimizer.param_groups[0]['lr'])
-        metrics.update([('train_' + k, v) for k, v in train_metrics[:-1].items()])
-        metrics.update([('val_' + k, v) for k, v in val_metrics[:-1].items()])
+        metrics.update([('train_' + k, v) for k, v in train_metrics.items()])
+        metrics.update([('val_' + k, v) for k, v in val_metrics.items()])
         if args.use_wandb:
             wandb.log(metrics, step=epoch)
 
