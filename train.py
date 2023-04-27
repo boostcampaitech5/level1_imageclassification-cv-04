@@ -77,7 +77,7 @@ def train(model, dataloader, criterion, optimizer,log_interval, args) -> dict:
         loss = criterion(outputs, targets)    
         loss.backward()
         # loss update
-        #optimizer.step()
+        optimizer.step()
         optimizer.zero_grad()
         losses_m.update(loss.item())
 
@@ -104,7 +104,7 @@ def train(model, dataloader, criterion, optimizer,log_interval, args) -> dict:
    
         end = time.time()
         confusionmatrix = toConfusionMatrix(cm_m.pred, cm_m.label,args.num_classes)
-        break
+
     return OrderedDict([('acc',acc_m.avg), ('loss',losses_m.avg), ('cm',confusionmatrix)])
     
 
