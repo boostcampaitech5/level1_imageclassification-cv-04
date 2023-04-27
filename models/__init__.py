@@ -1,2 +1,2 @@
 from .resnet import *
-from .backbone import *
+from .model import *
