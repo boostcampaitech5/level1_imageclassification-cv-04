@@ -16,7 +16,7 @@
     "model_param":
     {
         "pretrained": true,
-        "backbone": "vit_small_patch16_224"
+        "backbone": "resnet18"
     },
     "num_classes": 18,
     "batch_size": 32,
@@ -27,13 +27,13 @@
         
     },
     "lr": 5e-6,
-    "lr_scheduler":"ReduceLROnPlateau",
+    "lr_scheduler":"StepLR",
     "lr_scheduler_param":
     {
-       
+        "step_size":3
     },
     "weight_decay": 5e-4,
-    "epochs": 100,
+    "epochs": 1,
     "savedir": "./checkpoint",
     "grad_accum_steps": 1,
     "mixed_precision": "fp16",

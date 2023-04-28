@@ -6,7 +6,7 @@ import json
 import torch
 from collections import OrderedDict
 import numpy as np
-from utils.util import plot_confusion_matrix,toConfusionMatrix
+from utils.util import plot_confusion_matrix,toConfusionMatrix, calculateScore
 
 _logger = logging.getLogger('train')
 
@@ -105,9 +105,10 @@ def train(model,accelerator, dataloader, criterion, optimizer,log_interval, args
     
             end = time.time()
 
-    confusionmatrix, TN, FP, FN, TP = toConfusionMatrix(cm_m.pred, cm_m.label, args.num_classes)
+    confusionmatrix = toConfusionMatrix(cm_m.pred, cm_m.label, args.num_classes)
+    F1_score = calculateScore(cm_m.pred, cm_m.label, args.num_classes)
 
-    return OrderedDict([('acc',acc_m.avg), ('loss',losses_m.avg), ('F1_score', 2 * TP / (FP + FN + 2 * TP)), ('cm',confusionmatrix)])
+    return OrderedDict([('acc',acc_m.avg), ('loss',losses_m.avg), ('F1_score', F1_score), ('cm',confusionmatrix)])
     
 
 def val(model, dataloader, criterion,log_interval, args) -> dict:
@@ -137,9 +138,10 @@ def val(model, dataloader, criterion,log_interval, args) -> dict:
                 _logger.info('VAL [%d/%d]: Loss: %.3f | Acc: %.3f%% [%d/%d]' % 
                             (idx+1, len(dataloader), total_loss/(idx+1), 100.*correct/total, correct, total))
 
-        confusionmatrix, TN, FP, FN, TP = toConfusionMatrix(cm_m.pred, cm_m.label, args.num_classes)
+        confusionmatrix = toConfusionMatrix(cm_m.pred, cm_m.label, args.num_classes)
+        F1_score = calculateScore(cm_m.pred, cm_m.label, args.num_classes)
 
-    return OrderedDict([('acc',correct/total), ('loss',total_loss/len(dataloader)), ('F1_score', 2 * TP / (FP + FN + 2 * TP)), ('cm',confusionmatrix)])
+    return OrderedDict([('acc',correct/total), ('loss',total_loss/len(dataloader)), ('F1_score', F1_score), ('cm',confusionmatrix)])
 
 
 def fit(

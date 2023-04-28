@@ -2,7 +2,7 @@
 import torch
 import matplotlib as plt
 import seaborn as sns
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, f1_score
 import numpy as np
 
 
@@ -35,6 +35,9 @@ def toConfusionMatrix(y_pred, y_label, num_classes:int) -> np.ndarray:
     #cm[y_pred][y_gt]
     cm = confusion_matrix(y_label, y_pred, labels = np.arange(num_classes).tolist())
 
-    return cm, cm.ravel()
+    return cm
 
 
+def calculateScore(y_pred, y_label, num_classes:int) -> float:
+
+    return f1_score(y_label, y_pred, labels=np.arange(num_classes), average='micro')

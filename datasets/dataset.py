@@ -67,7 +67,7 @@ class TestDataset(Dataset):
 
 
     def __getitem__(self, idx):
-        img = Image.open(self.test_data.iloc[idx].ImageID)
+        img = Image.open(os.path.join('../input/data/eval/images', self.test_data.iloc[idx].ImageID))
         label = self.test_data.iloc[idx].ans
         if self.transform:
             test_trans = ["resize","centercrop","totensor","normalize"]

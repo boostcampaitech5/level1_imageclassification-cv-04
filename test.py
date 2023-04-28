@@ -4,6 +4,7 @@ import os
 import json
 import torch
 import numpy as np
+import pandas as pd
 from collections import OrderedDict
 from utils.util import plot_confusion_matrix, toConfusionMatrix
 from train import AverageMeter, cmMetter, outputToPred
@@ -39,7 +40,7 @@ def test(model, testloader, accelerator, savedir, args) -> dict:
         pbar_test.set_description(f"Test. iter:")
         with torch.no_grad():
             test_img = test_img.to(device)
-            test_pred = model(test_img)
+            test_pred = torch.max(model(test_img), 1)[1]
             result.append(test_pred.item())
     pbar_test.close()
 
