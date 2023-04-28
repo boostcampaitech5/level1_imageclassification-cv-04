@@ -5,15 +5,18 @@ import wandb
 
 import torch
 import argparse
-import timm
 import logging
+import json
 
 from train import fit
-from models import *
-from datasets import create_dataset, create_dataloader
+from datasets import create_dataloader
+from datasets.dataset import CustomDataset, TestDataset
 from log import setup_default_logging
 
+from accelerate import Accelerator
+
 _logger = logging.getLogger('train')
+
 
 def torch_seed(random_seed):
     torch.manual_seed(random_seed)
@@ -33,77 +36,85 @@ def run(args):
     savedir = os.path.join(args.savedir, args.exp_name)
     os.makedirs(savedir, exist_ok=True)
 
+    # set logger
     setup_default_logging(log_path=os.path.join(savedir,'log.txt'))
+
+    # set seed
     torch_seed(args.seed)
 
-    device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-    _logger.info('Device: {}'.format(device))
+    # set accelerator
+    accelerator = Accelerator(
+        gradient_accumulation_steps = args.grad_accum_steps,
+        mixed_precision             = args.mixed_precision
+    )
+    _logger.info('Device: {}'.format(accelerator.device))
 
     # build Model
-    model = ResNet18(num_classes=args.num_classes)
-    model.to(device)
+    model = __import__('models.model', fromlist='model').__dict__[args.model_name](args.num_classes, **args.model_param)
     _logger.info('# of params: {}'.format(np.sum([p.numel() for p in model.parameters()])))
 
     # load dataset
-    trainset, testset = create_dataset(datadir=args.datadir, dataname=args.dataname, aug_name=args.aug_name)
+    trainset = CustomDataset(args=args, train=True)
+    valset = CustomDataset(args=args, train=False)
+    testset = TestDataset(args=args)
     
     # load dataloader
     trainloader = create_dataloader(dataset=trainset, batch_size=args.batch_size, shuffle=True)
-    testloader = create_dataloader(dataset=testset, batch_size=256, shuffle=False)
+    valloader = create_dataloader(dataset=valset, batch_size=args.batch_size, shuffle=False)
+    testloader = create_dataloader(dataset=testset, batch_size=args.batch_size, shuffle=False)
 
-    # set training
-    criterion = torch.nn.CrossEntropyLoss()
-    optimizer = __import__('torch.optim', fromlist='optim').__dict__[args.opt_name](model.parameters(), lr=args.lr)
+    # set criterion
+    criterion = __import__('losses.loss', fromlist='loss').__dict__[args.loss](**args.loss_param)
+
+    # set optimizer
+    optimizer = __import__('torch.optim', fromlist='optim').__dict__[args.opt_name](model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
     # scheduler
-    if args.use_scheduler:
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
+    if args.lr_scheduler:
+        lr_scheduler = __import__('torch.optim.lr_scheduler', fromlist='lr_scheduler').__dict__[args.lr_scheduler](optimizer, **args.lr_scheduler_param)
     else:
-        scheduler = None
+        lr_scheduler = None
+
+    # prepraring accelerator
+    model, optimizer, trainloader, valloader, lr_scheduler = accelerator.prepare(
+        model, optimizer, trainloader, valloader, lr_scheduler
+    )
 
     # initialize wandb
-    wandb.init(name=args.exp_name, project='DSBA-study', config=args)
+    if args.use_wandb:
+        wandb.init(name     = f'{args.exp_name}_{args.exp_num}.{args.user_name}', 
+                   project  = args.project_name, 
+                   entity   = args.entity,
+                   config   = args)
 
     # fitting model
     fit(model        = model, 
         trainloader  = trainloader, 
-        testloader   = testloader, 
+        valloader    = valloader, 
         criterion    = criterion, 
         optimizer    = optimizer, 
-        scheduler    = scheduler,
-        epochs       = args.epochs, 
+        lr_scheduler = lr_scheduler,
+        accelerator  = accelerator,
         savedir      = savedir,
-        log_interval = args.log_interval,
-        device       = device)
+        args         = args)
+
+    # testing model
+    test(model        = model,
+         testloader   = testloader,
+         accelerator  = accelerator,
+         savedir      = savedir,
+         args         = args)
+
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description="Classification for Computer Vision")
-    # exp setting
-    parser.add_argument('--exp-name',type=str,help='experiment name')
-    parser.add_argument('--datadir',type=str,default='/data',help='data directory')
-    parser.add_argument('--savedir',type=str,default='./saved_model',help='saved model directory')
 
-    # datasets
-    parser.add_argument('--dataname',type=str,default='CIFAR100',choices=['CIFAR10','CIFAR100'],help='target dataname')
-    parser.add_argument('--num-classes',type=int,default=100,help='target classes')
+    with open('config.json') as f:
+        config = json.load(f)
 
-    # optimizer
-    parser.add_argument('--opt-name',type=str,choices=['SGD','Adam'],help='optimizer name')
-    parser.add_argument('--lr',type=float,default=0.1,help='learning_rate')
-
-    # scheduler
-    parser.add_argument('--use_scheduler',action='store_true',help='use sheduler')
-
-    # augmentation
-    parser.add_argument('--aug-name',type=str,choices=['default','weak','strong'],help='augmentation type')
-
-    # train
-    parser.add_argument('--epochs',type=int,default=50,help='the number of epochs')
-    parser.add_argument('--batch-size',type=int,default=128,help='batch size')
-    parser.add_argument('--log-interval',type=int,default=10,help='log interval')
-
-    # seed
-    parser.add_argument('--seed',type=int,default=223,help='223 is my birthday')
+    for key in config:
+        parser_key = key.replace('_', '-')
+        parser.add_argument(f'--{parser_key}', default=config[key], type=type(config[key]))
 
     args = parser.parse_args()
 

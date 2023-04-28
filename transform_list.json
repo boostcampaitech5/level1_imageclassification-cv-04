@@ -1,25 +1,15 @@
 {
 	"resize": {
-<<<<<<< HEAD:old/transform_list.json
-		"img_width": 98,
-		"img_height": 128
-=======
 		"img_width": 192,
 		"img_height": 192
->>>>>>> bcaba62161db00c4b42d6c0402789987360e6e55:transform_list.json
 	},
 	"totensor": {},
 	"normalize": {
 		"normalize_statistic": "imagenet"
 	},
 	"centercrop": {
-<<<<<<< HEAD:old/transform_list.json
-		"img_width": 384,
-		"img_height": 384
-=======
 		"img_width": 192,
 		"img_height": 192
->>>>>>> bcaba62161db00c4b42d6c0402789987360e6e55:transform_list.json
 	},
 	"colorjitter": {
 		"brightness": 0,

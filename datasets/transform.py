@@ -1,9 +1,10 @@
-import torchvision
 from torchvision import transforms
 import json
 
-def get_transform(args):
-    with open(args.transform_path, 'r') as f:
+
+#transform_list.json 으로부터 읽어와 필요한 transform 만 Compose 에 추가    
+def get_transform(transform_list:list):
+    with open('./transform_list.json', 'r') as f:
         transform_json = f.read()
     tf_list = json.loads(transform_json)
 
@@ -33,39 +34,10 @@ def get_transform(args):
     
     list_ = []
     config = {}
-    for key in args.transform_list:
+    for key in transform_list:
         list_.append(transform_dict[key])
         config[key] = tf_list[key]
     
     transform = transforms.Compose(list_)
 
     return transform, config
-    
-
-class CustomTransform():
-    def __init__(self):
-        super(CustomTransform, self).__init__()
-        pass
-
-
-    def __call__(self, tensor):
-        pass
-
-
-    def __repr__(self):
-        pass
-
-
-if __name__ == '__main__':
-    args_dict = {'transform_path' : './transform_list.json',
-                 'transform_list' : ['resize', 'totensor', 'normalize', 'centercrop',
-                                     'colorjitter', 'randomhorizontalflip', 'randomrotation', 
-                                     'gaussianblur', 'randomaffine']}
-    
-    from collections import namedtuple
-    Args = namedtuple('Args', args_dict.keys())
-    args = Args(**args_dict)
-
-    transform, config = get_transform(args)
-    print(transform)
-    print(config)

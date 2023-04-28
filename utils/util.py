@@ -1,7 +1,10 @@
+#임시로 여기 작성
 import torch
+import matplotlib as plt
 import seaborn as sns
-import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix
 import numpy as np
+
 
 def plot_confusion_matrix(cm, num_classes, normalize=False, save_path=None):
     plt.clf()
@@ -28,11 +31,10 @@ def plot_confusion_matrix(cm, num_classes, normalize=False, save_path=None):
     return ax
 
 
-if __name__ == '__main__':
-    num_classes = 3
-    cm = [[5, 1, 1],
-          [0, 5, 2],
-          [1, 0, 5]]
-    cm = torch.FloatTensor(cm)
-    fig = plot_confusion_matrix(cm, 3, normalize=True)
-    plt.savefig('./test_imgs/plot_cm_normalize.png')
+def toConfusionMatrix(y_pred, y_label, num_classes:int) -> np.ndarray:
+    #cm[y_pred][y_gt]
+    cm = confusion_matrix(y_label, y_pred, labels = np.arange(num_classes).tolist())
+
+    return cm, cm.ravel()
+
+

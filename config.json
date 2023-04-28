@@ -1,0 +1,41 @@
+{
+    "use_wandb": false,
+    "use_cm": false,
+    "entity":"connect-cv-04",
+    "project_name": "Image_classification_mask",
+    "exp_name": "my_test",
+    "exp_num": 0,
+    "user_name": "my_name",
+    "datadir": "../input",
+    "train_file": "train.csv",
+    "valid_file": "valid.csv",
+    "test_file": "test.csv",
+    "transform": ["resize", "randomhorizontalflip", "randomrotation", "totensor", "normalize"],
+    "seed": 223,
+    "model_name": "CustomModel",
+    "model_param":
+    {
+        "pretrained": true,
+        "backbone": "vit_small_patch16_224"
+    },
+    "num_classes": 18,
+    "batch_size": 32,
+    "opt_name": "Adam",
+    "loss": "crossentropy",
+    "loss_param":
+    {
+        
+    },
+    "lr": 5e-6,
+    "lr_scheduler":"ReduceLROnPlateau",
+    "lr_scheduler_param":
+    {
+       
+    },
+    "weight_decay": 5e-4,
+    "epochs": 100,
+    "savedir": "./checkpoint",
+    "grad_accum_steps": 1,
+    "mixed_precision": "fp16",
+    "patience": 100
+}
