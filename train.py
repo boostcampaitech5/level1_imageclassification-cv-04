@@ -128,17 +128,67 @@ def fit(
         if scheduler:
             scheduler.step()
 
-        # checkpoint
-        if best_acc < eval_metrics['acc']:
-            # save results
-            state = {'best_epoch':epoch, 'best_acc':eval_metrics['acc']}
-            json.dump(state, open(os.path.join(savedir, f'best_results.json'),'w'), indent=4)
+        print('time >> {:.4f}\tepoch >> {:04d}\ttrain_acc >> {:.4f}\ttrain_loss >> {:.4f}\ttrain_f1 >> {:.4f}\tval_acc >> {:.4f}\tval_loss >> {:.4f}\tval_f1 >> {:.4f}'
+              .format(time.time()-start_time, epoch, train_acc, train_epoch_loss, train_f1, val_acc, val_epoch_loss, val_f1))
+        
+        if (epoch+1) % args.save_epoch == 0:
+            if args.save_mode == 'state_dict' or args.save_mode == 'both':
+                # 모델의 parameter들을 저장
+                torch.save({
+                    'epoch': epoch,
+                    'model_state_dict': model.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    }, os.path.join(checkpoint_path, f'epoch({epoch})_acc({val_acc:.3f})_loss({val_epoch_loss:.3f})_f1({val_f1:.3f})_state_dict.pt'))
+            if args.save_mode == 'model' or args.save_mode == 'both':
+                # 모델 자체를 저장
+                torch.save(model, os.path.join(checkpoint_path, f'epoch({epoch})_acc({val_acc:.3f})_loss({val_epoch_loss:.3f})_f1({val_f1:.3f})_model.pt'))
 
-            # save model
-            torch.save(model.state_dict(), os.path.join(savedir, f'best_model.pt'))
-            
-            _logger.info('Best Accuracy {0:.3%} to {1:.3%}'.format(best_acc, eval_metrics['acc']))
+        if args.use_wandb:
+            wandb.log({'Train Acc': train_acc,
+                       'Train Loss': train_epoch_loss,
+                       'Train F1-Score': train_f1,
+                       'Val Acc': val_acc,
+                       'Val Loss': val_epoch_loss,
+                       'Val F1-Score': val_f1})
 
-            best_acc = eval_metrics['acc']
+            if (epoch+1) % args.save_epoch == 0:
+                fig = plot_confusion_matrix(val_cm, args.num_classes, normalize=True, save_path=None)
+                wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")})
+                # wandb.log({"Confusion Matrix Plot" : wandb.plot.confusion_matrix(probs=None,
+                #                                                             preds=pred_list, y_true=target_list,
+                #                                                             class_names=list(map(str,range(0, 18))))})
+                # # WARNING wandb.plots.* functions are deprecated and will be removed in a future release. Please use wandb.plot.* instead.
+                # wandb.log({'Confusion Matrix Heatmap': wandb.plots.HeatMap(list(range(0,18)), list(range(0,18)), val_cm, show_text=True)})
 
-    _logger.info('Best Metric: {0:.3%} (epoch {1:})'.format(state['best_acc'], state['best_epoch']))
+
+if __name__ == '__main__':
+    args_dict = {'seed' : 223,
+                 'csv_path' : './input/data/train/train_info.csv',
+                 'save_path' : './checkpoint',
+                 'use_wandb' : False,
+                 'wandb_exp_name' : 'exp',
+                 'wandb_project_name' : 'Image_classification_mask',
+                 'wandb_entity' : 'connect-cv-04',
+                 'num_classes' : 18,
+                 'model_summary' : True,
+                 'batch_size' : 64,
+                 'learning_rate' : 1e-4,
+                 'epochs' : 100,
+                 'train_val_split': 0.8,
+                 'save_mode' : 'model',
+                 'save_epoch' : 10,
+                 'load_model':'resnet50',
+                 'transform_path' : './transform_list.json',
+                 'transform_list' : ['resize', 'randomhorizontalflip', 'randomrotation', 'totensor', 'normalize'],
+                 'not_freeze_layer' : ['layer4'],
+                 'weight_decay': 1e-2}
+    wandb_data = wandb_info.get_wandb_info()
+    args_dict.update(wandb_data)
+    from collections import namedtuple
+    Args = namedtuple('Args', args_dict.keys())
+    args = Args(**args_dict)
+
+    # Config parser 하나만 넣어주면 됨(임시방편)
+    run(args, args_dict)
+    
+    
