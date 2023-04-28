@@ -26,6 +26,7 @@ class CustomDataset(Dataset):
         else:
             return len(self.valid_data)
 
+
     def __getitem__(self, idx):
         # Train Mode
         if self.train:
@@ -48,7 +49,35 @@ class CustomDataset(Dataset):
                         trans_list.append(t)
                 transform, cfg = get_transform(trans_list)
                 img = transform(img)
-    
+
+        return img, torch.LongTensor([label]).squeeze()
+
+
+class TestDataset(Dataset):
+    """Data loader를 만들기 위한 base dataset class"""
+
+    def __init__(self, args:dict):
+        self.datadir = args.datadir
+        self.test_data = pd.read_csv(os.path.join(self.datadir, args.test_file))
+        self.transform = args.transform
+
+
+    def __len__(self):
+        return len(self.test_data)
+
+
+    def __getitem__(self, idx):
+        img = Image.open(self.test_data.iloc[idx].ImageID)
+        label = self.test_data.iloc[idx].ans
+        if self.transform:
+            test_trans = ["resize","centercrop","totensor","normalize"]
+            trans_list = []
+            for t in self.transform:
+                if t in test_trans:
+                    trans_list.append(t)
+            transform, cfg = get_transform(trans_list)
+            img = transform(img)
+
         return img, torch.LongTensor([label]).squeeze()
 
 

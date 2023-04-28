@@ -105,9 +105,9 @@ def train(model,accelerator, dataloader, criterion, optimizer,log_interval, args
     
             end = time.time()
 
-    confusionmatrix = toConfusionMatrix(cm_m.pred, cm_m.label,args.num_classes)
+    confusionmatrix, TN, FP, FN, TP = toConfusionMatrix(cm_m.pred, cm_m.label, args.num_classes)
 
-    return OrderedDict([('acc',acc_m.avg), ('loss',losses_m.avg), ('cm',confusionmatrix)])
+    return OrderedDict([('acc',acc_m.avg), ('loss',losses_m.avg), ('F1_score', 2 * TP / (FP + FN + 2 * TP)), ('cm',confusionmatrix)])
     
 
 def val(model, dataloader, criterion,log_interval, args) -> dict:
@@ -137,9 +137,9 @@ def val(model, dataloader, criterion,log_interval, args) -> dict:
                 _logger.info('VAL [%d/%d]: Loss: %.3f | Acc: %.3f%% [%d/%d]' % 
                             (idx+1, len(dataloader), total_loss/(idx+1), 100.*correct/total, correct, total))
 
-        confusionmatrix = toConfusionMatrix(cm_m.pred,cm_m.label,args.num_classes)
+        confusionmatrix, TN, FP, FN, TP = toConfusionMatrix(cm_m.pred, cm_m.label, args.num_classes)
 
-    return OrderedDict([('acc',correct/total), ('loss',total_loss/len(dataloader)),('cm',confusionmatrix)])
+    return OrderedDict([('acc',correct/total), ('loss',total_loss/len(dataloader)), ('F1_score', 2 * TP / (FP + FN + 2 * TP)), ('cm',confusionmatrix)])
 
 
 def fit(
@@ -147,7 +147,7 @@ def fit(
     savedir: str, args
 ) -> None:
 
-    best_acc = 0
+    best_F1_score = 0
     step = 0
     log_interval = 5
     for epoch in range(args.epochs):
@@ -170,23 +170,23 @@ def fit(
             lr_scheduler.step()
 
         # checkpoint
-        if best_acc < val_metrics['acc']:
+        if best_F1_score < val_metrics['F1_score']:
             # save results
-            state = {'best_epoch':epoch, 'best_acc':val_metrics['acc']}
+            state = {'best_epoch':epoch, 'best_F1_score':val_metrics['F1_score']}
             json.dump(state, open(os.path.join(savedir, f'best_results.json'),'w'), indent=4)
 
             # save model
             torch.save(model.state_dict(), os.path.join(savedir, f'best_model.pt'))
             
-            _logger.info('Best Accuracy {0:.3%} to {1:.3%}'.format(best_acc, val_metrics['acc']))
+            _logger.info('Best F1 score {0:.3%} to {1:.3%}'.format(best_F1_score, val_metrics['F1_score']))
 
-            best_acc = val_metrics['acc']
+            best_F1_score = val_metrics['F1_score']
             #save confusion_matrix
             if args.use_cm:
                 fig = plot_confusion_matrix(val_metrics['cm'],args.num_classes)
                 if args.use_wandb:
                     wandb.log({'Confusion Matrix': wandb.Image(fig, caption=f"Epoch-{epoch}")},step=epoch)
                 
-    _logger.info('Best Metric: {0:.3%} (epoch {1:})'.format(state['best_acc'], state['best_epoch']))
+    _logger.info('Best Metric: {0:.3%} (epoch {1:})'.format(state['best_F1_score'], state['best_epoch']))
 
 

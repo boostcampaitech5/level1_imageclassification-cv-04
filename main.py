@@ -10,7 +10,7 @@ import json
 
 from train import fit
 from datasets import create_dataloader
-from datasets.dataset import CustomDataset
+from datasets.dataset import CustomDataset, TestDataset
 from log import setup_default_logging
 
 from accelerate import Accelerator
@@ -54,12 +54,14 @@ def run(args):
     _logger.info('# of params: {}'.format(np.sum([p.numel() for p in model.parameters()])))
 
     # load dataset
-    trainset = CustomDataset(args = args, train = True)
-    valset = CustomDataset(args = args, train = False)
+    trainset = CustomDataset(args=args, train=True)
+    valset = CustomDataset(args=args, train=False)
+    testset = TestDataset(args=args)
     
     # load dataloader
     trainloader = create_dataloader(dataset=trainset, batch_size=args.batch_size, shuffle=True)
     valloader = create_dataloader(dataset=valset, batch_size=args.batch_size, shuffle=False)
+    testloader = create_dataloader(dataset=testset, batch_size=args.batch_size, shuffle=False)
 
     # set criterion
     criterion = __import__('losses.loss', fromlist='loss').__dict__[args.loss](**args.loss_param)
@@ -95,6 +97,13 @@ def run(args):
         accelerator  = accelerator,
         savedir      = savedir,
         args         = args)
+
+    # testing model
+    test(model        = model,
+         testloader   = testloader,
+         accelerator  = accelerator,
+         savedir      = savedir,
+         args         = args)
 
 
 if __name__=='__main__':

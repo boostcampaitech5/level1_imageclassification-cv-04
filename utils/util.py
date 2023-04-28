@@ -35,4 +35,6 @@ def toConfusionMatrix(y_pred, y_label, num_classes:int) -> np.ndarray:
     #cm[y_pred][y_gt]
     cm = confusion_matrix(y_label, y_pred, labels = np.arange(num_classes).tolist())
 
-    return cm
+    return cm, cm.ravel()
+
+

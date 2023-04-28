@@ -9,6 +9,7 @@
     "datadir": "../input",
     "train_file": "train.csv",
     "valid_file": "valid.csv",
+    "test_file": "test.csv",
     "transform": ["resize", "randomhorizontalflip", "randomrotation", "totensor", "normalize"],
     "seed": 223,
     "model_name": "CustomModel",

@@ -1,0 +1,8 @@
+2023-04-28 06:33:25,802 -                train: [    INFO] - Device: cuda
+2023-04-28 06:33:26,803 -                train: [    INFO] - # of params: 21672594
+2023-04-28 06:44:41,046 -                train: [    INFO] - Device: cuda
+2023-04-28 06:44:42,086 -                train: [    INFO] - # of params: 21672594
+2023-04-28 06:49:25,025 -                train: [    INFO] - Device: cuda
+2023-04-28 06:49:26,054 -                train: [    INFO] - # of params: 21672594
+2023-04-28 06:49:29,163 -                train: [    INFO] - 
+Epoch: 1/100
