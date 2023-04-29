@@ -1,15 +1,15 @@
 {
 	"resize": {
-		"img_width": 192,
-		"img_height": 192
+		"img_width": 224,
+		"img_height": 224
 	},
 	"totensor": {},
 	"normalize": {
 		"normalize_statistic": "imagenet"
 	},
 	"centercrop": {
-		"img_width": 192,
-		"img_height": 192
+		"img_width": 384,
+		"img_height": 384
 	},
 	"colorjitter": {
 		"brightness": 0,

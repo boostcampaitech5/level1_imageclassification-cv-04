@@ -9,6 +9,7 @@ import logging
 import json
 
 from train import fit
+from test import test
 from datasets import create_dataloader
 from datasets.dataset import CustomDataset, TestDataset
 from log import setup_default_logging
@@ -61,7 +62,7 @@ def run(args):
     # load dataloader
     trainloader = create_dataloader(dataset=trainset, batch_size=args.batch_size, shuffle=True)
     valloader = create_dataloader(dataset=valset, batch_size=args.batch_size, shuffle=False)
-    testloader = create_dataloader(dataset=testset, batch_size=args.batch_size, shuffle=False)
+    testloader = create_dataloader(dataset=testset, batch_size=1, shuffle=False)
 
     # set criterion
     criterion = __import__('losses.loss', fromlist='loss').__dict__[args.loss](**args.loss_param)
