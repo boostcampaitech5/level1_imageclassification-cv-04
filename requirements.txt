@@ -15,7 +15,7 @@ boto3==1.18.25
 botocore==1.21.25
 brotlipy==0.7.0
 cachetools==4.2.2
-certifi==2020.12.5
+certifi==2023.7.22
 cffi @ file:///tmp/build/80754af9/cffi_1605538068321/work
 chardet @ file:///tmp/build/80754af9/chardet_1605303185383/work
 charset-normalizer==3.1.0
