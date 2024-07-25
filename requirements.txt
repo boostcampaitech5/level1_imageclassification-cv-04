@@ -149,6 +149,6 @@ wandb==0.14.2
 wcwidth @ file:///tmp/build/80754af9/wcwidth_1593447189090/work
 webencodings==0.5.1
 websocket-client==1.2.1
-Werkzeug==2.0.1
+Werkzeug==3.0.3
 zope.event==4.5.0
 zope.interface==5.4.0
